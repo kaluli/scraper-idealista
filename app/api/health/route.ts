@@ -10,12 +10,8 @@ export async function GET(request: NextRequest) {
   const nodeEnv = process.env.NODE_ENV || 'development'
   const port = process.env.PORT || '3000'
   
-  // Limpiar DATABASE_URL de espacios (por si Railway los agrega)
-  const cleanedDbUrl = process.env.DATABASE_URL?.trim() || ''
-  const actualHasDatabaseUrl = !!cleanedDbUrl
-  
   // Si no hay DATABASE_URL, retornar error inmediatamente
-  if (!actualHasDatabaseUrl) {
+  if (!hasDatabaseUrl) {
     return NextResponse.json({
       success: false,
       status: 'unhealthy',
@@ -46,25 +42,24 @@ export async function GET(request: NextRequest) {
   }
   
   try {
-    // Obtener DATABASE_URL original (antes de limpiar)
-    const originalUrlBeforeClean = process.env.DATABASE_URL || ''
-    
-    // Intentar conectar a la base de datos (ya debería estar limpia por lib/prisma.ts)
+    // Intentar conectar a la base de datos
     await prisma.$connect()
     
     // Verificar que las tablas existan
     const listingsCount = await prisma.listing.count()
     const neighborhoodsCount = await prisma.neighborhood.count()
     
-    // Obtener DATABASE_URL actual (después de limpiar)
-    const dbUrl = (process.env.DATABASE_URL || 'NOT SET').trim()
-    const maskedUrl = dbUrl.includes('@') 
-      ? dbUrl.split('@')[0] + '@***' 
-      : dbUrl
-    
-    // Verificar si había espacios al inicio o final (antes de limpiar)
-    const hasLeadingSpace = originalUrlBeforeClean.startsWith(' ')
-    const hasTrailingSpace = originalUrlBeforeClean.endsWith(' ')
+    // Obtener DATABASE_URL (sin mostrar la contraseña)
+    const dbUrl = process.env.DATABASE_URL || 'NOT SET'
+    // Ocultar completamente la contraseña: mysql://user:***@host:port/database
+    let maskedUrl = 'NOT SET'
+    if (dbUrl !== 'NOT SET' && dbUrl.includes('@')) {
+      const [credentials, rest] = dbUrl.split('@')
+      const user = credentials.replace('mysql://', '').split(':')[0]
+      maskedUrl = `mysql://${user}:***@${rest}`
+    } else if (dbUrl !== 'NOT SET') {
+      maskedUrl = dbUrl.includes('@') ? dbUrl.split('@')[0] + '@***' : dbUrl
+    }
     
     const responseTime = Date.now() - startTime
     
@@ -81,11 +76,6 @@ export async function GET(request: NextRequest) {
       database: {
         connected: true,
         url: maskedUrl,
-        urlValidation: {
-          hasLeadingSpace,
-          hasTrailingSpace,
-          isValid: !hasLeadingSpace && !hasTrailingSpace && dbUrl.startsWith('mysql://')
-        },
         tables: {
           listings: listingsCount,
           neighborhoods: neighborhoodsCount
@@ -99,15 +89,16 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error: any) {
-    const dbUrl = (process.env.DATABASE_URL || 'NOT SET').trim()
-    const maskedUrl = dbUrl.includes('@') 
-      ? dbUrl.split('@')[0] + '@***' 
-      : dbUrl
-    
-    // Verificar espacios en la URL original (antes de trim)
-    const originalUrlInError = process.env.DATABASE_URL || ''
-    const hasLeadingSpace = originalUrlInError.startsWith(' ')
-    const hasTrailingSpace = originalUrlInError.endsWith(' ')
+    const dbUrl = process.env.DATABASE_URL || 'NOT SET'
+    // Ocultar completamente la contraseña
+    let maskedUrl = 'NOT SET'
+    if (dbUrl !== 'NOT SET' && dbUrl.includes('@')) {
+      const [credentials, rest] = dbUrl.split('@')
+      const user = credentials.replace('mysql://', '').split(':')[0]
+      maskedUrl = `mysql://${user}:***@${rest}`
+    } else if (dbUrl !== 'NOT SET') {
+      maskedUrl = dbUrl.includes('@') ? dbUrl.split('@')[0] + '@***' : dbUrl
+    }
     
     const responseTime = Date.now() - startTime
     
@@ -121,15 +112,6 @@ export async function GET(request: NextRequest) {
       database: {
         connected: false,
         url: maskedUrl,
-        urlValidation: {
-          hasLeadingSpace,
-          hasTrailingSpace,
-          isValid: !hasLeadingSpace && !hasTrailingSpace && dbUrl.startsWith('mysql://'),
-          issue: hasLeadingSpace ? 'Hay un espacio al inicio de DATABASE_URL' 
-                : hasTrailingSpace ? 'Hay un espacio al final de DATABASE_URL'
-                : !dbUrl.startsWith('mysql://') ? 'DATABASE_URL no empieza con mysql://'
-                : 'Error de conexión'
-        },
         message: 'No se puede conectar a la base de datos. Verifica DATABASE_URL en Railway.'
       }
     }, { 
