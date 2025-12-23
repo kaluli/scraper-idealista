@@ -23,9 +23,10 @@ export default function Home() {
   const [provinces, setProvinces] = useState<string[]>([])
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedType, setSelectedType] = useState<'alquiler' | 'compra' | 'all'>('all')
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>('all')
-  const [selectedProvince, setSelectedProvince] = useState<string>('all')
+  const [selectedProvince, setSelectedProvince] = useState<string>('Murcia')
   const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('all')
   const [showModal, setShowModal] = useState(false)
   const [formData, setFormData] = useState({
@@ -44,6 +45,7 @@ export default function Home() {
   // Cargar pisos
   const loadListings = async () => {
     setLoading(true)
+    setError(null)
     try {
       const params = new URLSearchParams()
       if (selectedType !== 'all') {
@@ -68,10 +70,12 @@ export default function Home() {
         setListings(result.data || [])
       } else {
         console.error('API returned error:', result.error)
+        setError(result.error || 'Error al cargar los pisos')
         setListings([])
       }
     } catch (error) {
       console.error('Error loading listings:', error)
+      setError(error instanceof Error ? error.message : 'Error al cargar los pisos')
       setListings([])
     } finally {
       setLoading(false)
@@ -139,6 +143,10 @@ export default function Home() {
       const result = await response.json()
       if (result.success) {
         setProvinces(result.data)
+        // Si "Murcia" está disponible y no está seleccionada, seleccionarla por defecto
+        if (result.data.includes('Murcia') && selectedProvince === 'all') {
+          setSelectedProvince('Murcia')
+        }
       }
     } catch (error) {
       console.error('Error loading provinces:', error)
@@ -154,6 +162,7 @@ export default function Home() {
 
   useEffect(() => {
     loadProvinces()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Crear nuevo piso
@@ -228,11 +237,51 @@ export default function Home() {
       <div className={styles.content}>
         {/* Header */}
         <div className={styles.header}>
-          <h1 className={styles.title}>Gestor de Pisos Idealista</h1>
+          <h1 className={styles.title}>🏠 Gestor de Pisos Idealista</h1>
           <button className={styles.btnPrimary} onClick={() => setShowModal(true)}>
             + Añadir Piso
           </button>
         </div>
+
+        {/* Error message */}
+        {error && (
+          <div className={styles.errorCard}>
+            <h2 className={styles.errorTitle}>⚠️ Error</h2>
+            <p className={styles.errorMessage}>{error}</p>
+            <p className={styles.errorMessage} style={{ fontSize: '0.9rem', marginTop: '8px' }}>
+              Verifica que la base de datos esté configurada correctamente y que las variables de entorno estén establecidas.
+            </p>
+            <button className={styles.btnPrimary} onClick={() => {
+              setError(null)
+              loadListings()
+              loadStats()
+            }}>
+              Reintentar
+            </button>
+          </div>
+        )}
+
+        {/* Welcome message when no data */}
+        {!loading && !error && listings.length === 0 && !stats && (
+          <div className={styles.welcomeCard}>
+            <h2 className={styles.welcomeTitle}>¡Bienvenido al Gestor de Pisos Idealista!</h2>
+            <p className={styles.welcomeMessage}>
+              Esta aplicación te permite gestionar y analizar pisos de alquiler y compra.
+            </p>
+            <div className={styles.welcomeFeatures}>
+              <p><strong>Características:</strong></p>
+              <ul>
+                <li>📊 Estadísticas detalladas por barrio</li>
+                <li>🔍 Filtros avanzados (tipo, provincia, barrio, precio)</li>
+                <li>💰 Cálculo de rentabilidad</li>
+                <li>➕ Añadir y gestionar pisos</li>
+              </ul>
+            </div>
+            <button className={styles.btnPrimary} onClick={() => setShowModal(true)}>
+              Añadir tu primer piso
+            </button>
+          </div>
+        )}
 
         {/* Estadísticas */}
         {stats && stats.total > 0 && (
@@ -464,10 +513,28 @@ export default function Home() {
 
         {/* Lista de pisos */}
         {loading ? (
-          <div className={styles.loading}>Cargando...</div>
+          <div className={styles.loading}>
+            <p>Cargando pisos...</p>
+            <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '8px' }}>
+              Si esto tarda mucho, verifica la conexión a la base de datos
+            </p>
+          </div>
         ) : listings.length === 0 ? (
           <div className={styles.emptyState}>
-            <p>No hay pisos disponibles con estos filtros</p>
+            <h2 style={{ marginBottom: '16px' }}>No hay pisos disponibles</h2>
+            <p>No se encontraron pisos con los filtros seleccionados.</p>
+            <button 
+              className={styles.btnPrimary} 
+              onClick={() => {
+                setSelectedType('all')
+                setSelectedNeighborhood('all')
+                setSelectedProvince('Murcia')
+                setSelectedMaxPrice('all')
+              }}
+              style={{ marginTop: '16px' }}
+            >
+              Limpiar filtros
+            </button>
           </div>
         ) : (
           <div className={styles.listingsGrid}>
