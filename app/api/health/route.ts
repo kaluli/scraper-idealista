@@ -46,74 +46,25 @@ export async function GET(request: NextRequest) {
   }
   
   try {
-    // Limpiar DATABASE_URL y establecerla temporalmente si tiene espacios
-    const originalUrl = process.env.DATABASE_URL || ''
-    if (originalUrl !== originalUrl.trim()) {
-      // Si hay espacios, limpiar y establecer temporalmente
-      process.env.DATABASE_URL = originalUrl.trim()
-      // Recrear Prisma client con la URL limpia
-      const { PrismaClient } = require('@prisma/client')
-      const cleanPrisma = new PrismaClient()
-      await cleanPrisma.$connect()
-      
-      const listingsCount = await cleanPrisma.listing.count()
-      const neighborhoodsCount = await cleanPrisma.neighborhood.count()
-      await cleanPrisma.$disconnect()
-      
-      const responseTime = Date.now() - startTime
-      const maskedUrl = cleanedDbUrl.includes('@') 
-        ? cleanedDbUrl.split('@')[0] + '@***' 
-        : cleanedDbUrl
-      
-      return NextResponse.json({
-        success: true,
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        responseTime: `${responseTime}ms`,
-        warning: 'DATABASE_URL tenía espacios que fueron eliminados automáticamente',
-        environment: {
-          nodeEnv,
-          port,
-          hasDatabaseUrl: actualHasDatabaseUrl
-        },
-        database: {
-          connected: true,
-          url: maskedUrl,
-          urlValidation: {
-            hadSpaces: originalUrl !== originalUrl.trim(),
-            isValid: true
-          },
-          tables: {
-            listings: listingsCount,
-            neighborhoods: neighborhoodsCount
-          }
-        }
-      }, {
-        status: 200,
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Content-Type': 'application/json'
-        }
-      })
-    }
+    // Obtener DATABASE_URL original (antes de limpiar)
+    const originalUrlBeforeClean = process.env.DATABASE_URL || ''
     
-    // Intentar conectar a la base de datos
+    // Intentar conectar a la base de datos (ya debería estar limpia por lib/prisma.ts)
     await prisma.$connect()
     
     // Verificar que las tablas existan
     const listingsCount = await prisma.listing.count()
     const neighborhoodsCount = await prisma.neighborhood.count()
     
-    // Obtener DATABASE_URL (sin mostrar la contraseña completa)
-    const dbUrl = (process.env.DATABASE_URL || 'NOT SET').trim() // Eliminar espacios
+    // Obtener DATABASE_URL actual (después de limpiar)
+    const dbUrl = (process.env.DATABASE_URL || 'NOT SET').trim()
     const maskedUrl = dbUrl.includes('@') 
       ? dbUrl.split('@')[0] + '@***' 
       : dbUrl
     
-    // Verificar si hay espacios al inicio o final
-    const originalUrl = process.env.DATABASE_URL || ''
-    const hasLeadingSpace = originalUrl.startsWith(' ')
-    const hasTrailingSpace = originalUrl.endsWith(' ')
+    // Verificar si había espacios al inicio o final (antes de limpiar)
+    const hasLeadingSpace = originalUrlBeforeClean.startsWith(' ')
+    const hasTrailingSpace = originalUrlBeforeClean.endsWith(' ')
     
     const responseTime = Date.now() - startTime
     
@@ -148,10 +99,15 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error: any) {
-    const dbUrl = process.env.DATABASE_URL || 'NOT SET'
+    const dbUrl = (process.env.DATABASE_URL || 'NOT SET').trim()
     const maskedUrl = dbUrl.includes('@') 
       ? dbUrl.split('@')[0] + '@***' 
       : dbUrl
+    
+    // Verificar espacios en la URL original (antes de trim)
+    const originalUrlInError = process.env.DATABASE_URL || ''
+    const hasLeadingSpace = originalUrlInError.startsWith(' ')
+    const hasTrailingSpace = originalUrlInError.endsWith(' ')
     
     const responseTime = Date.now() - startTime
     
