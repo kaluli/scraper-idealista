@@ -21,7 +21,7 @@ PlanetScale usa MySQL pero requiere algunas configuraciones especiales. El schem
 
 1. Ve a https://vercel.com y crea una cuenta (puedes usar GitHub)
 2. Haz clic en "Add New Project"
-3. Importa tu repositorio de GitHub: `kaluli/scrapper-idealista`
+3. Importa tu repositorio de GitHub: `kaluli/scraper-idealista`
 4. Vercel detectará automáticamente que es un proyecto Next.js
 5. En "Environment Variables", añade:
    - **Nombre:** `DATABASE_URL`
@@ -68,7 +68,7 @@ Railway puede hostear tanto la aplicación como la base de datos MySQL.
 ### Paso 3: Desplegar la aplicación
 
 1. En Railway, haz clic en "New" → "GitHub Repo"
-2. Selecciona tu repositorio `kaluli/scrapper-idealista`
+2. Selecciona tu repositorio `kaluli/scraper-idealista`
 3. Railway detectará automáticamente que es un proyecto Next.js
 4. En "Variables", añade:
    - **Nombre:** `DATABASE_URL`
