@@ -49,18 +49,6 @@ export async function GET(request: NextRequest) {
     const listingsCount = await prisma.listing.count()
     const neighborhoodsCount = await prisma.neighborhood.count()
     
-    // Obtener DATABASE_URL (sin mostrar la contraseña)
-    const dbUrl = process.env.DATABASE_URL || 'NOT SET'
-    // Ocultar completamente la contraseña: mysql://user:***@host:port/database
-    let maskedUrl = 'NOT SET'
-    if (dbUrl !== 'NOT SET' && dbUrl.includes('@')) {
-      const [credentials, rest] = dbUrl.split('@')
-      const user = credentials.replace('mysql://', '').split(':')[0]
-      maskedUrl = `mysql://${user}:***@${rest}`
-    } else if (dbUrl !== 'NOT SET') {
-      maskedUrl = dbUrl.includes('@') ? dbUrl.split('@')[0] + '@***' : dbUrl
-    }
-    
     const responseTime = Date.now() - startTime
     
     return NextResponse.json({
@@ -75,7 +63,6 @@ export async function GET(request: NextRequest) {
       },
       database: {
         connected: true,
-        url: maskedUrl,
         tables: {
           listings: listingsCount,
           neighborhoods: neighborhoodsCount
@@ -89,17 +76,6 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error: any) {
-    const dbUrl = process.env.DATABASE_URL || 'NOT SET'
-    // Ocultar completamente la contraseña
-    let maskedUrl = 'NOT SET'
-    if (dbUrl !== 'NOT SET' && dbUrl.includes('@')) {
-      const [credentials, rest] = dbUrl.split('@')
-      const user = credentials.replace('mysql://', '').split(':')[0]
-      maskedUrl = `mysql://${user}:***@${rest}`
-    } else if (dbUrl !== 'NOT SET') {
-      maskedUrl = dbUrl.includes('@') ? dbUrl.split('@')[0] + '@***' : dbUrl
-    }
-    
     const responseTime = Date.now() - startTime
     
     return NextResponse.json({
@@ -111,7 +87,6 @@ export async function GET(request: NextRequest) {
       errorType: error.constructor?.name || 'Unknown',
       database: {
         connected: false,
-        url: maskedUrl,
         message: 'No se puede conectar a la base de datos. Verifica DATABASE_URL en Railway.'
       }
     }, { 
