@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
         
         // Si el barrio incluye la ciudad (ej: "Zona Juan Carlos I - Avenida de Europa, Murcia")
         if (neighborhood && neighborhood.includes(',')) {
-          const parts = neighborhood.split(',').map(p => p.trim())
+          const parts = neighborhood.split(',').map((p: string) => p.trim())
           if (parts.length > 1) {
             neighborhood = parts[0].trim()
             city = parts[parts.length - 1].trim()
