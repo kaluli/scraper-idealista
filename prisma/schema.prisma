@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Listing {
+  id                Int      @id @default(autoincrement())
+  title             String?  @db.VarChar(255) // título del piso (opcional)
+  price             Float    // precio_eur_mes o precio de compra
+  surface           Float?   @map("metros_cuadrados") // metros cuadrados
+  link              String   @db.VarChar(500) // link a Idealista
+  profitabilityRate Float?   @map("tasa_rentabilidad") // tasa de rentabilidad (opcional)
+  type              String   @db.VarChar(20) // "alquiler" o "compra"
+  neighborhood      String?  @map("barrio") @db.VarChar(100) // barrio
+  city              String?  @db.VarChar(100) // ciudad (opcional)
+  province          String?  @db.VarChar(100) // provincia (opcional)
+  publishedAddress  String?  @map("direccion_publicada") @db.VarChar(255) // dirección publicada
+  rooms             Int?     @map("habitaciones") // número de habitaciones
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@index([type])
+  @@index([neighborhood])
+  @@index([city])
+  @@index([province])
+  @@map("listings")
+}
+
+model Neighborhood {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(100) // nombre del barrio
+  province  String   @db.VarChar(100) // provincia
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([province])
+  @@map("neighborhoods")
+}

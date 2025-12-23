@@ -1,0 +1,203 @@
+[
+  {
+    "link": "https://www.idealista.com/inmueble/110181729/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Avenida de la Marina Española, 71",
+    "precio_eur_mes": 900,
+    "metros_cuadrados": 80,
+    "habitaciones": 2
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/110183054/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Calle Arquitecto Jaime Bort",
+    "precio_eur_mes": 550,
+    "metros_cuadrados": 45,
+    "habitaciones": 1
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/110180183/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Calle Ingeniero Melchor de Luzón",
+    "precio_eur_mes": 630,
+    "metros_cuadrados": 60,
+    "habitaciones": 1
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/110179700/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Calle Rosendos, 4",
+    "precio_eur_mes": 650,
+    "metros_cuadrados": 50,
+    "habitaciones": 1
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/110179232/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Calle San Ramón",
+    "precio_eur_mes": 725,
+    "metros_cuadrados": 70,
+    "habitaciones": 2
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/106185167/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Calle La Flota, 3",
+    "precio_eur_mes": 750,
+    "metros_cuadrados": 85,
+    "habitaciones": 2
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/110168249/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Calle Almirante Malaspina, 3",
+    "precio_eur_mes": 1200,
+    "metros_cuadrados": 160,
+    "habitaciones": 3
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/109952555/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Calle Ingeniero Bryant",
+    "precio_eur_mes": 1600,
+    "metros_cuadrados": 90,
+    "habitaciones": 3
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/87389502/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Calle Antonio de Ulloa",
+    "precio_eur_mes": 1150,
+    "metros_cuadrados": 95,
+    "habitaciones": 3
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/109970725/",
+    "barrio": "La Flota",
+    "direccion_publicada": "CL Alonso Ojeda",
+    "precio_eur_mes": 850,
+    "metros_cuadrados": 89,
+    "habitaciones": 3
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/101885243/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Paseo Ingeniero Sebastian Feringan",
+    "precio_eur_mes": 1000,
+    "metros_cuadrados": 128,
+    "habitaciones": 3
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/109858797/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Carril Ruipérez",
+    "precio_eur_mes": 1100,
+    "metros_cuadrados": 180,
+    "habitaciones": 4
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/108711279/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Carril Ruipérez",
+    "precio_eur_mes": 740,
+    "metros_cuadrados": 70,
+    "habitaciones": 2
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/31418294/",
+    "barrio": "La Flota",
+    "direccion_publicada": "La Flota, Norte, Murcia",
+    "precio_eur_mes": 750,
+    "metros_cuadrados": 75,
+    "habitaciones": 2
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/107559426/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Calle Arquitecto Jaime Bort, 2",
+    "precio_eur_mes": 1100,
+    "metros_cuadrados": 125,
+    "habitaciones": 4
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/109513277/",
+    "barrio": "La Flota",
+    "direccion_publicada": "La Flota, Norte, Murcia",
+    "precio_eur_mes": 900,
+    "metros_cuadrados": 110,
+    "habitaciones": 3
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/100352890/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Calle Obispo Francisco Landeira",
+    "precio_eur_mes": 1200,
+    "metros_cuadrados": 120,
+    "habitaciones": 4
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/107181733/",
+    "barrio": "La Flota",
+    "direccion_publicada": "La Flota, Norte, Murcia",
+    "precio_eur_mes": 1100,
+    "metros_cuadrados": 94,
+    "habitaciones": 2
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/110089573/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Calle Antonio de Ulloa",
+    "precio_eur_mes": 750,
+    "metros_cuadrados": 78,
+    "habitaciones": 3
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/102911715/",
+    "barrio": "La Flota",
+    "direccion_publicada": "La Flota, Norte, Murcia",
+    "precio_eur_mes": 620,
+    "metros_cuadrados": 55,
+    "habitaciones": 1
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/107333010/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Calle Magallanes, 2",
+    "precio_eur_mes": 450,
+    "metros_cuadrados": 40,
+    "habitaciones": 0
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/109803566/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Calle La Flota, 3",
+    "precio_eur_mes": 750,
+    "metros_cuadrados": 87,
+    "habitaciones": 2
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/110068763/",
+    "barrio": "La Flota",
+    "direccion_publicada": "La Flota, Norte, Murcia",
+    "precio_eur_mes": 800,
+    "metros_cuadrados": 88,
+    "habitaciones": 2
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/25500414/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Calle de Don Juan de Borbón, 100",
+    "precio_eur_mes": 645,
+    "metros_cuadrados": 50,
+    "habitaciones": 1
+  },
+  {
+    "link": "https://www.idealista.com/inmueble/91287259/",
+    "barrio": "La Flota",
+    "direccion_publicada": "Calle Navegante Macías del Poyo, 3",
+    "precio_eur_mes": 750,
+    "metros_cuadrados": 78,
+    "habitaciones": 2
+  }
+]
+
