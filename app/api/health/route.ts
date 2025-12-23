@@ -10,8 +10,12 @@ export async function GET(request: NextRequest) {
   const nodeEnv = process.env.NODE_ENV || 'development'
   const port = process.env.PORT || '3000'
   
+  // Limpiar DATABASE_URL de espacios (por si Railway los agrega)
+  const cleanedDbUrl = process.env.DATABASE_URL?.trim() || ''
+  const actualHasDatabaseUrl = !!cleanedDbUrl
+  
   // Si no hay DATABASE_URL, retornar error inmediatamente
-  if (!hasDatabaseUrl) {
+  if (!actualHasDatabaseUrl) {
     return NextResponse.json({
       success: false,
       status: 'unhealthy',
@@ -42,6 +46,57 @@ export async function GET(request: NextRequest) {
   }
   
   try {
+    // Limpiar DATABASE_URL y establecerla temporalmente si tiene espacios
+    const originalUrl = process.env.DATABASE_URL || ''
+    if (originalUrl !== originalUrl.trim()) {
+      // Si hay espacios, limpiar y establecer temporalmente
+      process.env.DATABASE_URL = originalUrl.trim()
+      // Recrear Prisma client con la URL limpia
+      const { PrismaClient } = require('@prisma/client')
+      const cleanPrisma = new PrismaClient()
+      await cleanPrisma.$connect()
+      
+      const listingsCount = await cleanPrisma.listing.count()
+      const neighborhoodsCount = await cleanPrisma.neighborhood.count()
+      await cleanPrisma.$disconnect()
+      
+      const responseTime = Date.now() - startTime
+      const maskedUrl = cleanedDbUrl.includes('@') 
+        ? cleanedDbUrl.split('@')[0] + '@***' 
+        : cleanedDbUrl
+      
+      return NextResponse.json({
+        success: true,
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        responseTime: `${responseTime}ms`,
+        warning: 'DATABASE_URL tenía espacios que fueron eliminados automáticamente',
+        environment: {
+          nodeEnv,
+          port,
+          hasDatabaseUrl: actualHasDatabaseUrl
+        },
+        database: {
+          connected: true,
+          url: maskedUrl,
+          urlValidation: {
+            hadSpaces: originalUrl !== originalUrl.trim(),
+            isValid: true
+          },
+          tables: {
+            listings: listingsCount,
+            neighborhoods: neighborhoodsCount
+          }
+        }
+      }, {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Content-Type': 'application/json'
+        }
+      })
+    }
+    
     // Intentar conectar a la base de datos
     await prisma.$connect()
     
