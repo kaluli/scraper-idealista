@@ -1,4 +1,4 @@
-/**
+node scripts/import-via-api.js https://scraper-idealista-production.up.railway.app/**
  * Script para importar datos JSON a Railway usando la API
  * 
  * Uso:
@@ -38,7 +38,7 @@ const files = [
   'pisos_juan_carlos_compra.json',
   'pisos_san_lorenzo.json',
   'pisos_santa_eulalia.json',
-  'pisos_santa_eulalia_compra.json',
+  'pisos_santa_eulalia_compra.json',rein
   'pisos_vistalegre.json',
   'pisos_nuevos.json',
   'pisos.json'

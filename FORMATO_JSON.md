@@ -86,3 +86,4 @@ echo '{"link":"...","barrio":"...","precio_eur_mes":900}' | node scripts/import-
 - Si solo hay `precio`, el tipo se establece como "compra"
 - El campo `type` puede especificarse manualmente como "alquiler" o "compra"
 
+

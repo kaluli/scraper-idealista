@@ -1,103 +1,91 @@
-/**
- * Script para corregir títulos faltantes o "sin titulo"
- * Usa el campo direccion_publicada para reemplazar el título
- * 
- * Uso:
- * node scripts/fix-titles.js
- */
-
-const { PrismaClient } = require('@prisma/client')
-const prisma = new PrismaClient()
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 async function fixTitles() {
   try {
-    console.log('🔍 Buscando pisos sin título o con "sin titulo"...\n')
-
-    // Buscar TODOS los listings que tienen dirección publicada
+    console.log('🔍 Buscando pisos sin título o con "sin titulo"...');
+    
+    // Obtener todos los listings
     const allListings = await prisma.listing.findMany({
-      where: {
-        publishedAddress: {
-          not: null,
-        },
+      select: {
+        id: true,
+        title: true,
+        publishedAddress: true,
       },
-    })
+    });
 
-    // Filtrar los que necesitan corrección - los que tienen "Sin Titulo" o están vacíos
-    const listingsToFix = allListings.filter((listing) => {
-      // Si no tiene dirección, no se puede actualizar
-      if (!listing.publishedAddress || listing.publishedAddress.trim() === '') {
-        return false
-      }
-      // Si no tiene título o está vacío, necesita corrección
-      if (!listing.title || listing.title.trim() === '') {
-        return true
-      }
-      // Si tiene "Sin Titulo" en cualquier variación, necesita corrección
-      const titleLower = listing.title.toLowerCase()
-      const titleOriginal = listing.title
+    // Filtrar los que necesitan corrección (en JavaScript porque MySQL no soporta case-insensitive contains)
+    const listings = allListings.filter(listing => {
+      const title = listing.title || '';
+      const titleLower = title.toLowerCase();
       return (
+        !listing.title ||
+        listing.title === '' ||
         titleLower.includes('sin titulo') ||
-        titleLower.includes('sin título') ||
-        titleOriginal.includes('Sin Titulo') ||
-        titleOriginal.includes('Sin título') ||
-        titleOriginal === 'Sin Titulo' ||
-        titleOriginal === 'Sin título'
-      )
-    })
+        titleLower.includes('sin título')
+      );
+    });
 
-    console.log(`📋 Encontrados ${listingsToFix.length} pisos para corregir\n`)
+    console.log(`📋 Encontrados ${listings.length} pisos para corregir\n`);
 
-    if (listingsToFix.length === 0) {
-      console.log('✅ No hay pisos que corregir')
-      return
-    }
+    let updated = 0;
+    let skipped = 0;
 
-    let updated = 0
-    let skipped = 0
-
-    for (const listing of listingsToFix) {
-      if (!listing.publishedAddress || listing.publishedAddress.trim() === '') {
-        console.log(`⚠️  Sin dirección: ${listing.link} (omitido)`)
-        skipped++
-        continue
+    for (const listing of listings) {
+      let newTitle = null;
+      
+      // Prioridad 1: usar publishedAddress si existe
+      if (listing.publishedAddress) {
+        newTitle = listing.publishedAddress;
+      } 
+      // Prioridad 2: construir título con barrio y tipo
+      else if (listing.neighborhood) {
+        const tipo = listing.type === 'alquiler' ? 'Alquiler' : 'Compra';
+        newTitle = `${tipo} en ${listing.neighborhood}`;
+        if (listing.city) {
+          newTitle += `, ${listing.city}`;
+        }
       }
-
-      try {
+      // Prioridad 3: usar solo el tipo y ciudad
+      else if (listing.city) {
+        const tipo = listing.type === 'alquiler' ? 'Alquiler' : 'Compra';
+        newTitle = `${tipo} en ${listing.city}`;
+      }
+      // Prioridad 4: solo el tipo
+      else {
+        newTitle = listing.type === 'alquiler' ? 'Alquiler' : 'Compra';
+      }
+      
+      if (newTitle) {
         await prisma.listing.update({
           where: { id: listing.id },
-          data: {
-            title: listing.publishedAddress.trim(),
-          },
-        })
-        console.log(`✅ Actualizado: ${listing.link}`)
-        console.log(`   Título: "${listing.publishedAddress.trim()}"`)
-        updated++
-      } catch (error) {
-        console.error(`❌ Error actualizando ${listing.link}:`, error.message)
-        skipped++
+          data: { title: newTitle },
+        });
+        updated++;
+        if (updated <= 10) {
+          console.log(`✅ ID ${listing.id}: "${newTitle}"`);
+        }
+      } else {
+        skipped++;
+        console.log(`⚠️  ID ${listing.id}: Sin información suficiente, omitido`);
       }
     }
+    
+    if (updated > 10) {
+      console.log(`... y ${updated - 10} más`);
+    }
 
-    console.log('\n✅ Corrección completada:')
-    console.log(`   - Actualizados: ${updated}`)
-    console.log(`   - Omitidos: ${skipped}`)
-    console.log(`   - Total procesados: ${listingsToFix.length}`)
-  } catch (error) {
-    console.error('❌ Error:', error)
-    throw error
-  }
-}
+    console.log(`\n📊 RESUMEN:`);
+    console.log(`✅ Actualizados: ${updated}`);
+    console.log(`⚠️  Omitidos (sin dirección): ${skipped}`);
+    console.log(`📋 Total procesados: ${listings.length}`);
 
-async function main() {
-  try {
-    await fixTitles()
   } catch (error) {
-    console.error('Error fatal:', error)
-    process.exit(1)
+    console.error('❌ Error:', error);
+    process.exit(1);
   } finally {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   }
 }
 
-main()
-
+fixTitles();

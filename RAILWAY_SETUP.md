@@ -14,7 +14,17 @@ Guía paso a paso para desplegar tu aplicación en Railway.
 1. En el dashboard de Railway, haz clic en **"New Project"**
 2. Selecciona **"Deploy from GitHub repo"**
 3. Busca y selecciona tu repositorio: `kaluli/scraper-idealista`
-4. Railway detectará automáticamente que es un proyecto Next.js
+4. Railway debería detectar automáticamente que es un proyecto Next.js
+
+**⚠️ IMPORTANTE:** Si Railway NO detecta automáticamente Next.js (solo ves iconos de GitHub y MySQL):
+
+1. Después de conectar el repositorio, Railway creará un servicio automáticamente
+2. Si no ves el servicio de Next.js, haz clic en **"+ New"** → **"GitHub Repo"** nuevamente
+3. Selecciona tu repositorio otra vez
+4. Railway debería crear un servicio con el icono de Next.js
+5. Si aún no aparece, ve al servicio que se creó (aunque no tenga el icono de Next.js)
+6. En la pestaña **"Settings"**, verifica que el **"Build Command"** sea: `npm install && prisma generate && npm run build`
+7. Y el **"Start Command"** sea: `npm start`
 
 ## Paso 3: Añadir base de datos MySQL
 
@@ -30,15 +40,34 @@ Guía paso a paso para desplegar tu aplicación en Railway.
 3. Busca la variable **`MYSQL_URL`** o **`DATABASE_URL`**
 4. **Copia esta URL completa** (se verá algo como: `mysql://root:xxxxx@containers-us-west-xxx.railway.app:xxxx/railway`)
 
+**⚠️ IMPORTANTE:** Si más adelante recibes un error de autenticación, las credenciales pueden haber cambiado. En ese caso:
+1. Ve a tu servicio MySQL → Variables
+2. Busca `MYSQLPASSWORD` o `MYSQL_ROOT_PASSWORD`
+3. Haz clic en los tres puntos (⋯) → **"Regenerate"** para generar una nueva contraseña
+4. Copia la nueva `MYSQL_URL` y actualiza `DATABASE_URL` en tu servicio Next.js
+5. Ver la guía completa en `SOLUCION_CREDENCIALES_RAILWAY.md`
+
 ## Paso 5: Configurar la variable de entorno en la aplicación
+
+**⚠️ CRÍTICO:** Este paso es esencial. Sin `DATABASE_URL`, la aplicación no funcionará.
 
 1. En Railway, haz clic en el servicio de tu **aplicación Next.js** (no el MySQL)
 2. Ve a la pestaña **"Variables"**
-3. Haz clic en **"+ New Variable"**
-4. Añade:
+3. **Verifica si ya existe `DATABASE_URL`:**
+   - Si **NO existe**, haz clic en **"+ New Variable"**
+   - Si **SÍ existe**, haz clic en ella para editarla
+4. Añade o edita:
    - **Name:** `DATABASE_URL`
-   - **Value:** Pega la URL que copiaste en el paso 4
-5. Haz clic en **"Add"**
+   - **Value:** Pega la URL que copiaste en el paso 4 (debe empezar con `mysql://`)
+5. Haz clic en **"Add"** o **"Save"**
+
+**Verificación rápida:**
+- La variable debe aparecer en la lista de variables
+- El valor debe empezar con `mysql://`
+- No debe haber espacios al inicio o final
+
+**Si recibes el error "Environment variable not found: DATABASE_URL":**
+- Consulta `CONFIGURAR_DATABASE_URL.md` para una guía detallada paso a paso
 
 ## Paso 6: Esperar el despliegue
 
@@ -101,6 +130,19 @@ Si necesitas añadir más variables de entorno:
 ### Error: "Cannot connect to database"
 - Verifica que la variable `DATABASE_URL` esté correctamente configurada
 - Asegúrate de que la base de datos MySQL esté corriendo (debería estar en verde)
+
+### Error: "Authentication failed" o "provided database credentials for `root` are not valid"
+Este es un error común cuando las credenciales de MySQL han cambiado en Railway.
+
+**Solución rápida:**
+1. Ve a tu servicio MySQL → Variables
+2. Busca `MYSQLPASSWORD` o `MYSQL_ROOT_PASSWORD`
+3. Haz clic en los tres puntos (⋯) → **"Regenerate"**
+4. Copia la nueva `MYSQL_URL` del servicio MySQL
+5. Actualiza `DATABASE_URL` en tu servicio Next.js con la nueva URL
+6. Reinicia el servicio Next.js (Redeploy)
+
+**Para más detalles, consulta:** `SOLUCION_CREDENCIALES_RAILWAY.md`
 
 ### Error en el build
 - Revisa los logs en la pestaña "Deployments"

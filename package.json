@@ -10,6 +10,8 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
+    "db:import": "node scripts/import-json.js",
+    "db:import-all": "node scripts/import-all.js",
     "postinstall": "prisma generate"
   },
   "dependencies": {

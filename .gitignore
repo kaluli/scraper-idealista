@@ -48,3 +48,9 @@ next-env.d.ts
 
 # json temporal files
 pisos_*.json
+temp_import*.json
+
+# dumps y backups
+dump_*.sql
+*.backup
+export_pisos_*.json

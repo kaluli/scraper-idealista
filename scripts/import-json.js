@@ -16,6 +16,12 @@ const prisma = new PrismaClient()
 
 async function importListing(data) {
   try {
+    // Validar que tenga link (requerido)
+    if (!data.link) {
+      console.log(`⚠️  Sin link, omitido: ${JSON.stringify(data).substring(0, 50)}...`)
+      return { skipped: true, reason: 'Sin link' }
+    }
+
     // Verificar si el piso ya existe por su link
     const existing = await prisma.listing.findFirst({
       where: { link: data.link },
@@ -27,7 +33,7 @@ async function importListing(data) {
     }
 
     // Normalizar campos de precio (múltiples formatos)
-    const price = data.precio_mensual_eur || data.precio_eur_mes || data.precio_venta_eur || data.precio || 0
+    const price = data.precio_mensual_eur || data.precio_eur_mes || data.precio_venta_eur || data.precio_total_eur || data.precio_eur || data.precio || 0
     
     // Normalizar superficie (múltiples formatos)
     const surface = data.m2 || data.metros_cuadrados || data.surface || null
@@ -72,7 +78,7 @@ async function importListing(data) {
         price: price,
         surface: surface ? parseFloat(surface) : null,
         rooms: data.habitaciones !== undefined ? (data.habitaciones === null ? null : parseInt(data.habitaciones)) : null,
-        type: (data.precio_mensual_eur || data.precio_eur_mes) ? 'alquiler' : (data.precio_venta_eur ? 'compra' : 'compra'),
+        type: (data.precio_mensual_eur || data.precio_eur_mes) ? 'alquiler' : (data.precio_venta_eur || data.precio_total_eur ? 'compra' : 'compra'),
         title: data.titulo || data.title || null,
         city: city,
         province: data.province || 'Murcia', // Por defecto Murcia

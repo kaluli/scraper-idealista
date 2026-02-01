@@ -536,6 +536,81 @@
   font-size: 1.1rem;
 }
 
+.errorCard {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.errorTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #856404;
+  margin: 0 0 12px 0;
+}
+
+.errorMessage {
+  font-size: 1rem;
+  color: #856404;
+  margin: 0 0 16px 0;
+}
+
+.welcomeCard {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 40px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: white;
+  text-align: center;
+}
+
+.welcomeTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  color: white;
+}
+
+.welcomeMessage {
+  font-size: 1.1rem;
+  margin: 0 0 24px 0;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.welcomeFeatures {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 24px;
+  margin: 24px 0;
+  text-align: left;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.welcomeFeatures p {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: white;
+}
+
+.welcomeFeatures ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.welcomeFeatures li {
+  padding: 8px 0;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .container {

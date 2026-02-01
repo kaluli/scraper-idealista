@@ -85,3 +85,4 @@ La aplicación estará disponible en: **http://localhost:3000**
 ### Error: "Unknown database"
 - Crea la base de datos primero (ver Paso 2)
 
+
