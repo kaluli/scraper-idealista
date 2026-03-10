@@ -28,7 +28,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [selectedType, setSelectedType] = useState<'alquiler' | 'compra' | 'all'>('all')
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>('all')
-  const [selectedProvince, setSelectedProvince] = useState<string>('Madrid')
+  const [selectedProvince, setSelectedProvince] = useState<string>('all') // Primera carga sin filtro (local+prod OK); loadProvinces pone Madrid si existe
   const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('all')
   const [showModal, setShowModal] = useState(false)
   const [formData, setFormData] = useState({
@@ -146,10 +146,10 @@ export default function Home() {
       if (result.success) {
         const list = result.data as string[]
         setProvinces(list)
-        // Si la provincia actual no está en la lista, elegir la primera disponible (o "all")
+        // Si la provincia actual no está en la lista, usar la primera disponible
         if (list.length > 0 && selectedProvince !== 'all' && !list.includes(selectedProvince)) {
           setSelectedProvince(list[0])
-        } else if (list.includes('Madrid') && selectedProvince === 'all') {
+        } else if (list.length > 0 && list.includes('Madrid') && selectedProvince === 'all') {
           setSelectedProvince('Madrid')
         }
       }
@@ -163,7 +163,7 @@ export default function Home() {
     loadNeighborhoods()
     loadStats()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedType, selectedNeighborhood, selectedProvince])
+  }, [selectedType, selectedNeighborhood, selectedProvince, selectedMaxPrice])
 
   useEffect(() => {
     loadProvinces()
@@ -251,6 +251,93 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Filtros — siempre arriba, mismo orden en local y producción */}
+        <div className={styles.filtersCard}>
+          <h2 className={styles.sectionTitle}>Filtros</h2>
+          
+          <div className={styles.filters}>
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Tipo:</label>
+              <div className={styles.typeButtons}>
+                <button
+                  className={`${styles.btnType} ${selectedType === 'all' ? styles.btnTypeActive : ''}`}
+                  onClick={() => setSelectedType('all')}
+                >
+                  Todos
+                </button>
+                <button
+                  className={`${styles.btnType} ${selectedType === 'alquiler' ? styles.btnTypeActive : ''}`}
+                  onClick={() => setSelectedType('alquiler')}
+                >
+                  Alquiler
+                </button>
+                <button
+                  className={`${styles.btnType} ${selectedType === 'compra' ? styles.btnTypeActive : ''}`}
+                  onClick={() => setSelectedType('compra')}
+                >
+                  Compra
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Provincia</label>
+              <select
+                className={styles.select}
+                value={provinces.length === 0 ? 'all' : selectedProvince}
+                onChange={(e) => {
+                  setSelectedProvince(e.target.value)
+                  setSelectedNeighborhood('all') // Reset barrio al cambiar provincia
+                }}
+                title="Filtrar por provincia"
+              >
+                <option value="all">Todas las provincias</option>
+                {provinces.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Barrio:</label>
+              <select
+                className={styles.select}
+                value={selectedNeighborhood}
+                onChange={(e) => setSelectedNeighborhood(e.target.value)}
+                disabled={selectedProvince === 'all' && neighborhoods.length === 0}
+              >
+                <option value="all">Todos los barrios</option>
+                {neighborhoods.map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Precio máximo:</label>
+              <select
+                className={styles.select}
+                value={selectedMaxPrice}
+                onChange={(e) => setSelectedMaxPrice(e.target.value)}
+              >
+                <option value="all">Todos los precios</option>
+                <option value="100000">Menores de 100.000€</option>
+                <option value="150000">Menores de 150.000€</option>
+                <option value="180000">Menores de 180.000€</option>
+                <option value="200000">Menores de 200.000€</option>
+                <option value="250000">Menores de 250.000€</option>
+                <option value="300000">Menores de 300.000€</option>
+                <option value="400000">Menores de 400.000€</option>
+                <option value="500000">Menores de 500.000€</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         {/* Error message */}
         {error && (
           <div className={styles.errorCard}>
@@ -269,12 +356,15 @@ export default function Home() {
           </div>
         )}
 
-        {/* Welcome message when no data */}
+        {/* Welcome message when no data (primera carga sin nada en la base) */}
         {!loading && !error && listings.length === 0 && !stats && (
           <div className={styles.welcomeCard}>
             <h2 className={styles.welcomeTitle}>¡Bienvenido al Gestor de Pisos Idealista!</h2>
             <p className={styles.welcomeMessage}>
               Esta aplicación te permite gestionar y analizar pisos de alquiler y compra.
+            </p>
+            <p className={styles.welcomeMessage} style={{ fontSize: '0.9rem', marginTop: '12px' }}>
+              Si ya tenés datos en la base y no ves nada, probá «Ver todos los pisos» más abajo o revisá la conexión (variable <code>DATABASE_URL</code> en .env.local o en Vercel).
             </p>
             <div className={styles.welcomeFeatures}>
               <p><strong>Características:</strong></p>
@@ -448,93 +538,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Filtros */}
-        <div className={styles.filtersCard}>
-          <h2 className={styles.sectionTitle}>Filtros</h2>
-          
-          <div className={styles.filters}>
-            <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Tipo:</label>
-              <div className={styles.typeButtons}>
-                <button
-                  className={`${styles.btnType} ${selectedType === 'all' ? styles.btnTypeActive : ''}`}
-                  onClick={() => setSelectedType('all')}
-                >
-                  Todos
-                </button>
-                <button
-                  className={`${styles.btnType} ${selectedType === 'alquiler' ? styles.btnTypeActive : ''}`}
-                  onClick={() => setSelectedType('alquiler')}
-                >
-                  Alquiler
-                </button>
-                <button
-                  className={`${styles.btnType} ${selectedType === 'compra' ? styles.btnTypeActive : ''}`}
-                  onClick={() => setSelectedType('compra')}
-                >
-                  Compra
-                </button>
-              </div>
-            </div>
-
-            <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Provincia</label>
-              <select
-                className={styles.select}
-                value={provinces.length === 0 ? 'all' : selectedProvince}
-                onChange={(e) => {
-                  setSelectedProvince(e.target.value)
-                  setSelectedNeighborhood('all') // Reset barrio al cambiar provincia
-                }}
-                title="Filtrar por provincia"
-              >
-                <option value="all">Todas las provincias</option>
-                {provinces.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Barrio:</label>
-              <select
-                className={styles.select}
-                value={selectedNeighborhood}
-                onChange={(e) => setSelectedNeighborhood(e.target.value)}
-                disabled={selectedProvince === 'all' && neighborhoods.length === 0}
-              >
-                <option value="all">Todos los barrios</option>
-                {neighborhoods.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Precio máximo:</label>
-              <select
-                className={styles.select}
-                value={selectedMaxPrice}
-                onChange={(e) => setSelectedMaxPrice(e.target.value)}
-              >
-                <option value="all">Todos los precios</option>
-                <option value="100000">Menores de 100.000€</option>
-                <option value="150000">Menores de 150.000€</option>
-                <option value="180000">Menores de 180.000€</option>
-                <option value="200000">Menores de 200.000€</option>
-                <option value="250000">Menores de 250.000€</option>
-                <option value="300000">Menores de 300.000€</option>
-                <option value="400000">Menores de 400.000€</option>
-                <option value="500000">Menores de 500.000€</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
         {/* Lista de pisos */}
         {loading ? (
           <div className={styles.loading}>
@@ -547,17 +550,23 @@ export default function Home() {
           <div className={styles.emptyState}>
             <h2 style={{ marginBottom: '16px' }}>No hay pisos disponibles</h2>
             <p>No se encontraron pisos con los filtros seleccionados.</p>
+            <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '8px' }}>
+              Probá con «Todas las provincias» o revisá que la base de datos esté conectada.
+            </p>
             <button 
               className={styles.btnPrimary} 
               onClick={() => {
                 setSelectedType('all')
                 setSelectedNeighborhood('all')
-                setSelectedProvince('Madrid')
+                setSelectedProvince('all')
                 setSelectedMaxPrice('all')
+                loadListings()
+                loadStats()
+                loadNeighborhoods()
               }}
               style={{ marginTop: '16px' }}
             >
-              Limpiar filtros
+              Ver todos los pisos
             </button>
           </div>
         ) : (
