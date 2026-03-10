@@ -24,9 +24,11 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
+# local env files (nunca commitear)
 .env*.local
 .env
+.env.production
+.env.production.local
 
 # vercel
 .vercel
@@ -52,5 +54,7 @@ temp_import*.json
 
 # dumps y backups
 dump_*.sql
+backup-idealista-*.sql
+data-for-freedb.sql
 *.backup
 export_pisos_*.json

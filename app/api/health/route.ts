@@ -48,9 +48,11 @@ export async function GET(request: NextRequest) {
     // Verificar que las tablas existan
     const listingsCount = await prisma.listing.count()
     const neighborhoodsCount = await prisma.neighborhood.count()
-    
+    const dbUrl = process.env.DATABASE_URL || ''
+    const dbName = dbUrl.split('/').pop()?.split('?')[0] || '(desconocida)'
+
     const responseTime = Date.now() - startTime
-    
+
     return NextResponse.json({
       success: true,
       status: 'healthy',
@@ -63,6 +65,7 @@ export async function GET(request: NextRequest) {
       },
       database: {
         connected: true,
+        databaseName: dbName,
         tables: {
           listings: listingsCount,
           neighborhoods: neighborhoodsCount

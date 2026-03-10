@@ -14,6 +14,7 @@ interface Listing {
   type: 'alquiler' | 'compra'
   neighborhood: string | null
   city: string | null
+  province: string | null
   publishedAddress: string | null
   rooms: number | null
 }
@@ -143,9 +144,12 @@ export default function Home() {
       const response = await fetch('/api/provinces')
       const result = await response.json()
       if (result.success) {
-        setProvinces(result.data)
-        // Si "Madrid" está disponible y no está seleccionada, seleccionarla por defecto
-        if (result.data.includes('Madrid') && selectedProvince === 'all') {
+        const list = result.data as string[]
+        setProvinces(list)
+        // Si la provincia actual no está en la lista, elegir la primera disponible (o "all")
+        if (list.length > 0 && selectedProvince !== 'all' && !list.includes(selectedProvince)) {
+          setSelectedProvince(list[0])
+        } else if (list.includes('Madrid') && selectedProvince === 'all') {
           setSelectedProvince('Madrid')
         }
       }
@@ -474,14 +478,15 @@ export default function Home() {
             </div>
 
             <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Provincia:</label>
+              <label className={styles.filterLabel}>Provincia</label>
               <select
                 className={styles.select}
-                value={selectedProvince}
+                value={provinces.length === 0 ? 'all' : selectedProvince}
                 onChange={(e) => {
                   setSelectedProvince(e.target.value)
                   setSelectedNeighborhood('all') // Reset barrio al cambiar provincia
                 }}
+                title="Filtrar por provincia"
               >
                 <option value="all">Todas las provincias</option>
                 {provinces.map((p) => (
@@ -568,13 +573,15 @@ export default function Home() {
 
                 <div className={styles.listingInfo}>
                   <div className={styles.price}>{formatPrice(listing.price)}</div>
+                  {listing.province && (
+                    <div className={styles.meta}>🏛️ Provincia: {listing.province}</div>
+                  )}
                   {listing.surface && (
                     <div className={styles.meta}>📐 {listing.surface} m²</div>
                   )}
-                  {listing.neighborhood && (
+                  {(listing.neighborhood || listing.city) && (
                     <div className={styles.meta}>
-                      📍 {listing.neighborhood}
-                      {listing.city && `, ${listing.city}`}
+                      📍 {[listing.neighborhood, listing.city].filter(Boolean).join(', ')}
                     </div>
                   )}
                   {listing.profitabilityRate && (

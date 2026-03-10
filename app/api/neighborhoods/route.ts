@@ -12,22 +12,29 @@ export async function GET(request: NextRequest) {
     const province = searchParams.get('province') // filtrar por provincia
 
     if (all) {
-      // Obtener todos los barrios de la tabla Neighborhood
       const where: any = {}
       if (province) {
         where.province = province
       }
-      
       const neighborhoods = await prisma.neighborhood.findMany({
         where,
-        orderBy: {
-          name: 'asc',
-        },
+        orderBy: { name: 'asc' },
       })
-      return NextResponse.json({ 
-        success: true, 
-        data: neighborhoods.map(n => n.name) 
-      })
+      let names = neighborhoods.map((n) => n.name)
+      if (names.length === 0) {
+        const listingWhere: any = { neighborhood: { not: null } }
+        if (province) listingWhere.province = province
+        const fromListings = await prisma.listing.findMany({
+          where: listingWhere,
+          select: { neighborhood: true },
+          distinct: ['neighborhood'],
+        })
+        names = fromListings
+          .map((l) => l.neighborhood)
+          .filter((n): n is string => n !== null && n !== '')
+          .sort()
+      }
+      return NextResponse.json({ success: true, data: names })
     }
 
     // Obtener barrios únicos de los pisos (comportamiento original)
