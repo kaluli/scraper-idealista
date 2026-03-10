@@ -39,17 +39,14 @@ Aplicación web para gestionar pisos de alquiler y compra con filtros por tipo, 
 npm install
 ```
 
-2. **Configurar base de datos MySQL:**
+2. **Configurar base de datos (desarrollo local):**
 
-Crea un archivo `.env` en la raíz del proyecto:
-```env
-DATABASE_URL="mysql://usuario:password@localhost:3306/idealista_db"
-```
-
-Ejemplo:
-```env
-DATABASE_URL="mysql://root:password@localhost:3306/idealista_db"
-```
+   Usá un archivo **solo para desarrollo**, no compartido con producción:
+   ```bash
+   cp .env.development.local.example .env.development.local
+   ```
+   Editá `.env.development.local` y poné tu MySQL local (localhost).  
+   **Importante:** Ver [ENTORNOS.md](ENTORNOS.md) para la separación desarrollo / producción.
 
 3. **Crear la base de datos:**
 ```bash

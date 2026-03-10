@@ -244,7 +244,8 @@ export default function Home() {
         <div className={styles.header}>
           <h1 className={styles.title}>🏠 Gestor de Pisos Idealista</h1>
           <div className={styles.headerActions}>
-            <Link href="/reporte" className={styles.reportLink}>📋 Reporte</Link>
+            <Link href="/recomendaciones" className={styles.reportLink}>📋 Recomendaciones</Link>
+            <Link href="/contactos" className={styles.reportLink}>📇 Contactos</Link>
             <button className={styles.btnPrimary} onClick={() => setShowModal(true)}>
               + Añadir Piso
             </button>

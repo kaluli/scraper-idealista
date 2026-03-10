@@ -23,6 +23,10 @@ model Listing {
   province          String?  @db.VarChar(100) // provincia (opcional)
   publishedAddress  String?  @map("direccion_publicada") @db.VarChar(255) // dirección publicada
   rooms             Int?     @map("habitaciones") // número de habitaciones
+  citaAt            DateTime? @map("cita_at") // fecha/hora de cita (página contactos)
+  contacto          String?  @db.VarChar(20) // quién contactó: "Juli" o "Kalu"
+  phone             String?  @map("telefono") @db.VarChar(50) // teléfono (página contactos)
+  notas             String?  @db.Text // notas (página contactos)
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 

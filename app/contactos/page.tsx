@@ -1,0 +1,567 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import styles from './page.module.css'
+
+const CONTACTO_OPCIONES = ['Juli', 'Kalu'] as const
+
+/** Horas en bloques de 10 min para el selector de cita (solo 07:00–21:50, no 22h–07h). */
+const TIME_SLOTS_10: string[] = []
+for (let h = 7; h < 22; h++) {
+  for (let m = 0; m < 60; m += 10) {
+    TIME_SLOTS_10.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
+  }
+}
+
+interface Listing {
+  id: number
+  title: string | null
+  price: number
+  surface: number | null
+  link: string
+  type: 'alquiler' | 'compra'
+  neighborhood: string | null
+  city: string | null
+  province: string | null
+  publishedAddress: string | null
+  rooms: number | null
+  citaAt: string | null
+  contacto: string | null
+  phone: string | null
+  notas: string | null
+}
+
+/** Redondea minutos al bloque de 10 min más cercano (:00, :10, :20, :30, :40, :50). */
+function roundToTenMinutes(d: Date): Date {
+  const mins = d.getMinutes()
+  const rounded = Math.round(mins / 10) * 10
+  const out = new Date(d)
+  if (rounded >= 60) {
+    out.setHours(out.getHours() + 1)
+    out.setMinutes(0, 0, 0)
+  } else {
+    out.setMinutes(rounded, 0, 0)
+  }
+  return out
+}
+
+/** Fecha mínima (hoy) para el input date. */
+function minDateToday(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+/** Hora mínima para el selector: si la fecha es hoy, siguiente slot de 10 min (entre 07:00 y 21:50); si no, "07:00". */
+function minTimeForDate(dateStr: string): string {
+  const today = minDateToday()
+  if (!dateStr || dateStr !== today) return '07:00'
+  const d = new Date()
+  const mins = d.getMinutes() + d.getSeconds() / 60 + d.getMilliseconds() / 60000
+  const nextSlot = Math.ceil(mins / 10) * 10
+  let h = d.getHours()
+  let m = nextSlot
+  if (nextSlot >= 60) {
+    h += 1
+    m = 0
+  }
+  const slot = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+  if (slot < '07:00') return '07:00'
+  if (slot > '21:50') return '22:00' // hoy ya no hay slots; el filtro no mostrará opciones
+  return slot
+}
+
+function toDatetimeLocal(iso: string | null): string {
+  if (!iso) return ''
+  const d = roundToTenMinutes(new Date(iso))
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const h = String(d.getHours()).padStart(2, '0')
+  const min = String(d.getMinutes()).padStart(2, '0')
+  return `${y}-${m}-${day}T${h}:${min}`
+}
+
+function formatCita(iso: string | null): string {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleString('es-ES', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  })
+}
+
+type SortKey = 'publishedAddress' | 'neighborhood' | 'price' | 'citaAt' | 'contacto' | 'notas'
+type SortDir = 'asc' | 'desc'
+
+export default function ContactosPage() {
+  const [listings, setListings] = useState<Listing[]>([])
+  const [provinces, setProvinces] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedProvince, setSelectedProvince] = useState<string>('Madrid')
+  const [selectedBarrio, setSelectedBarrio] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState<SortKey | null>(null)
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [editForm, setEditForm] = useState<{
+    citaAt: string
+    contacto: string
+    phone: string
+    notas: string
+  }>({ citaAt: '', contacto: '', phone: '', notas: '' })
+
+  const loadProvinces = () => {
+    fetch('/api/provinces')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data?.length) setProvinces(json.data)
+      })
+  }
+
+  const loadListings = () => {
+    setLoading(true)
+    const params = new URLSearchParams({ type: 'compra' })
+    if (selectedProvince && selectedProvince !== 'all') params.set('province', selectedProvince)
+    fetch(`/api/listings?${params.toString()}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data) setListings(json.data)
+      })
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    loadProvinces()
+  }, [])
+
+  useEffect(() => {
+    loadListings()
+    setSelectedBarrio(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProvince])
+
+  const openEdit = (row: Listing) => {
+    setEditingId(row.id)
+    const citaDate = row.citaAt ? new Date(row.citaAt) : null
+    const now = new Date()
+    const citaAt =
+      citaDate && citaDate >= now ? toDatetimeLocal(row.citaAt) : ''
+    setEditForm({
+      citaAt,
+      contacto: row.contacto === 'Juli' || row.contacto === 'Kalu' ? row.contacto : '',
+      phone: row.phone ?? '',
+      notas: row.notas ?? '',
+    })
+  }
+
+  const closeEdit = () => {
+    setEditingId(null)
+  }
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('¿Eliminar este piso de la lista?')) return
+    try {
+      const res = await fetch(`/api/listings/${id}`, { method: 'DELETE' })
+      const json = await res.json()
+      if (json.success) {
+        if (editingId === id) closeEdit()
+        loadListings()
+      } else {
+        alert(json.error || 'Error al eliminar')
+      }
+    } catch {
+      alert('Error al eliminar')
+    }
+  }
+
+  const saveEdit = async () => {
+    if (editingId == null) return
+    setSaving(true)
+    try {
+      let citaAt: string | null = null
+      if (editForm.citaAt && editForm.citaAt.length >= 16) {
+        const d = new Date(editForm.citaAt)
+        if (!Number.isNaN(d.getTime())) {
+          citaAt = roundToTenMinutes(d).toISOString()
+        }
+      }
+      const payload = {
+        citaAt,
+        contacto: editForm.contacto || null,
+        phone: editForm.phone.trim() || null,
+        notas: editForm.notas.trim() || null,
+      }
+      const res = await fetch(`/api/listings/${editingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      let json: { success?: boolean; error?: string }
+      try {
+        json = await res.json()
+      } catch {
+        json = { success: false, error: res.statusText || 'Error de conexión' }
+      }
+      if (json.success) {
+        closeEdit()
+        loadListings()
+      } else {
+        alert(json.error || 'Error al guardar')
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Error al guardar'
+      alert(msg)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const barrios = Array.from(
+    new Set(
+      listings
+        .map((l) => l.neighborhood?.trim())
+        .filter((b): b is string => Boolean(b))
+    )
+  ).sort((a, b) => a.localeCompare(b, 'es'))
+
+  const filteredByBarrio =
+    selectedBarrio === null
+      ? listings
+      : listings.filter((l) => l.neighborhood === selectedBarrio)
+
+  const searchLower = searchQuery.trim().toLowerCase()
+  const searchNum = searchLower ? parseFloat(searchQuery.replace(/[^\d,.]/g, '').replace(',', '.')) : NaN
+  const filteredBySearch = searchLower
+    ? filteredByBarrio.filter((l) => {
+        const addr = (l.publishedAddress || l.title || '').toLowerCase()
+        const barrio = (l.neighborhood || '').toLowerCase()
+        if (!Number.isNaN(searchNum)) {
+          return l.price === searchNum || String(l.price).includes(searchQuery.trim()) || addr.includes(searchLower) || barrio.includes(searchLower)
+        }
+        return addr.includes(searchLower) || barrio.includes(searchLower)
+      })
+    : filteredByBarrio
+
+  const sortedListings = sortBy
+    ? [...filteredBySearch].sort((a, b) => {
+        let va: string | number | null = sortBy === 'publishedAddress' ? (a.publishedAddress || a.title || '') : sortBy === 'neighborhood' ? (a.neighborhood || '') : sortBy === 'price' ? a.price : sortBy === 'citaAt' ? (a.citaAt || '') : sortBy === 'contacto' ? (a.contacto || '') : (a.notas || '')
+        let vb: string | number | null = sortBy === 'publishedAddress' ? (b.publishedAddress || b.title || '') : sortBy === 'neighborhood' ? (b.neighborhood || '') : sortBy === 'price' ? b.price : sortBy === 'citaAt' ? (b.citaAt || '') : sortBy === 'contacto' ? (b.contacto || '') : (b.notas || '')
+        if (sortBy === 'price') {
+          const diff = (va as number) - (vb as number)
+          return sortDir === 'asc' ? diff : -diff
+        }
+        if (sortBy === 'citaAt') {
+          const da = va ? new Date(va as string).getTime() : 0
+          const db = vb ? new Date(vb as string).getTime() : 0
+          const diff = da - db
+          return sortDir === 'asc' ? diff : -diff
+        }
+        const sa = String(va).localeCompare(String(vb), 'es')
+        return sortDir === 'asc' ? sa : -sa
+      })
+    : filteredBySearch
+
+  const handleSort = (key: SortKey) => {
+    if (sortBy === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    else {
+      setSortBy(key)
+      setSortDir('asc')
+    }
+  }
+
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 0,
+    }).format(price)
+
+  const editingRow = editingId != null ? listings.find((l) => l.id === editingId) : null
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.content}>
+        <header className={styles.header}>
+          <Link href="/" className={styles.backLink}>
+            ← Volver al Gestor
+          </Link>
+          <h1 className={styles.title}>📇 Pisos en venta – Contactos</h1>
+          <p className={styles.subtitle}>
+            Índice de barrios y listado de pisos en compra. Edita cita, contacto (Juli/Kalu) y notas; se guardan en la base de datos.
+          </p>
+        </header>
+
+        {loading && (
+          <section className={styles.section}>
+            <p className={styles.loading}>Cargando pisos en venta…</p>
+          </section>
+        )}
+
+        {!loading && (
+          <>
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Provincia</h2>
+              <div className={styles.barrioIndex}>
+                <button
+                  type="button"
+                  className={`${styles.barrioChip} ${selectedProvince === 'all' ? styles.barrioChipActive : ''}`}
+                  onClick={() => setSelectedProvince('all')}
+                >
+                  Todas
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.barrioChip} ${selectedProvince === 'Madrid' ? styles.barrioChipActive : ''}`}
+                  onClick={() => setSelectedProvince('Madrid')}
+                >
+                  Madrid
+                </button>
+                {provinces.filter((p) => p !== 'Madrid').map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    className={`${styles.barrioChip} ${selectedProvince === p ? styles.barrioChipActive : ''}`}
+                    onClick={() => setSelectedProvince(p)}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Barrios</h2>
+              {barrios.length === 0 ? (
+                <p className={styles.noData}>
+                  No hay pisos de compra en la base de datos para esta provincia. Cambia de provincia o añade pisos desde el gestor principal.
+                </p>
+              ) : (
+                <div className={styles.barrioIndex}>
+                  <button
+                    type="button"
+                    className={`${styles.barrioChip} ${selectedBarrio === null ? styles.barrioChipActive : ''}`}
+                    onClick={() => setSelectedBarrio(null)}
+                  >
+                    Todos ({listings.length})
+                  </button>
+                  {barrios.map((b) => (
+                    <button
+                      key={b}
+                      type="button"
+                      className={`${styles.barrioChip} ${selectedBarrio === b ? styles.barrioChipActive : ''}`}
+                      onClick={() => setSelectedBarrio(b)}
+                    >
+                      {b} ({listings.filter((l) => l.neighborhood === b).length})
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {listings.length > 0 && (
+              <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>
+                  {selectedBarrio ? `Pisos en venta – ${selectedBarrio}` : 'Todos los pisos en venta'}
+                </h2>
+                <div className={styles.searchRow}>
+                  <label className={styles.filterLabel} htmlFor="contactos-search">
+                    Buscar
+                  </label>
+                  <input
+                    id="contactos-search"
+                    type="text"
+                    className={styles.searchInput}
+                    placeholder="Por dirección o precio…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th className={styles.thSortable} onClick={() => handleSort('publishedAddress')}>
+                          Dirección {sortBy === 'publishedAddress' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                        </th>
+                        <th className={styles.thSortable} onClick={() => handleSort('neighborhood')}>
+                          Barrio {sortBy === 'neighborhood' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                        </th>
+                        <th>Teléfono</th>
+                        <th>Link Idealista</th>
+                        <th className={styles.thSortable} onClick={() => handleSort('price')}>
+                          Precio {sortBy === 'price' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                        </th>
+                        <th className={styles.thSortable} onClick={() => handleSort('citaAt')}>
+                          Cita {sortBy === 'citaAt' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                        </th>
+                        <th className={styles.thSortable} onClick={() => handleSort('contacto')}>
+                          Contacto {sortBy === 'contacto' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                        </th>
+                        <th className={styles.thSortable} onClick={() => handleSort('notas')}>
+                          Notas {sortBy === 'notas' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                        </th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedListings.map((row) => (
+                        <tr key={row.id}>
+                          <td className={styles.cellAddress}>
+                            {row.publishedAddress || row.title || '—'}
+                          </td>
+                          <td>{row.neighborhood || '—'}</td>
+                          <td>{row.phone || '—'}</td>
+                          <td>
+                            <a
+                              href={row.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.linkIdealista}
+                            >
+                              Ver en Idealista
+                            </a>
+                          </td>
+                          <td className={styles.cellPrice}>{formatPrice(row.price)}</td>
+                          <td className={styles.cellEditable}>{formatCita(row.citaAt)}</td>
+                          <td className={styles.cellEditable}>{row.contacto || '—'}</td>
+                          <td className={styles.cellNotas}>
+                            {row.notas ? (row.notas.length > 60 ? `${row.notas.slice(0, 60)}…` : row.notas) : '—'}
+                          </td>
+                          <td className={styles.cellActions}>
+                            <button
+                              type="button"
+                              className={styles.btnEdit}
+                              onClick={() => openEdit(row)}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.btnDanger}
+                              onClick={() => handleDelete(row.id)}
+                            >
+                              Eliminar
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
+          </>
+        )}
+
+        <section className={styles.section}>
+          <Link href="/" className={styles.backButton}>
+            Volver al Gestor de Pisos
+          </Link>
+        </section>
+      </div>
+
+      {/* Modal editar */}
+      {editingRow && (
+        <div className={styles.modalOverlay} onClick={closeEdit}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>Editar: {editingRow.publishedAddress || editingRow.title || 'Piso'}</h2>
+              <button type="button" className={styles.modalClose} onClick={closeEdit} aria-label="Cerrar">
+                ×
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Cita (fecha y hora)</label>
+                <div className={styles.citaRow}>
+                  <input
+                    type="date"
+                    className={styles.input}
+                    min={minDateToday()}
+                    value={editForm.citaAt ? editForm.citaAt.slice(0, 10) : ''}
+                    onChange={(e) => {
+                      const date = e.target.value
+                      const time = editForm.citaAt?.slice(11, 16) || '00:00'
+                      setEditForm((f) => ({ ...f, citaAt: date ? `${date}T${time}` : '' }))
+                    }}
+                  />
+                  <select
+                    className={styles.select}
+                    value={editForm.citaAt ? editForm.citaAt.slice(11, 16) : ''}
+                    onChange={(e) => {
+                      const time = e.target.value
+                      const date = editForm.citaAt?.slice(0, 10) || minDateToday()
+                      setEditForm((f) => ({ ...f, citaAt: date ? `${date}T${time}` : '' }))
+                    }}
+                  >
+                    <option value="">—</option>
+                    {(editForm.citaAt?.slice(0, 10) === minDateToday()
+                      ? TIME_SLOTS_10.filter((slot) => slot >= minTimeForDate(minDateToday()))
+                      : TIME_SLOTS_10
+                    ).map((slot) => (
+                      <option key={slot} value={slot}>
+                        {slot}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Contacto (quién contactó)</label>
+                <select
+                  className={styles.select}
+                  value={editForm.contacto}
+                  onChange={(e) => setEditForm((f) => ({ ...f, contacto: e.target.value }))}
+                >
+                  <option value="">—</option>
+                  {CONTACTO_OPCIONES.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Teléfono</label>
+                <input
+                  type="tel"
+                  className={styles.input}
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
+                  placeholder="Ej. 612 345 678"
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Notas</label>
+                <textarea
+                  className={styles.textarea}
+                  rows={4}
+                  value={editForm.notas}
+                  onChange={(e) => setEditForm((f) => ({ ...f, notas: e.target.value }))}
+                  placeholder="Añade notas sobre este piso…"
+                />
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.btnSecondary} onClick={closeEdit}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={styles.btnPrimary}
+                onClick={saveEdit}
+                disabled={saving}
+              >
+                {saving ? 'Guardando…' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
