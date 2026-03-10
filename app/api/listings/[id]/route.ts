@@ -81,27 +81,27 @@ export async function PUT(
       notas?: string | null
     }
     const data: UpdateData = {}
-    if (body.title !== undefined) data.title = strOrNull(body.title)
+    if (body.title !== undefined) data.title = strOrNull(body.title) as UpdateData['title']
     if (body.price !== undefined) data.price = parseFloat(String(body.price))
     if (body.surface !== undefined) data.surface = body.surface ? parseFloat(String(body.surface)) : null
-    if (body.link !== undefined) data.link = strOrNull(body.link) ?? undefined
+    if (body.link !== undefined) data.link = (strOrNull(body.link) ?? undefined) as UpdateData['link']
     if (body.profitabilityRate !== undefined) data.profitabilityRate = body.profitabilityRate ? parseFloat(String(body.profitabilityRate)) : null
-    if (body.type !== undefined) data.type = strOrNull(body.type) ?? undefined
-    if (body.neighborhood !== undefined) data.neighborhood = strOrNull(body.neighborhood)
-    if (body.city !== undefined) data.city = strOrNull(body.city)
-    if (body.publishedAddress !== undefined) data.publishedAddress = strOrNull(body.publishedAddress)
+    if (body.type !== undefined) data.type = (strOrNull(body.type) ?? undefined) as UpdateData['type']
+    if (body.neighborhood !== undefined) data.neighborhood = strOrNull(body.neighborhood) as UpdateData['neighborhood']
+    if (body.city !== undefined) data.city = strOrNull(body.city) as UpdateData['city']
+    if (body.publishedAddress !== undefined) data.publishedAddress = strOrNull(body.publishedAddress) as UpdateData['publishedAddress']
     if (body.rooms !== undefined) data.rooms = body.rooms != null && body.rooms !== '' ? parseInt(String(body.rooms)) : null
     if (body.citaAt !== undefined) {
       if (body.citaAt) {
         const citaDate = new Date(body.citaAt as string)
-        data.citaAt = Number.isNaN(citaDate.getTime()) ? null : citaDate
+        data.citaAt = (Number.isNaN(citaDate.getTime()) ? null : citaDate) as UpdateData['citaAt']
       } else {
         data.citaAt = null
       }
     }
-    if (body.contacto !== undefined) data.contacto = body.contacto === 'Juli' || body.contacto === 'Kalu' ? (body.contacto as string) : null
-    if (body.phone !== undefined) data.phone = body.phone === '' ? null : String(body.phone)
-    if (body.notas !== undefined) data.notas = body.notas === '' ? null : String(body.notas)
+    if (body.contacto !== undefined) data.contacto = (body.contacto === 'Juli' || body.contacto === 'Kalu' ? (body.contacto as string) : null) as UpdateData['contacto']
+    if (body.phone !== undefined) data.phone = (body.phone === '' ? null : String(body.phone)) as UpdateData['phone']
+    if (body.notas !== undefined) data.notas = (body.notas === '' ? null : String(body.notas)) as UpdateData['notas']
 
     const listing = await prisma.listing.update({
       where: { id },
