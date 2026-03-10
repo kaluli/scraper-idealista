@@ -7,6 +7,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    await prisma.$connect()
     const id = parseInt(params.id)
 
     if (isNaN(id)) {
@@ -36,6 +37,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    await prisma.$connect()
     const id = parseInt(params.id)
     const body = await request.json()
 

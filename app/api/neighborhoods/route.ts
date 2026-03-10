@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic'
 // GET - Obtener lista de barrios únicos
 export async function GET(request: NextRequest) {
   try {
+    await prisma.$connect()
     const searchParams = request.nextUrl.searchParams
     const type = searchParams.get('type') // filtrar por tipo
     const all = searchParams.get('all') === 'true' // obtener todos los barrios disponibles

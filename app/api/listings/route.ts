@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 // GET - Obtener todos los pisos con filtros
 export async function GET(request: NextRequest) {
   try {
+    await prisma.$connect()
     const searchParams = request.nextUrl.searchParams
     const type = searchParams.get('type') // 'alquiler' o 'compra'
     const neighborhood = searchParams.get('neighborhood') // barrio específico
@@ -42,7 +45,9 @@ export async function GET(request: NextRequest) {
       ],
     })
 
-    return NextResponse.json({ success: true, data: listings })
+    const res = NextResponse.json({ success: true, data: listings })
+    res.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+    return res
   } catch (error) {
     console.error('Error fetching listings:', error)
     return NextResponse.json(
@@ -55,6 +60,7 @@ export async function GET(request: NextRequest) {
 // POST - Crear un nuevo piso
 export async function POST(request: NextRequest) {
   try {
+    await prisma.$connect()
     const body = await request.json()
     
     // Aceptar formato JSON del scraper o formato del formulario

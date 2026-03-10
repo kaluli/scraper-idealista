@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic'
 // GET - Obtener estadísticas de los pisos
 export async function GET(request: NextRequest) {
   try {
+    await prisma.$connect()
     const searchParams = request.nextUrl.searchParams
     const type = searchParams.get('type') // 'alquiler' o 'compra'
     const neighborhood = searchParams.get('neighborhood') // barrio específico

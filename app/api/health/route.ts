@@ -100,11 +100,8 @@ export async function GET(request: NextRequest) {
       }
     })
   } finally {
-    try {
-      await prisma.$disconnect()
-    } catch (disconnectError) {
-      // Ignorar errores al desconectar
-    }
+    // No hacer $disconnect(): el cliente es compartido con listings/provinces/neighborhoods.
+    // Desconectarlo aquí dejaba la DB inaccesible para el resto de las APIs en producción.
   }
 }
 

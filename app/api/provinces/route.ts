@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic'
 // GET - Obtener lista de provincias únicas (neighborhoods → listings → SQL directo como respaldo)
 export async function GET(request: NextRequest) {
   try {
+    await prisma.$connect()
     let provinces: string[] = []
 
     const neighborhoods = await prisma.neighborhood.findMany({

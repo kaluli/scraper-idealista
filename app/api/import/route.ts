@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma'
  */
 export async function POST(request: NextRequest) {
   try {
+    await prisma.$connect()
     const body = await request.json()
     
     // Aceptar tanto { listings: [...] } como directamente [...]
