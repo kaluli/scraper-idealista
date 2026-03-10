@@ -122,7 +122,8 @@ export async function GET(request: NextRequest) {
 
       // Calcular rentabilidad comparando alquiler vs compra por habitaciones
       let avgProfitability: number | null = null
-      
+      let reliabilityPct: number | null = null
+
       if (alquilerListings.length > 0 && compraListings.length > 0) {
         // Agrupar por número de habitaciones
         const alquilerByRooms: Record<number, number[]> = {}
@@ -170,6 +171,13 @@ export async function GET(request: NextRequest) {
         if (profitabilityRates.length > 0) {
           avgProfitability = profitabilityRates.reduce((a, b) => a + b, 0) / profitabilityRates.length
         }
+
+        // Índice de fiabilidad (0-100%): más anuncios y más tramos de habitaciones = más fiable
+        if (avgProfitability !== null) {
+          const roomBuckets = profitabilityRates.length
+          const totalUsed = alquilerListings.length + compraListings.length
+          reliabilityPct = Math.min(100, Math.round(25 + totalUsed * 1.2 + roomBuckets * 12))
+        }
       }
 
       if (neighborhoodPrices.length > 0) {
@@ -181,6 +189,7 @@ export async function GET(request: NextRequest) {
           avgSurface: neighborhoodSurfaces.length > 0 ? neighborhoodSurfaces.reduce((a, b) => a + b, 0) / neighborhoodSurfaces.length : 0,
           avgRooms: neighborhoodRooms.length > 0 ? neighborhoodRooms.reduce((a, b) => a + b, 0) / neighborhoodRooms.length : 0,
           avgProfitability: avgProfitability,
+          reliabilityPct: reliabilityPct,
         }
       }
     })

@@ -35,11 +35,12 @@ model Listing {
 
 model Neighborhood {
   id        Int      @id @default(autoincrement())
-  name      String   @unique @db.VarChar(100) // nombre del barrio
+  name      String   @db.VarChar(100) // nombre del barrio
   province  String   @db.VarChar(100) // provincia
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@unique([province, name])
   @@index([province])
   @@map("neighborhoods")
 }

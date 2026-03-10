@@ -1,0 +1,100 @@
+.container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 24px;
+}
+
+.content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 32px;
+}
+
+.backLink {
+  display: inline-block;
+  color: #0066cc;
+  text-decoration: none;
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.section {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.sectionTitle {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.section p {
+  margin: 0 0 12px 0;
+  line-height: 1.6;
+  color: #333;
+}
+
+.section ul,
+.section ol {
+  margin: 0 0 12px 0;
+  padding-left: 24px;
+}
+
+.section li {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.numberedList {
+  list-style: decimal;
+}
+
+.formula {
+  background: #f0f7ff;
+  border-left: 4px solid #0066cc;
+  padding: 12px 16px;
+  margin-top: 16px !important;
+  font-size: 0.95rem;
+}
+
+.footerNote {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.backButton {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 12px 24px;
+  background-color: #0066cc;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.backButton:hover {
+  background-color: #0052a3;
+}

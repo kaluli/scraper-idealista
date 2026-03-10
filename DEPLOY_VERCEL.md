@@ -7,8 +7,9 @@ Guía para hostear el proyecto **scraper-idealista** en Vercel.
 Vercel **no incluye base de datos**. Necesitás una MySQL en la nube y configurar `DATABASE_URL` en Vercel.
 
 Opciones gratuitas:
-- **PlanetScale** (recomendado): [planetscale.com](https://planetscale.com) — MySQL gratis, compatible con Prisma.
-- **Railway**: [railway.app](https://railway.app) — podés crear solo el servicio MySQL y usar la URL en Vercel.
+- **db4free.net**: [db4free.net](https://www.db4free.net) — MySQL gratis, sin tarjeta. Ver **[DB4FREE.md](./DB4FREE.md)** para los pasos.
+- **PlanetScale**: [planetscale.com](https://planetscale.com) — MySQL, puede requerir tarjeta.
+- **Railway**: [railway.app](https://railway.app) — servicio MySQL; usar la URL en Vercel.
 
 ---
 

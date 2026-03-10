@@ -12,7 +12,10 @@
     "db:studio": "prisma studio",
     "db:import": "node scripts/import-json.js",
     "db:import-all": "node scripts/import-all.js",
-    "postinstall": "prisma generate"
+    "db:seed-madrid": "node scripts/seed-madrid-neighborhoods.js",
+    "import-idealista-html": "node scripts/import-idealista-html.js",
+    "postinstall": "prisma generate",
+    "deploy": "vercel --prod"
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",

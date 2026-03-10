@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import styles from './page.module.css'
 
 interface Listing {
@@ -26,7 +27,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [selectedType, setSelectedType] = useState<'alquiler' | 'compra' | 'all'>('all')
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>('all')
-  const [selectedProvince, setSelectedProvince] = useState<string>('Murcia')
+  const [selectedProvince, setSelectedProvince] = useState<string>('Madrid')
   const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('all')
   const [showModal, setShowModal] = useState(false)
   const [formData, setFormData] = useState({
@@ -143,9 +144,9 @@ export default function Home() {
       const result = await response.json()
       if (result.success) {
         setProvinces(result.data)
-        // Si "Murcia" está disponible y no está seleccionada, seleccionarla por defecto
-        if (result.data.includes('Murcia') && selectedProvince === 'all') {
-          setSelectedProvince('Murcia')
+        // Si "Madrid" está disponible y no está seleccionada, seleccionarla por defecto
+        if (result.data.includes('Madrid') && selectedProvince === 'all') {
+          setSelectedProvince('Madrid')
         }
       }
     } catch (error) {
@@ -238,9 +239,12 @@ export default function Home() {
         {/* Header */}
         <div className={styles.header}>
           <h1 className={styles.title}>🏠 Gestor de Pisos Idealista</h1>
-          <button className={styles.btnPrimary} onClick={() => setShowModal(true)}>
-            + Añadir Piso
-          </button>
+          <div className={styles.headerActions}>
+            <Link href="/reporte" className={styles.reportLink}>📋 Reporte</Link>
+            <button className={styles.btnPrimary} onClick={() => setShowModal(true)}>
+              + Añadir Piso
+            </button>
+          </div>
         </div>
 
         {/* Error message */}
@@ -414,11 +418,26 @@ export default function Home() {
                               <span className={styles.neighborhoodProfitabilityValue}>
                                 {data.avgProfitability.toFixed(2)}%
                               </span>
+                              {data.reliabilityPct != null && (
+                                <span className={styles.neighborhoodReliability}>
+                                  Fiabilidad: {data.reliabilityPct}%
+                                </span>
+                              )}
                             </div>
                           </>
                         )}
                       </div>
                     ))}
+                </div>
+                <div className={styles.rentabilidadCriterios}>
+                  <h4 className={styles.criteriosTitle}>Criterio de rentabilidad</h4>
+                  <p className={styles.criteriosText}>
+                    La rentabilidad se calcula por barrio comparando <strong>precios medios de alquiler y compra por número de habitaciones</strong> (no el mismo piso). Para cada tramo (1 hab, 2 hab, …) se usa: (alquiler medio mensual × 12 / precio compra medio) × 100. El % del barrio es el promedio de esos tramos. El <strong>índice de fiabilidad</strong> depende de la cantidad de anuncios y de tramos usados (más datos = más fiable).
+                  </p>
+                  <div className={styles.criteriosLinks}>
+                    <Link href="/reporte" className={styles.criteriosLink}>Ver reporte completo: fórmulas, circunstancias e índice de fiabilidad →</Link>
+                    <Link href="/recomendaciones" className={styles.criteriosLink}>Ver recomendaciones: qué barrio visitar primero y Top 5 para comprar en 2026 →</Link>
+                  </div>
                 </div>
               </div>
             )}
@@ -528,7 +547,7 @@ export default function Home() {
               onClick={() => {
                 setSelectedType('all')
                 setSelectedNeighborhood('all')
-                setSelectedProvince('Murcia')
+                setSelectedProvince('Madrid')
                 setSelectedMaxPrice('all')
               }}
               style={{ marginTop: '16px' }}
