@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+/** Convierte unknown a string | null para asignar a UpdateData sin errores de tipo. */
+function strOrNull(v: unknown): string | null {
+  if (v === null || v === undefined) return null
+  return String(v)
+}
+
 // DELETE - Eliminar un piso
 export async function DELETE(
   request: NextRequest,
@@ -75,15 +81,15 @@ export async function PUT(
       notas?: string | null
     }
     const data: UpdateData = {}
-    if (body.title !== undefined) data.title = body.title == null ? null : String(body.title)
+    if (body.title !== undefined) data.title = strOrNull(body.title)
     if (body.price !== undefined) data.price = parseFloat(String(body.price))
     if (body.surface !== undefined) data.surface = body.surface ? parseFloat(String(body.surface)) : null
-    if (body.link !== undefined) data.link = String(body.link)
+    if (body.link !== undefined) data.link = strOrNull(body.link) ?? undefined
     if (body.profitabilityRate !== undefined) data.profitabilityRate = body.profitabilityRate ? parseFloat(String(body.profitabilityRate)) : null
-    if (body.type !== undefined) data.type = String(body.type)
-    if (body.neighborhood !== undefined) data.neighborhood = body.neighborhood == null ? null : String(body.neighborhood)
-    if (body.city !== undefined) data.city = body.city == null ? null : String(body.city)
-    if (body.publishedAddress !== undefined) data.publishedAddress = body.publishedAddress == null ? null : String(body.publishedAddress)
+    if (body.type !== undefined) data.type = strOrNull(body.type) ?? undefined
+    if (body.neighborhood !== undefined) data.neighborhood = strOrNull(body.neighborhood)
+    if (body.city !== undefined) data.city = strOrNull(body.city)
+    if (body.publishedAddress !== undefined) data.publishedAddress = strOrNull(body.publishedAddress)
     if (body.rooms !== undefined) data.rooms = body.rooms != null && body.rooms !== '' ? parseInt(String(body.rooms)) : null
     if (body.citaAt !== undefined) {
       if (body.citaAt) {
