@@ -192,8 +192,8 @@ export default function ContactosPage() {
       const payload = {
         citaAt,
         contacto: editForm.contacto || null,
-        phone: editForm.phone.trim() || null,
-        notas: editForm.notas.trim() || null,
+        phone: (editForm.phone?.trim() ?? '') || null,
+        notas: (editForm.notas?.trim() ?? '') || null,
       }
       const res = await fetch(`/api/listings/${editingId}`, {
         method: 'PUT',
@@ -210,10 +210,13 @@ export default function ContactosPage() {
         closeEdit()
         loadListings()
       } else {
-        alert(json.error || 'Error al guardar')
+        const err = json.error || res.statusText || 'Error al guardar'
+        console.error('PUT /api/listings error:', res.status, err)
+        alert(`${err}\n\n(Si habla de "telefono" o "column", ejecutá en la terminal: npm run db:push)`)
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error al guardar'
+      console.error('saveEdit exception:', e)
       alert(msg)
     } finally {
       setSaving(false)

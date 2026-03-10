@@ -39,7 +39,16 @@ export async function PUT(
   try {
     await prisma.$connect()
     const id = parseInt(params.id)
-    const body = await request.json()
+    let body: Record<string, unknown>
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json(
+        { success: false, error: 'Cuerpo de la petición inválido o vacío (JSON)' },
+        { status: 400 }
+      )
+    }
+    if (typeof body !== 'object' || body === null) body = {}
 
     if (isNaN(id)) {
       return NextResponse.json(
@@ -95,10 +104,14 @@ export async function PUT(
 
     return NextResponse.json({ success: true, data: listing })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error al actualizar el piso'
+    const raw = error instanceof Error ? error.message : String(error)
     console.error('Error updating listing:', error)
+    const hint =
+      /telefono|Unknown column|doesn't exist/i.test(raw)
+        ? ' Ejecutá en local: npm run db:push'
+        : ''
     return NextResponse.json(
-      { success: false, error: message },
+      { success: false, error: raw + hint },
       { status: 500 }
     )
   }
