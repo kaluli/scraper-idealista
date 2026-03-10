@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+const DB_ERROR_MESSAGE = 'No se pudo conectar a la base de datos. En Vercel: Settings → Environment Variables → añadí DATABASE_URL (MySQL de producción).'
+
 /** Convierte unknown a string | null para asignar a UpdateData sin errores de tipo. */
 function strOrNull(v: unknown): string | null {
   if (v === null || v === undefined) return null
@@ -12,6 +14,12 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  if (!process.env.DATABASE_URL?.trim()) {
+    return NextResponse.json(
+      { success: false, error: DB_ERROR_MESSAGE },
+      { status: 500 }
+    )
+  }
   try {
     await prisma.$connect()
     const id = parseInt(params.id)
@@ -42,6 +50,12 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  if (!process.env.DATABASE_URL?.trim()) {
+    return NextResponse.json(
+      { success: false, error: DB_ERROR_MESSAGE },
+      { status: 500 }
+    )
+  }
   try {
     await prisma.$connect()
     const id = parseInt(params.id)
@@ -81,27 +95,66 @@ export async function PUT(
       notas?: string | null
     }
     const data: UpdateData = {}
-    if (body.title !== undefined) data.title = strOrNull(body.title) as UpdateData['title']
-    if (body.price !== undefined) data.price = parseFloat(String(body.price))
-    if (body.surface !== undefined) data.surface = body.surface ? parseFloat(String(body.surface)) : null
-    if (body.link !== undefined) data.link = (strOrNull(body.link) ?? undefined) as UpdateData['link']
-    if (body.profitabilityRate !== undefined) data.profitabilityRate = body.profitabilityRate ? parseFloat(String(body.profitabilityRate)) : null
-    if (body.type !== undefined) data.type = (strOrNull(body.type) ?? undefined) as UpdateData['type']
-    if (body.neighborhood !== undefined) data.neighborhood = strOrNull(body.neighborhood) as UpdateData['neighborhood']
-    if (body.city !== undefined) data.city = strOrNull(body.city) as UpdateData['city']
-    if (body.publishedAddress !== undefined) data.publishedAddress = strOrNull(body.publishedAddress) as UpdateData['publishedAddress']
-    if (body.rooms !== undefined) data.rooms = body.rooms != null && body.rooms !== '' ? parseInt(String(body.rooms)) : null
+    if (body.title !== undefined) {
+      const v = strOrNull(body.title)
+      data.title = v
+    }
+    if (body.price !== undefined) {
+      const v = parseFloat(String(body.price))
+      data.price = v
+    }
+    if (body.surface !== undefined) {
+      const v = body.surface ? parseFloat(String(body.surface)) : null
+      data.surface = v
+    }
+    if (body.link !== undefined) {
+      const v = strOrNull(body.link)
+      data.link = v !== null ? v : undefined
+    }
+    if (body.profitabilityRate !== undefined) {
+      const v = body.profitabilityRate ? parseFloat(String(body.profitabilityRate)) : null
+      data.profitabilityRate = v
+    }
+    if (body.type !== undefined) {
+      const v = strOrNull(body.type)
+      data.type = v !== null ? v : undefined
+    }
+    if (body.neighborhood !== undefined) {
+      const v = strOrNull(body.neighborhood)
+      data.neighborhood = v
+    }
+    if (body.city !== undefined) {
+      const v = strOrNull(body.city)
+      data.city = v
+    }
+    if (body.publishedAddress !== undefined) {
+      const v = strOrNull(body.publishedAddress)
+      data.publishedAddress = v
+    }
+    if (body.rooms !== undefined) {
+      const v = body.rooms != null && body.rooms !== '' ? parseInt(String(body.rooms)) : null
+      data.rooms = v
+    }
     if (body.citaAt !== undefined) {
       if (body.citaAt) {
         const citaDate = new Date(body.citaAt as string)
-        data.citaAt = (Number.isNaN(citaDate.getTime()) ? null : citaDate) as UpdateData['citaAt']
+        data.citaAt = Number.isNaN(citaDate.getTime()) ? null : citaDate
       } else {
         data.citaAt = null
       }
     }
-    if (body.contacto !== undefined) data.contacto = (body.contacto === 'Juli' || body.contacto === 'Kalu' ? (body.contacto as string) : null) as UpdateData['contacto']
-    if (body.phone !== undefined) data.phone = (body.phone === '' ? null : String(body.phone)) as UpdateData['phone']
-    if (body.notas !== undefined) data.notas = (body.notas === '' ? null : String(body.notas)) as UpdateData['notas']
+    if (body.contacto !== undefined) {
+      const v = body.contacto === 'Juli' || body.contacto === 'Kalu' ? (body.contacto as string) : null
+      data.contacto = v
+    }
+    if (body.phone !== undefined) {
+      const v = body.phone === '' ? null : String(body.phone)
+      data.phone = v
+    }
+    if (body.notas !== undefined) {
+      const v = body.notas === '' ? null : String(body.notas)
+      data.notas = v
+    }
 
     const listing = await prisma.listing.update({
       where: { id },

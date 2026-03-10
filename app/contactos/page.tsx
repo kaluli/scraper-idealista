@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import styles from './page.module.css'
 
-const CONTACTO_OPCIONES = ['Juli', 'Kalu'] as const
 
 /** Horas en bloques de 10 min para el selector de cita (solo 07:00–21:50, no 22h–07h). */
 const TIME_SLOTS_10: string[] = []
@@ -93,7 +92,7 @@ function formatCita(iso: string | null): string {
   })
 }
 
-type SortKey = 'publishedAddress' | 'neighborhood' | 'price' | 'citaAt' | 'contacto' | 'notas'
+type SortKey = 'publishedAddress' | 'neighborhood' | 'price' | 'citaAt' | 'notas'
 type SortDir = 'asc' | 'desc'
 
 export default function ContactosPage() {
@@ -109,10 +108,8 @@ export default function ContactosPage() {
   const [saving, setSaving] = useState(false)
   const [editForm, setEditForm] = useState<{
     citaAt: string
-    contacto: string
-    phone: string
     notas: string
-  }>({ citaAt: '', contacto: '', phone: '', notas: '' })
+  }>({ citaAt: '', notas: '' })
 
   const loadProvinces = () => {
     fetch('/api/provinces')
@@ -152,8 +149,6 @@ export default function ContactosPage() {
       citaDate && citaDate >= now ? toDatetimeLocal(row.citaAt) : ''
     setEditForm({
       citaAt,
-      contacto: row.contacto === 'Juli' || row.contacto === 'Kalu' ? row.contacto : '',
-      phone: row.phone ?? '',
       notas: row.notas ?? '',
     })
   }
@@ -191,8 +186,6 @@ export default function ContactosPage() {
       }
       const payload = {
         citaAt,
-        contacto: editForm.contacto || null,
-        phone: (editForm.phone?.trim() ?? '') || null,
         notas: (editForm.notas?.trim() ?? '') || null,
       }
       const res = await fetch(`/api/listings/${editingId}`, {
@@ -251,8 +244,8 @@ export default function ContactosPage() {
 
   const sortedListings = sortBy
     ? [...filteredBySearch].sort((a, b) => {
-        let va: string | number | null = sortBy === 'publishedAddress' ? (a.publishedAddress || a.title || '') : sortBy === 'neighborhood' ? (a.neighborhood || '') : sortBy === 'price' ? a.price : sortBy === 'citaAt' ? (a.citaAt || '') : sortBy === 'contacto' ? (a.contacto || '') : (a.notas || '')
-        let vb: string | number | null = sortBy === 'publishedAddress' ? (b.publishedAddress || b.title || '') : sortBy === 'neighborhood' ? (b.neighborhood || '') : sortBy === 'price' ? b.price : sortBy === 'citaAt' ? (b.citaAt || '') : sortBy === 'contacto' ? (b.contacto || '') : (b.notas || '')
+        let va: string | number | null = sortBy === 'publishedAddress' ? (a.publishedAddress || a.title || '') : sortBy === 'neighborhood' ? (a.neighborhood || '') : sortBy === 'price' ? a.price : sortBy === 'citaAt' ? (a.citaAt || '') : (a.notas || '')
+        let vb: string | number | null = sortBy === 'publishedAddress' ? (b.publishedAddress || b.title || '') : sortBy === 'neighborhood' ? (b.neighborhood || '') : sortBy === 'price' ? b.price : sortBy === 'citaAt' ? (b.citaAt || '') : (b.notas || '')
         if (sortBy === 'price') {
           const diff = (va as number) - (vb as number)
           return sortDir === 'asc' ? diff : -diff
@@ -294,7 +287,7 @@ export default function ContactosPage() {
           </Link>
           <h1 className={styles.title}>📇 Pisos en venta – Contactos</h1>
           <p className={styles.subtitle}>
-            Índice de barrios y listado de pisos en compra. Edita cita, contacto (Juli/Kalu) y notas; se guardan en la base de datos.
+            Índice de barrios y listado de pisos en compra. Edita cita y notas; se guardan en la base de datos.
           </p>
         </header>
 
@@ -393,16 +386,12 @@ export default function ContactosPage() {
                         <th className={styles.thSortable} onClick={() => handleSort('neighborhood')}>
                           Barrio {sortBy === 'neighborhood' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                         </th>
-                        <th>Teléfono</th>
                         <th>Link Idealista</th>
                         <th className={styles.thSortable} onClick={() => handleSort('price')}>
                           Precio {sortBy === 'price' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                         </th>
                         <th className={styles.thSortable} onClick={() => handleSort('citaAt')}>
                           Cita {sortBy === 'citaAt' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                        </th>
-                        <th className={styles.thSortable} onClick={() => handleSort('contacto')}>
-                          Contacto {sortBy === 'contacto' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                         </th>
                         <th className={styles.thSortable} onClick={() => handleSort('notas')}>
                           Notas {sortBy === 'notas' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
@@ -417,7 +406,6 @@ export default function ContactosPage() {
                             {row.publishedAddress || row.title || '—'}
                           </td>
                           <td>{row.neighborhood || '—'}</td>
-                          <td>{row.phone || '—'}</td>
                           <td>
                             <a
                               href={row.link}
@@ -430,7 +418,6 @@ export default function ContactosPage() {
                           </td>
                           <td className={styles.cellPrice}>{formatPrice(row.price)}</td>
                           <td className={styles.cellEditable}>{formatCita(row.citaAt)}</td>
-                          <td className={styles.cellEditable}>{row.contacto || '—'}</td>
                           <td className={styles.cellNotas}>
                             {row.notas ? (row.notas.length > 60 ? `${row.notas.slice(0, 60)}…` : row.notas) : '—'}
                           </td>
@@ -512,31 +499,6 @@ export default function ContactosPage() {
                     ))}
                   </select>
                 </div>
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Contacto (quién contactó)</label>
-                <select
-                  className={styles.select}
-                  value={editForm.contacto}
-                  onChange={(e) => setEditForm((f) => ({ ...f, contacto: e.target.value }))}
-                >
-                  <option value="">—</option>
-                  {CONTACTO_OPCIONES.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Teléfono</label>
-                <input
-                  type="tel"
-                  className={styles.input}
-                  value={editForm.phone}
-                  onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
-                  placeholder="Ej. 612 345 678"
-                />
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.label}>Notas</label>
