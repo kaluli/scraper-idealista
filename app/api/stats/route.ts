@@ -3,8 +3,16 @@ import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
+const DB_ERROR_MESSAGE = 'No se pudo conectar a la base de datos. En Vercel: Settings → Environment Variables → añadí DATABASE_URL (MySQL de producción).'
+
 // GET - Obtener estadísticas de los pisos
 export async function GET(request: NextRequest) {
+  if (!process.env.DATABASE_URL?.trim()) {
+    return NextResponse.json(
+      { success: false, error: DB_ERROR_MESSAGE, data: null },
+      { status: 200, headers: { 'Cache-Control': 'no-store' } }
+    )
+  }
   try {
     await prisma.$connect()
     const searchParams = request.nextUrl.searchParams
@@ -215,8 +223,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching stats:', error)
     return NextResponse.json(
-      { success: false, error: 'Error al obtener las estadísticas' },
-      { status: 500 }
+      { success: false, error: DB_ERROR_MESSAGE, data: null },
+      { status: 200, headers: { 'Cache-Control': 'no-store' } }
     )
   }
 }
