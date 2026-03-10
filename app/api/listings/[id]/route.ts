@@ -75,25 +75,25 @@ export async function PUT(
       notas?: string | null
     }
     const data: UpdateData = {}
-    if (body.title !== undefined) data.title = body.title
-    if (body.price !== undefined) data.price = parseFloat(body.price)
-    if (body.surface !== undefined) data.surface = body.surface ? parseFloat(body.surface) : null
-    if (body.link !== undefined) data.link = body.link
-    if (body.profitabilityRate !== undefined) data.profitabilityRate = body.profitabilityRate ? parseFloat(body.profitabilityRate) : null
-    if (body.type !== undefined) data.type = body.type
-    if (body.neighborhood !== undefined) data.neighborhood = body.neighborhood
-    if (body.city !== undefined) data.city = body.city
-    if (body.publishedAddress !== undefined) data.publishedAddress = body.publishedAddress
-    if (body.rooms !== undefined) data.rooms = body.rooms != null && body.rooms !== '' ? parseInt(body.rooms) : null
+    if (body.title !== undefined) data.title = body.title == null ? null : String(body.title)
+    if (body.price !== undefined) data.price = parseFloat(String(body.price))
+    if (body.surface !== undefined) data.surface = body.surface ? parseFloat(String(body.surface)) : null
+    if (body.link !== undefined) data.link = String(body.link)
+    if (body.profitabilityRate !== undefined) data.profitabilityRate = body.profitabilityRate ? parseFloat(String(body.profitabilityRate)) : null
+    if (body.type !== undefined) data.type = String(body.type)
+    if (body.neighborhood !== undefined) data.neighborhood = body.neighborhood == null ? null : String(body.neighborhood)
+    if (body.city !== undefined) data.city = body.city == null ? null : String(body.city)
+    if (body.publishedAddress !== undefined) data.publishedAddress = body.publishedAddress == null ? null : String(body.publishedAddress)
+    if (body.rooms !== undefined) data.rooms = body.rooms != null && body.rooms !== '' ? parseInt(String(body.rooms)) : null
     if (body.citaAt !== undefined) {
       if (body.citaAt) {
-        const citaDate = new Date(body.citaAt)
+        const citaDate = new Date(body.citaAt as string)
         data.citaAt = Number.isNaN(citaDate.getTime()) ? null : citaDate
       } else {
         data.citaAt = null
       }
     }
-    if (body.contacto !== undefined) data.contacto = body.contacto === 'Juli' || body.contacto === 'Kalu' ? body.contacto : null
+    if (body.contacto !== undefined) data.contacto = body.contacto === 'Juli' || body.contacto === 'Kalu' ? (body.contacto as string) : null
     if (body.phone !== undefined) data.phone = body.phone === '' ? null : String(body.phone)
     if (body.notas !== undefined) data.notas = body.notas === '' ? null : String(body.notas)
 
