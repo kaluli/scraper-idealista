@@ -12,7 +12,6 @@ Aplicación web para gestionar pisos de alquiler y compra con filtros por tipo, 
 - ✅ Filtros por precio máximo
 - ✅ Estadísticas por barrio (precio promedio, superficie, habitaciones)
 - ✅ Cálculo de rentabilidad comparando alquiler vs compra
-- ✅ Base de datos MySQL con Prisma
 
 ## Datos actuales
 
