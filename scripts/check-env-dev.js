@@ -55,11 +55,3 @@ if (!url.includes('localhost') && !url.includes('127.0.0.1')) {
   console.error('   Para desarrollo usá siempre tu MySQL local en .env.development.local')
   process.exit(1)
 }
-
-// Comprobar que MySQL local responde antes de arrancar Next (mismo orden de .env que este script)
-const { execSync } = require('child_process')
-try {
-  execSync('node scripts/check-local-db.js', { stdio: 'inherit', cwd: root })
-} catch (e) {
-  process.exit(1)
-}

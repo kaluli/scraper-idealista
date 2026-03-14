@@ -13,6 +13,7 @@
     "db:import": "node scripts/import-json.js",
     "db:import-all": "node scripts/import-all.js",
     "db:seed-madrid": "node scripts/seed-madrid-neighborhoods.js",
+    "db:sync-from-prod": "node scripts/sync-local-from-prod.js",
     "import-idealista-html": "node scripts/import-idealista-html.js",
     "postinstall": "prisma generate",
     "deploy": "vercel --prod"
