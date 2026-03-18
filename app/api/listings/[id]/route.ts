@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 
 const DB_ERROR_MESSAGE = 'No se pudo conectar a la base de datos. En Vercel: Settings → Environment Variables → añadí DATABASE_URL (MySQL de producción).'
@@ -77,23 +78,7 @@ export async function PUT(
       )
     }
 
-    type UpdateData = {
-      title?: string | null
-      price?: number
-      surface?: number | null
-      link?: string
-      profitabilityRate?: number | null
-      type?: string
-      neighborhood?: string | null
-      city?: string | null
-      province?: string | null
-      publishedAddress?: string | null
-      rooms?: number | null
-      citaAt?: Date | null
-      contacto?: string | null
-      phone?: string | null
-      notas?: string | null
-    }
+    type UpdateData = Prisma.ListingUpdateInput
     const data: UpdateData = {}
     if (body.title !== undefined) {
       const v = strOrNull(body.title)
@@ -147,30 +132,55 @@ export async function PUT(
       const v = body.contacto === 'Juli' || body.contacto === 'Kalu' ? (body.contacto as string) : null
       data.contacto = v
     }
+    // phone: siempre string; puede tener números, espacios, etc. Solo null si viene vacío.
     if (body.phone !== undefined) {
-      const v = body.phone === '' ? null : String(body.phone)
-      data.phone = v
+      const raw =
+        body.phone === null || body.phone === '' ? null : String(body.phone)
+      data.phone = { set: raw }
     }
     if (body.notas !== undefined) {
       const v = body.notas === '' ? null : String(body.notas)
       data.notas = v
     }
+    if (body.llamado !== undefined) {
+      data.llamado = { set: Boolean(body.llamado) }
+    }
+    if (body.visitado !== undefined) {
+      data.visitado = { set: Boolean(body.visitado) }
+    }
+
+    // Quitar claves undefined para que Prisma no rechace el update
+    const cleanData = Object.fromEntries(
+      Object.entries(data).filter(([, v]) => v !== undefined)
+    ) as Prisma.ListingUpdateInput
 
     const listing = await prisma.listing.update({
       where: { id },
-      data,
+      data: cleanData,
     })
 
     return NextResponse.json({ success: true, data: listing })
   } catch (error) {
     const raw = error instanceof Error ? error.message : String(error)
-    console.error('Error updating listing:', error)
+    const errDetail = {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: raw,
+      code: typeof (error as { code?: string })?.code === 'string' ? (error as { code: string }).code : undefined,
+      stack: error instanceof Error ? error.stack : undefined,
+    }
+    console.error('[PUT /api/listings/[id]] Error completo:', JSON.stringify(errDetail, null, 2))
+    if (error instanceof Error && error.stack) console.error('[PUT /api/listings/[id]] Stack:', error.stack)
+
     const hint =
-      /telefono|Unknown column|doesn't exist/i.test(raw)
-        ? ' Ejecutá en local: npm run db:push'
+      /telefono|llamado|Unknown column|doesn't exist|Invalid.*invocation/i.test(raw)
+        ? ' → Si habla de columna: ejecutá en la BD que usás: npx prisma db push'
         : ''
     return NextResponse.json(
-      { success: false, error: raw + hint },
+      {
+        success: false,
+        error: raw + hint,
+        errorDetail: errDetail,
+      },
       { status: 500 }
     )
   }

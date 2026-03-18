@@ -27,6 +27,8 @@ model Listing {
   contacto          String?  @db.VarChar(20) // quién contactó: "Juli" o "Kalu"
   phone             String?  @map("telefono") @db.VarChar(50) // teléfono (página contactos)
   notas             String?  @db.Text // notas (página contactos)
+  llamado           Boolean  @default(false) // true = ya llamé (icono verde en contactos)
+  visitado          Boolean  @default(false) // true = ya visité el piso (icono verde en contactos)
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 

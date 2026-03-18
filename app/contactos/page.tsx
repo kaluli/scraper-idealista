@@ -29,6 +29,8 @@ interface Listing {
   contacto: string | null
   phone: string | null
   notas: string | null
+  llamado?: boolean
+  visitado?: boolean
 }
 
 /** Redondea minutos al bloque de 10 min más cercano (:00, :10, :20, :30, :40, :50). */
@@ -92,14 +94,45 @@ function formatCita(iso: string | null): string {
   })
 }
 
+function PhoneIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+    </svg>
+  )
+}
+
+/** Icono de visitado (pin de ubicación). */
+function VisitadoIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+    </svg>
+  )
+}
+
+function EditIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+    </svg>
+  )
+}
+
+function TrashIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+    </svg>
+  )
+}
+
 type SortKey = 'publishedAddress' | 'neighborhood' | 'price' | 'citaAt' | 'notas'
 type SortDir = 'asc' | 'desc'
 
 export default function ContactosPage() {
   const [listings, setListings] = useState<Listing[]>([])
-  const [provinces, setProvinces] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedProvince, setSelectedProvince] = useState<string>('Madrid')
   const [selectedBarrio, setSelectedBarrio] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortBy, setSortBy] = useState<SortKey | null>(null)
@@ -110,19 +143,14 @@ export default function ContactosPage() {
     citaAt: string
     notas: string
   }>({ citaAt: '', notas: '' })
-
-  const loadProvinces = () => {
-    fetch('/api/provinces')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data?.length) setProvinces(json.data)
-      })
-  }
+  const [phoneDialogId, setPhoneDialogId] = useState<number | null>(null)
+  const [phoneDialogForm, setPhoneDialogForm] = useState<{ phone: string; llamado: boolean }>({ phone: '', llamado: false })
+  const [savingPhone, setSavingPhone] = useState(false)
+  const [visitadoTogglingId, setVisitadoTogglingId] = useState<number | null>(null)
 
   const loadListings = () => {
     setLoading(true)
     const params = new URLSearchParams({ type: 'compra' })
-    if (selectedProvince && selectedProvince !== 'all') params.set('province', selectedProvince)
     fetch(`/api/listings?${params.toString()}`)
       .then((res) => res.json())
       .then((json) => {
@@ -132,14 +160,9 @@ export default function ContactosPage() {
   }
 
   useEffect(() => {
-    loadProvinces()
-  }, [])
-
-  useEffect(() => {
     loadListings()
-    setSelectedBarrio(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedProvince])
+  }, [])
 
   const openEdit = (row: Listing) => {
     setEditingId(row.id)
@@ -170,6 +193,66 @@ export default function ContactosPage() {
       }
     } catch {
       alert('Error al eliminar')
+    }
+  }
+
+  const openPhoneDialog = (row: Listing) => {
+    setPhoneDialogId(row.id)
+    setPhoneDialogForm({
+      phone: row.phone ?? '',
+      llamado: row.llamado ?? false,
+    })
+  }
+
+  const closePhoneDialog = () => {
+    setPhoneDialogId(null)
+  }
+
+  const handleToggleVisitado = async (row: Listing) => {
+    const next = !(row.visitado ?? false)
+    setVisitadoTogglingId(row.id)
+    try {
+      const res = await fetch(`/api/listings/${row.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visitado: next }),
+      })
+      const json = await res.json()
+      if (json.success) loadListings()
+      else alert(json.error || 'Error al guardar')
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Error al guardar')
+    } finally {
+      setVisitadoTogglingId(null)
+    }
+  }
+
+  const savePhoneDialog = async () => {
+    if (phoneDialogId == null) return
+    setSavingPhone(true)
+    try {
+      const res = await fetch(`/api/listings/${phoneDialogId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: (phoneDialogForm.phone?.trim() ?? '') || null,
+          llamado: phoneDialogForm.llamado,
+        }),
+      })
+      const json = await res.json()
+      if (json.success) {
+        closePhoneDialog()
+        loadListings()
+      } else {
+        console.error('[savePhoneDialog] Respuesta de error:', json)
+        if (json.errorDetail) console.error('[savePhoneDialog] Detalle:', json.errorDetail)
+        alert((json.error || 'Error al guardar') + '\n\n(Abrí la consola (F12 > Console) o Network > PUT > Response para ver el error completo.)')
+      }
+    } catch (e) {
+      console.error('[savePhoneDialog] Excepción:', e)
+      alert(e instanceof Error ? e.message : 'Error al guardar')
+    } finally {
+      setSavingPhone(false)
     }
   }
 
@@ -216,9 +299,14 @@ export default function ContactosPage() {
     }
   }
 
+  const filteredByProvince = listings.filter((l) => l.province === 'Madrid')
+  const filteredForTodos = filteredByProvince.filter(
+    (l) => !(l.visitado === true) && !l.citaAt
+  )
+
   const barrios = Array.from(
     new Set(
-      listings
+      filteredForTodos
         .map((l) => l.neighborhood?.trim())
         .filter((b): b is string => Boolean(b))
     )
@@ -226,8 +314,8 @@ export default function ContactosPage() {
 
   const filteredByBarrio =
     selectedBarrio === null
-      ? listings
-      : listings.filter((l) => l.neighborhood === selectedBarrio)
+      ? filteredForTodos
+      : filteredForTodos.filter((l) => l.neighborhood === selectedBarrio)
 
   const searchLower = searchQuery.trim().toLowerCase()
   const searchNum = searchLower ? parseFloat(searchQuery.replace(/[^\d,.]/g, '').replace(',', '.')) : NaN
@@ -261,6 +349,34 @@ export default function ContactosPage() {
       })
     : filteredBySearch
 
+  const visitedListings = listings.filter((l) => l.visitado === true)
+  const now = Date.now()
+  const upcomingCitasListings = listings.filter(
+    (l) => l.citaAt != null && new Date(l.citaAt).getTime() > now
+  )
+  const sortedUpcomingCitasListings = [...upcomingCitasListings].sort(
+    (a, b) =>
+      new Date(a.citaAt!).getTime() - new Date(b.citaAt!).getTime()
+  )
+  const sortedVisitedListings = sortBy
+    ? [...visitedListings].sort((a, b) => {
+        let va: string | number | null = sortBy === 'publishedAddress' ? (a.publishedAddress || a.title || '') : sortBy === 'neighborhood' ? (a.neighborhood || '') : sortBy === 'price' ? a.price : sortBy === 'citaAt' ? (a.citaAt || '') : (a.notas || '')
+        let vb: string | number | null = sortBy === 'publishedAddress' ? (b.publishedAddress || b.title || '') : sortBy === 'neighborhood' ? (b.neighborhood || '') : sortBy === 'price' ? b.price : sortBy === 'citaAt' ? (b.citaAt || '') : (b.notas || '')
+        if (sortBy === 'price') {
+          const diff = (va as number) - (vb as number)
+          return sortDir === 'asc' ? diff : -diff
+        }
+        if (sortBy === 'citaAt') {
+          const da = va ? new Date(va as string).getTime() : 0
+          const db = vb ? new Date(vb as string).getTime() : 0
+          const diff = da - db
+          return sortDir === 'asc' ? diff : -diff
+        }
+        const sa = String(va).localeCompare(String(vb), 'es')
+        return sortDir === 'asc' ? sa : -sa
+      })
+    : visitedListings
+
   const handleSort = (key: SortKey) => {
     if (sortBy === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
     else {
@@ -277,6 +393,7 @@ export default function ContactosPage() {
     }).format(price)
 
   const editingRow = editingId != null ? listings.find((l) => l.id === editingId) : null
+  const editingPhoneRow = phoneDialogId != null ? listings.find((l) => l.id === phoneDialogId) : null
 
   return (
     <div className={styles.container}>
@@ -300,33 +417,205 @@ export default function ContactosPage() {
         {!loading && (
           <>
             <section className={styles.section}>
-              <h2 className={styles.sectionTitle}>Provincia</h2>
-              <div className={styles.barrioIndex}>
-                <button
-                  type="button"
-                  className={`${styles.barrioChip} ${selectedProvince === 'all' ? styles.barrioChipActive : ''}`}
-                  onClick={() => setSelectedProvince('all')}
-                >
-                  Todas
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.barrioChip} ${selectedProvince === 'Madrid' ? styles.barrioChipActive : ''}`}
-                  onClick={() => setSelectedProvince('Madrid')}
-                >
-                  Madrid
-                </button>
-                {provinces.filter((p) => p !== 'Madrid').map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    className={`${styles.barrioChip} ${selectedProvince === p ? styles.barrioChipActive : ''}`}
-                    onClick={() => setSelectedProvince(p)}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
+              <h2 className={styles.sectionTitle}>Visitas Hechas ({visitedListings.length})</h2>
+              {visitedListings.length > 0 ? (
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th className={styles.thSortable} onClick={() => handleSort('publishedAddress')}>
+                          Dirección {sortBy === 'publishedAddress' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                        </th>
+                        <th className={styles.thSortable} onClick={() => handleSort('neighborhood')}>
+                          Barrio {sortBy === 'neighborhood' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                        </th>
+                        <th>Link Idealista</th>
+                        <th className={styles.thSortable} onClick={() => handleSort('price')}>
+                          Precio {sortBy === 'price' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                        </th>
+                        <th className={styles.thSortable} onClick={() => handleSort('citaAt')}>
+                          Cita {sortBy === 'citaAt' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                        </th>
+                        <th className={styles.thSortable} onClick={() => handleSort('notas')}>
+                          Notas {sortBy === 'notas' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                        </th>
+                        <th className={styles.thLlamado}>Llamé</th>
+                        <th className={styles.thVisitado}>Visitado</th>
+                        <th className={styles.thActions}>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedVisitedListings.map((row) => (
+                        <tr key={row.id}>
+                          <td className={styles.cellAddress}>
+                            {row.publishedAddress || row.title || '—'}
+                          </td>
+                          <td>{row.neighborhood || '—'}</td>
+                          <td>
+                            <a
+                              href={row.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.linkIdealista}
+                            >
+                              Ver en Idealista
+                            </a>
+                          </td>
+                          <td className={styles.cellPrice}>{formatPrice(row.price)}</td>
+                          <td className={styles.cellEditable}>{formatCita(row.citaAt)}</td>
+                          <td className={styles.cellNotas}>
+                            {row.notas ? (row.notas.length > 60 ? `${row.notas.slice(0, 60)}…` : row.notas) : '—'}
+                          </td>
+                          <td className={styles.cellLlamado}>
+                            <button
+                              type="button"
+                              className={(row.llamado ?? false) ? styles.phoneIconCalled : styles.phoneIconNotCalled}
+                              onClick={() => openPhoneDialog(row)}
+                              title={(row.llamado ?? false) ? 'Ya llamé' : 'Teléfono / ¿Llamé?'}
+                              aria-label="Abrir diálogo teléfono y llamada"
+                            >
+                              <PhoneIcon />
+                            </button>
+                          </td>
+                          <td className={styles.cellVisitado}>
+                            <button
+                              type="button"
+                              className={(row.visitado ?? false) ? styles.visitadoIconVisitado : styles.visitadoIconNotVisitado}
+                              onClick={() => handleToggleVisitado(row)}
+                              disabled={visitadoTogglingId === row.id}
+                              title={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+                              aria-label={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+                            >
+                              <VisitadoIcon />
+                            </button>
+                          </td>
+                          <td className={styles.cellActions}>
+                            <span className={styles.cellActionsButtons}>
+                              <button
+                                type="button"
+                                className={styles.btnEdit}
+                                onClick={() => openEdit(row)}
+                                aria-label="Editar"
+                                title="Editar"
+                              >
+                                <EditIcon />
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.btnDanger}
+                                onClick={() => handleDelete(row.id)}
+                                aria-label="Eliminar"
+                                title="Eliminar"
+                              >
+                                <TrashIcon />
+                              </button>
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className={styles.noData}>No hay visitas hechas con el filtro actual.</p>
+              )}
+            </section>
+
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
+                Próximas Visitas {upcomingCitasListings.length > 0 && `(${upcomingCitasListings.length})`}
+              </h2>
+              {upcomingCitasListings.length > 0 ? (
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Dirección</th>
+                        <th>Barrio</th>
+                        <th>Link Idealista</th>
+                        <th>Precio</th>
+                        <th>Cita</th>
+                        <th>Notas</th>
+                        <th className={styles.thLlamado}>Llamé</th>
+                        <th className={styles.thVisitado}>Visitado</th>
+                        <th className={styles.thActions}>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedUpcomingCitasListings.map((row) => (
+                        <tr key={row.id}>
+                          <td className={styles.cellAddress}>
+                            {row.publishedAddress || row.title || '—'}
+                          </td>
+                          <td>{row.neighborhood || '—'}</td>
+                          <td>
+                            <a
+                              href={row.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.linkIdealista}
+                            >
+                              Ver en Idealista
+                            </a>
+                          </td>
+                          <td className={styles.cellPrice}>{formatPrice(row.price)}</td>
+                          <td className={styles.cellEditable}>{formatCita(row.citaAt)}</td>
+                          <td className={styles.cellNotas}>
+                            {row.notas ? (row.notas.length > 60 ? `${row.notas.slice(0, 60)}…` : row.notas) : '—'}
+                          </td>
+                          <td className={styles.cellLlamado}>
+                            <button
+                              type="button"
+                              className={(row.llamado ?? false) ? styles.phoneIconCalled : styles.phoneIconNotCalled}
+                              onClick={() => openPhoneDialog(row)}
+                              title={(row.llamado ?? false) ? 'Ya llamé' : 'Teléfono / ¿Llamé?'}
+                              aria-label="Abrir diálogo teléfono y llamada"
+                            >
+                              <PhoneIcon />
+                            </button>
+                          </td>
+                          <td className={styles.cellVisitado}>
+                            <button
+                              type="button"
+                              className={(row.visitado ?? false) ? styles.visitadoIconVisitado : styles.visitadoIconNotVisitado}
+                              onClick={() => handleToggleVisitado(row)}
+                              disabled={visitadoTogglingId === row.id}
+                              title={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+                              aria-label={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+                            >
+                              <VisitadoIcon />
+                            </button>
+                          </td>
+                          <td className={styles.cellActions}>
+                            <span className={styles.cellActionsButtons}>
+                              <button
+                                type="button"
+                                className={styles.btnEdit}
+                                onClick={() => openEdit(row)}
+                                aria-label="Editar"
+                                title="Editar"
+                              >
+                                <EditIcon />
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.btnDanger}
+                                onClick={() => handleDelete(row.id)}
+                                aria-label="Eliminar"
+                                title="Eliminar"
+                              >
+                                <TrashIcon />
+                              </button>
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className={styles.noData}>No hay citas futuras con el filtro actual.</p>
+              )}
             </section>
 
             <section className={styles.section}>
@@ -342,7 +631,7 @@ export default function ContactosPage() {
                     className={`${styles.barrioChip} ${selectedBarrio === null ? styles.barrioChipActive : ''}`}
                     onClick={() => setSelectedBarrio(null)}
                   >
-                    Todos ({listings.length})
+                    Todos ({filteredForTodos.length})
                   </button>
                   {barrios.map((b) => (
                     <button
@@ -351,7 +640,7 @@ export default function ContactosPage() {
                       className={`${styles.barrioChip} ${selectedBarrio === b ? styles.barrioChipActive : ''}`}
                       onClick={() => setSelectedBarrio(b)}
                     >
-                      {b} ({listings.filter((l) => l.neighborhood === b).length})
+                      {b} ({filteredForTodos.filter((l) => l.neighborhood === b).length})
                     </button>
                   ))}
                 </div>
@@ -396,7 +685,9 @@ export default function ContactosPage() {
                         <th className={styles.thSortable} onClick={() => handleSort('notas')}>
                           Notas {sortBy === 'notas' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                         </th>
-                        <th></th>
+                        <th className={styles.thLlamado}>Llamé</th>
+                        <th className={styles.thVisitado}>Visitado</th>
+                        <th className={styles.thActions}>Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -421,21 +712,50 @@ export default function ContactosPage() {
                           <td className={styles.cellNotas}>
                             {row.notas ? (row.notas.length > 60 ? `${row.notas.slice(0, 60)}…` : row.notas) : '—'}
                           </td>
+                          <td className={styles.cellLlamado}>
+                            <button
+                              type="button"
+                              className={(row.llamado ?? false) ? styles.phoneIconCalled : styles.phoneIconNotCalled}
+                              onClick={() => openPhoneDialog(row)}
+                              title={(row.llamado ?? false) ? 'Ya llamé' : 'Teléfono / ¿Llamé?'}
+                              aria-label="Abrir diálogo teléfono y llamada"
+                            >
+                              <PhoneIcon />
+                            </button>
+                          </td>
+                          <td className={styles.cellVisitado}>
+                            <button
+                              type="button"
+                              className={(row.visitado ?? false) ? styles.visitadoIconVisitado : styles.visitadoIconNotVisitado}
+                              onClick={() => handleToggleVisitado(row)}
+                              disabled={visitadoTogglingId === row.id}
+                              title={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+                              aria-label={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+                            >
+                              <VisitadoIcon />
+                            </button>
+                          </td>
                           <td className={styles.cellActions}>
-                            <button
-                              type="button"
-                              className={styles.btnEdit}
-                              onClick={() => openEdit(row)}
-                            >
-                              Editar
-                            </button>
-                            <button
-                              type="button"
-                              className={styles.btnDanger}
-                              onClick={() => handleDelete(row.id)}
-                            >
-                              Eliminar
-                            </button>
+                            <span className={styles.cellActionsButtons}>
+                              <button
+                                type="button"
+                                className={styles.btnEdit}
+                                onClick={() => openEdit(row)}
+                                aria-label="Editar"
+                                title="Editar"
+                              >
+                                <EditIcon />
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.btnDanger}
+                                onClick={() => handleDelete(row.id)}
+                                aria-label="Eliminar"
+                                title="Eliminar"
+                              >
+                                <TrashIcon />
+                              </button>
+                            </span>
                           </td>
                         </tr>
                       ))}
@@ -522,6 +842,67 @@ export default function ContactosPage() {
                 disabled={saving}
               >
                 {saving ? 'Guardando…' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal teléfono / ¿Llamé? */}
+      {editingPhoneRow && (
+        <div className={styles.modalOverlay} onClick={closePhoneDialog}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2>Teléfono · {editingPhoneRow.publishedAddress || editingPhoneRow.title || 'Piso'}</h2>
+              <button type="button" className={styles.modalClose} onClick={closePhoneDialog} aria-label="Cerrar">
+                ×
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Teléfono</label>
+                <input
+                  type="tel"
+                  className={styles.input}
+                  value={phoneDialogForm.phone}
+                  onChange={(e) => setPhoneDialogForm((f) => ({ ...f, phone: e.target.value }))}
+                  placeholder="Ej. 612 345 678"
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>¿Llamé?</label>
+                <div className={styles.llameRow}>
+                  <button
+                    type="button"
+                    className={phoneDialogForm.llamado ? styles.btnLlamadoSi : styles.btnLlamado}
+                    onClick={() => setPhoneDialogForm((f) => ({ ...f, llamado: true }))}
+                  >
+                    Sí
+                  </button>
+                  <button
+                    type="button"
+                    className={!phoneDialogForm.llamado ? styles.btnLlamadoNoActive : styles.btnLlamado}
+                    onClick={() => setPhoneDialogForm((f) => ({ ...f, llamado: false }))}
+                  >
+                    No
+                  </button>
+                </div>
+                {phoneDialogForm.llamado && (
+                  <span className={styles.llameHint}>El icono se verá en verde al guardar</span>
+                )}
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.btnSecondary} onClick={closePhoneDialog}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className={styles.btnPrimary}
+                onClick={savePhoneDialog}
+                disabled={savingPhone}
+              >
+                {savingPhone ? 'Guardando…' : 'Guardar'}
               </button>
             </div>
           </div>
