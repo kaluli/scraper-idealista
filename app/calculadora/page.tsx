@@ -27,7 +27,7 @@ function cuotaHipotecaria(principal: number, interesAnual: number, anos: number)
 }
 
 export default function CalculadoraPage() {
-  const [precioCompra, setPrecioCompra] = useState<string>('200000')
+  const [precioCompra, setPrecioCompra] = useState<string>('180000')
   const [alquilerMensual, setAlquilerMensual] = useState<string>('1000')
   const [reformaInicial, setReformaInicial] = useState<string>('0')
   const [conHipoteca, setConHipoteca] = useState<boolean>(false)
