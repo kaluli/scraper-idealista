@@ -32,6 +32,8 @@
 }
 
 .reportLink {
+  display: inline-flex;
+  align-items: center;
   color: #0066cc;
   text-decoration: none;
   font-size: 0.95rem;
@@ -40,6 +42,13 @@
 
 .reportLink:hover {
   text-decoration: underline;
+}
+
+.reportLink .linkIcon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 6px;
+  vertical-align: middle;
 }
 
 /* Estadísticas */

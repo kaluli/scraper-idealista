@@ -130,7 +130,19 @@ export default function CalculadoraPage() {
       <div className={styles.content}>
         <header className={styles.header}>
           <Link href="/" className={styles.backLink}>← Volver al Gestor</Link>
-          <h1 className={styles.title}>🧮 Calculadora de rentabilidad</h1>
+          <h1 className={styles.title}>
+          <span className={styles.titleIcon} aria-hidden>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="4" y="2" width="16" height="20" rx="2" />
+              <rect x="6" y="6" width="12" height="4" rx="1" fill="currentColor" fillOpacity="0.2" />
+              <line x1="8" y1="14" x2="10" y2="14" />
+              <line x1="14" y1="14" x2="16" y2="14" />
+              <line x1="8" y1="18" x2="10" y2="18" />
+              <line x1="14" y1="18" x2="16" y2="18" />
+            </svg>
+          </span>
+          Calculadora de rentabilidad
+        </h1>
           <p className={styles.subtitle}>
             Analiza si un piso en alquiler tiene sentido como inversión. Rápido y visual.
           </p>

@@ -30,6 +30,13 @@
   text-decoration: underline;
 }
 
+.backLink .linkIcon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
 .title {
   font-size: 1.75rem;
   font-weight: 700;
