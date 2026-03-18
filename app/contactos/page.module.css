@@ -13,12 +13,17 @@
   margin-bottom: 32px;
 }
 
+.headerLinks {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
 .backLink {
   display: inline-block;
   color: #0066cc;
   text-decoration: none;
   font-size: 0.95rem;
-  margin-bottom: 12px;
 }
 
 .backLink:hover {

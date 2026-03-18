@@ -244,6 +244,7 @@ export default function Home() {
         <div className={styles.header}>
           <h1 className={styles.title}>🏠 Gestor de Pisos Idealista</h1>
           <div className={styles.headerActions}>
+            <Link href="/calculadora" className={styles.reportLink}>🧮 Calculadora</Link>
             <Link href="/recomendaciones" className={styles.reportLink}>📋 Ajustes</Link>
             <Link href="/contactos" className={styles.reportLink}>📇 Contactos</Link>
           </div>

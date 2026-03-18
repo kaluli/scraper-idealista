@@ -78,7 +78,10 @@ export default function RecomendacionesPage() {
     <div className={styles.container}>
       <div className={styles.content}>
         <header className={styles.header}>
-          <Link href="/" className={styles.backLink}>← Volver al Gestor</Link>
+          <div className={styles.headerLinks}>
+            <Link href="/" className={styles.backLink}>← Volver al Gestor</Link>
+            <Link href="/calculadora" className={styles.backLink}>🧮 Calculadora</Link>
+          </div>
           <h1 className={styles.title}>🏘️ Ajustes</h1>
           <p className={styles.subtitle}>
             Importar pisos desde archivos HTML guardados de Idealista.

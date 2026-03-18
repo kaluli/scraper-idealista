@@ -403,9 +403,10 @@ export default function ContactosPage() {
     <div className={styles.container}>
       <div className={styles.content}>
         <header className={styles.header}>
-          <Link href="/" className={styles.backLink}>
-            ← Volver al Gestor
-          </Link>
+          <div className={styles.headerLinks}>
+            <Link href="/" className={styles.backLink}>← Volver al Gestor</Link>
+            <Link href="/calculadora" className={styles.backLink}>🧮 Calculadora</Link>
+          </div>
           <h1 className={styles.title}>📇 Pisos en venta – Contactos</h1>
           <p className={styles.subtitle}>
             Índice de barrios y listado de pisos en compra. Edita cita y notas; se guardan en la base de datos.
