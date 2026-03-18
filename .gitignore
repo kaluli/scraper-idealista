@@ -59,3 +59,6 @@ backup-idealista-*.sql
 data-for-freedb.sql
 *.backup
 export_pisos_*.json
+
+# API antigua (importar por URL), ya no se usa
+app/api/import-url/
