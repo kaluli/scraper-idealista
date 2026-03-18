@@ -147,10 +147,14 @@ export default function ContactosPage() {
   const [phoneDialogForm, setPhoneDialogForm] = useState<{ phone: string; llamado: boolean }>({ phone: '', llamado: false })
   const [savingPhone, setSavingPhone] = useState(false)
   const [visitadoTogglingId, setVisitadoTogglingId] = useState<number | null>(null)
+  const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('200000') // Por defecto ocultar pisos > 200.000 €
 
   const loadListings = () => {
     setLoading(true)
     const params = new URLSearchParams({ type: 'compra' })
+    if (selectedMaxPrice !== 'all') {
+      params.append('maxPrice', selectedMaxPrice)
+    }
     fetch(`/api/listings?${params.toString()}`)
       .then((res) => res.json())
       .then((json) => {
@@ -162,7 +166,7 @@ export default function ContactosPage() {
   useEffect(() => {
     loadListings()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [selectedMaxPrice])
 
   const openEdit = (row: Listing) => {
     setEditingId(row.id)
@@ -653,17 +657,40 @@ export default function ContactosPage() {
                   {selectedBarrio ? `Pisos en venta – ${selectedBarrio}` : 'Todos los pisos en venta'}
                 </h2>
                 <div className={styles.searchRow}>
-                  <label className={styles.filterLabel} htmlFor="contactos-search">
-                    Buscar
-                  </label>
-                  <input
-                    id="contactos-search"
-                    type="text"
-                    className={styles.searchInput}
-                    placeholder="Por dirección o precio…"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
+                  <div className={styles.searchGroup}>
+                    <label className={styles.filterLabel} htmlFor="contactos-search">
+                      Buscar
+                    </label>
+                    <input
+                      id="contactos-search"
+                      type="text"
+                      className={styles.searchInput}
+                      placeholder="Por dirección o precio…"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  <div className={styles.priceFilterGroup}>
+                    <label className={styles.filterLabel} htmlFor="contactos-max-price">
+                      Precio máximo
+                    </label>
+                    <select
+                      id="contactos-max-price"
+                      className={styles.select}
+                      value={selectedMaxPrice}
+                      onChange={(e) => setSelectedMaxPrice(e.target.value)}
+                    >
+                      <option value="all">Todos los precios</option>
+                      <option value="100000">Menores de 100.000€</option>
+                      <option value="150000">Menores de 150.000€</option>
+                      <option value="180000">Menores de 180.000€</option>
+                      <option value="200000">Menores de 200.000€</option>
+                      <option value="250000">Menores de 250.000€</option>
+                      <option value="300000">Menores de 300.000€</option>
+                      <option value="400000">Menores de 400.000€</option>
+                      <option value="500000">Menores de 500.000€</option>
+                    </select>
+                  </div>
                 </div>
                 <div className={styles.tableWrap}>
                   <table className={styles.table}>

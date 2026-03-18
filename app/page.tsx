@@ -29,7 +29,7 @@ export default function Home() {
   const [selectedType, setSelectedType] = useState<'alquiler' | 'compra' | 'all'>('all')
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>('all')
   const [selectedProvince, setSelectedProvince] = useState<string>('all') // Primera carga sin filtro (local+prod OK); loadProvinces pone Madrid si existe
-  const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('all')
+  const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('200000') // Por defecto ocultar pisos > 200.000 €
   const [showModal, setShowModal] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
