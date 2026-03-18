@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import styles from './page.module.css'
 
@@ -31,8 +31,6 @@ export default function Home() {
   const [selectedProvince, setSelectedProvince] = useState<string>('all') // Primera carga sin filtro (local+prod OK); loadProvinces pone Madrid si existe
   const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('all')
   const [showModal, setShowModal] = useState(false)
-  const [importing, setImporting] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const [formData, setFormData] = useState({
     title: '',
     price: '',
@@ -208,45 +206,6 @@ export default function Home() {
     }
   }
 
-  // Importar pisos desde archivo HTML (Idealista)
-  const handleImportHtml = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    if (!file.name.toLowerCase().endsWith('.html')) {
-      alert('Elegí un archivo .html (página guardada de Idealista).')
-      return
-    }
-    setImporting(true)
-    setError(null)
-    try {
-      const fd = new FormData()
-      fd.append('file', file)
-      const res = await fetch('/api/import-html', { method: 'POST', body: fd })
-      const json = await res.json()
-      if (json.success) {
-        let msg = `Importados: ${json.imported} | Omitidos (duplicados): ${json.skipped} | Total en archivo: ${json.total}`
-        if (json.errorsCount > 0) {
-          msg += `\n\n${json.errorsCount} anuncio(s) fallaron.`
-          if (json.errors?.length) {
-            msg += '\n' + json.errors.slice(0, 5).map((err: { link: string; error: string }) => `${err.error}`).join('\n')
-            if (json.errorsCount > 5) msg += `\n... y ${json.errorsCount - 5} más`
-          }
-        }
-        alert(msg)
-        loadListings()
-        loadStats()
-        loadNeighborhoods()
-      } else {
-        alert(json.error || 'Error al importar')
-      }
-    } catch {
-      alert('Error al importar el archivo')
-    } finally {
-      setImporting(false)
-    }
-  }
-
   // Eliminar piso
   const handleDelete = async (id: number) => {
     if (!confirm('¿Estás seguro de que quieres eliminar este piso?')) {
@@ -285,24 +244,8 @@ export default function Home() {
         <div className={styles.header}>
           <h1 className={styles.title}>🏠 Gestor de Pisos Idealista</h1>
           <div className={styles.headerActions}>
-            <Link href="/recomendaciones" className={styles.reportLink}>📋 Recomendaciones</Link>
+            <Link href="/recomendaciones" className={styles.reportLink}>📋 Ajustes</Link>
             <Link href="/contactos" className={styles.reportLink}>📇 Contactos</Link>
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept=".html"
-              className={styles.hiddenFileInput}
-              onChange={handleImportHtml}
-              aria-label="Seleccionar archivo HTML"
-            />
-            <button
-              type="button"
-              className={styles.btnPrimary}
-              disabled={importing}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {importing ? 'Importando…' : '📥 Importar pisos'}
-            </button>
           </div>
         </div>
 
@@ -427,12 +370,12 @@ export default function Home() {
                 <li>📊 Estadísticas detalladas por barrio</li>
                 <li>🔍 Filtros avanzados (tipo, provincia, barrio, precio)</li>
                 <li>💰 Cálculo de rentabilidad</li>
-                <li>📥 Importar pisos desde HTML (Idealista)</li>
+                <li>📥 Importar pisos desde HTML (Idealista) — en Ajustes</li>
               </ul>
             </div>
-            <button className={styles.btnPrimary} onClick={() => fileInputRef.current?.click()}>
-              Importar pisos (archivo .html)
-            </button>
+            <Link href="/recomendaciones" className={styles.btnPrimary} style={{ display: 'inline-block', padding: '10px 20px', textDecoration: 'none', color: 'white' }}>
+              Ir a Ajustes para importar pisos
+            </Link>
           </div>
         )}
 
