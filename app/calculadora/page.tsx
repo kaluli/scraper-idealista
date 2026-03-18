@@ -27,20 +27,20 @@ function cuotaHipotecaria(principal: number, interesAnual: number, anos: number)
 }
 
 export default function CalculadoraPage() {
-  const [precioCompra, setPrecioCompra] = useState<string>('180000')
-  const [alquilerMensual, setAlquilerMensual] = useState<string>('900')
-  const [reformaInicial, setReformaInicial] = useState<string>('5000')
+  const [precioCompra, setPrecioCompra] = useState<string>('200000')
+  const [alquilerMensual, setAlquilerMensual] = useState<string>('1000')
+  const [reformaInicial, setReformaInicial] = useState<string>('0')
   const [conHipoteca, setConHipoteca] = useState<boolean>(false)
 
   const [entradaPct, setEntradaPct] = useState<string>('30')
-  const [tipoInteres, setTipoInteres] = useState<string>('3.5')
+  const [tipoInteres, setTipoInteres] = useState<string>('2.4')
   const [plazoAnos, setPlazoAnos] = useState<string>('25')
 
   const [gastosCompraPct, setGastosCompraPct] = useState<string>('10')
-  const [ibiAnual, setIbiAnual] = useState<string>('400')
+  const [ibiAnual, setIbiAnual] = useState<string>('500')
   const [comunidadMensual, setComunidadMensual] = useState<string>('50')
-  const [seguroAnual, setSeguroAnual] = useState<string>('200')
-  const [mantenimientoPct, setMantenimientoPct] = useState<string>('8')
+  const [seguroAnual, setSeguroAnual] = useState<string>('250')
+  const [mantenimientoPct, setMantenimientoPct] = useState<string>('5')
   const [vacanciaPct, setVacanciaPct] = useState<string>('5')
 
   const precio = parseFloat(precioCompra) || 0
@@ -84,7 +84,8 @@ export default function CalculadoraPage() {
     }
 
     let rentabilidadBruta = precio > 0 ? (ingresoAnualBruto / precio) * 100 : 0
-    let rentabilidadNeta = inversionTotalInicial > 0 ? (ingresoAnualNetoAntesHipoteca / inversionTotalInicial) * 100 : 0
+    const costeTotalInmueble = precio + gastosCompra + reforma
+    let rentabilidadNeta = costeTotalInmueble > 0 ? (ingresoAnualNetoAntesHipoteca / costeTotalInmueble) * 100 : 0
 
     return {
       ingresoAnualBruto,
@@ -311,27 +312,29 @@ export default function CalculadoraPage() {
               <span className={styles.resultHint}>Lo que entra menos gastos</span>
             </div>
             {conHipoteca && (
-              <div className={styles.resultCard}>
+              <div className={styles.resultCardCuota}>
                 <span className={styles.resultLabel}>Cuota hipotecaria mensual</span>
                 <span className={styles.resultValue}>{formatEuros(resultado.cuotaMensual)}</span>
               </div>
             )}
-            <div className={styles.resultCard}>
+            <div className={styles.resultCardCashflow}>
               <span className={styles.resultLabel}>Cashflow mensual</span>
               <span className={`${styles.resultValue} ${resultado.cashflowMensual < 0 ? styles.negative : ''}`}>
                 {formatEuros(resultado.cashflowMensual)}
               </span>
               <span className={styles.resultHint}>Lo que te queda cada mes</span>
             </div>
-            <div className={styles.resultCard}>
-              <span className={styles.resultLabel}>Rentabilidad bruta</span>
-              <span className={styles.resultValue}>{formatPercent(resultado.rentabilidadBruta)}</span>
-              <span className={styles.resultHint}>Ingreso bruto / precio compra</span>
-            </div>
-            <div className={styles.resultCard}>
-              <span className={styles.resultLabel}>Rentabilidad neta</span>
-              <span className={styles.resultValue}>{formatPercent(resultado.rentabilidadNeta)}</span>
-              <span className={styles.resultHint}>Ingreso neto / inversión total</span>
+            <div className={styles.rentabilidadGroup}>
+              <div className={styles.resultCardRentabilidad}>
+                <span className={styles.resultLabel}>Rentabilidad bruta</span>
+                <span className={styles.resultValueRentabilidad}>{formatPercent(resultado.rentabilidadBruta)}</span>
+                <span className={styles.resultHint}>Ingreso bruto / precio compra</span>
+              </div>
+              <div className={styles.resultCardRentabilidad}>
+                <span className={styles.resultLabel}>Rentabilidad neta</span>
+                <span className={styles.resultValueRentabilidad}>{formatPercent(resultado.rentabilidadNeta)}</span>
+                <span className={styles.resultHint}>Beneficio anual / coste total del inmueble (sin hipoteca)</span>
+              </div>
             </div>
             <div className={styles.resultCard}>
               <span className={styles.resultLabel}>ROI sobre dinero aportado</span>
