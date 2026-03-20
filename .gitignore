@@ -56,6 +56,7 @@ temp_import*.json
 # dumps y backups
 dump_*.sql
 backup-idealista-*.sql
+backup-prod-idealista-*.sql
 data-for-freedb.sql
 *.backup
 export_pisos_*.json

@@ -303,9 +303,15 @@ export default function ContactosPage() {
     }
   }
 
-  const filteredByProvince = listings.filter((l) => l.province === 'Madrid')
+  // Incluir Madrid y ciudades de la Comunidad de Madrid (Alcalá de Henares, etc.)
+  const isMadridArea = (l: Listing) =>
+    l.province === 'Madrid' || l.province === 'Alcalá de Henares' || l.city === 'Alcalá de Henares'
+  const filteredByProvince = listings.filter(isMadridArea)
+  const nowForFilter = Date.now()
   const filteredForTodos = filteredByProvince.filter(
-    (l) => !(l.visitado === true) && !l.citaAt
+    (l) =>
+      !(l.visitado === true) &&
+      (!l.citaAt || new Date(l.citaAt).getTime() <= nowForFilter)
   )
 
   const barrios = Array.from(

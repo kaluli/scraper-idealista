@@ -31,8 +31,12 @@ export async function GET(request: NextRequest) {
       where.neighborhood = neighborhood
     }
     
-    if (province) {
-      where.province = province
+    if (province && province !== 'all') {
+      if (province === 'Madrid') {
+        where.province = { in: ['Madrid', 'Alcalá de Henares'] }
+      } else {
+        where.province = province
+      }
     }
 
     if (maxPriceParam) {

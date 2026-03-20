@@ -90,6 +90,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // Siempre Madrid para importación de un solo piso (evita Alcalá de Henares u otras ciudades como provincia)
+    const province = 'Madrid'
     await prisma.listing.create({
       data: {
         link,
@@ -99,7 +101,7 @@ export async function POST(request: NextRequest) {
         rooms: safeInt(listing.rooms),
         neighborhood: truncate(listing.neighborhood, 100),
         city: truncate(listing.city, 100),
-        province: truncate(listing.province, 100) || 'Madrid',
+        province,
         type: listing.type === 'alquiler' ? 'alquiler' : 'compra',
         publishedAddress: truncate(listing.publishedAddress, 255),
         profitabilityRate: null,

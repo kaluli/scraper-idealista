@@ -22,8 +22,8 @@ export async function GET(request: NextRequest) {
 
     if (all) {
       const where: any = {}
-      if (province) {
-        where.province = province
+      if (province && province !== 'all') {
+        where.province = province === 'Madrid' ? { in: ['Madrid', 'Alcalá de Henares'] } : province
       }
       const neighborhoods = await prisma.neighborhood.findMany({
         where,
@@ -32,7 +32,9 @@ export async function GET(request: NextRequest) {
       let names = neighborhoods.map((n) => n.name)
       if (names.length === 0) {
         const listingWhere: any = { neighborhood: { not: null } }
-        if (province) listingWhere.province = province
+        if (province && province !== 'all') {
+          listingWhere.province = province === 'Madrid' ? { in: ['Madrid', 'Alcalá de Henares'] } : province
+        }
         const fromListings = await prisma.listing.findMany({
           where: listingWhere,
           select: { neighborhood: true },
