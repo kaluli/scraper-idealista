@@ -364,6 +364,16 @@ export default function ContactosPage() {
   const upcomingCitasListings = listings.filter(
     (l) => l.citaAt != null && new Date(l.citaAt).getTime() > now
   )
+  const pastCitasListings = listings.filter(
+    (l) =>
+      isMadridArea(l) &&
+      l.citaAt != null &&
+      new Date(l.citaAt).getTime() <= now &&
+      !(l.visitado === true)
+  )
+  const sortedPastCitasListings = [...pastCitasListings].sort(
+    (a, b) => new Date(b.citaAt!).getTime() - new Date(a.citaAt!).getTime()
+  )
   const sortedUpcomingCitasListings = [...upcomingCitasListings].sort(
     (a, b) =>
       new Date(a.citaAt!).getTime() - new Date(b.citaAt!).getTime()
@@ -638,6 +648,103 @@ export default function ContactosPage() {
                 </div>
               ) : (
                 <p className={styles.noData}>No hay citas futuras con el filtro actual.</p>
+              )}
+            </section>
+
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>
+                Citas pasadas (pendiente marcar visitado) {pastCitasListings.length > 0 && `(${pastCitasListings.length})`}
+              </h2>
+              {pastCitasListings.length > 0 ? (
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Dirección</th>
+                        <th>Barrio</th>
+                        <th>Link Idealista</th>
+                        <th>Precio</th>
+                        <th>Cita</th>
+                        <th>Notas</th>
+                        <th className={styles.thLlamado}>Llamé</th>
+                        <th className={styles.thVisitado}>Visitado</th>
+                        <th className={styles.thActions}>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedPastCitasListings.map((row) => (
+                        <tr key={row.id}>
+                          <td className={styles.cellAddress}>
+                            {row.publishedAddress || row.title || '—'}
+                          </td>
+                          <td>{row.neighborhood || '—'}</td>
+                          <td>
+                            <a
+                              href={row.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.linkIdealista}
+                            >
+                              Ver en Idealista
+                            </a>
+                          </td>
+                          <td className={styles.cellPrice}>{formatPrice(row.price)}</td>
+                          <td className={styles.cellEditable}>{formatCita(row.citaAt)}</td>
+                          <td className={styles.cellNotas}>
+                            {row.notas ? (row.notas.length > 60 ? `${row.notas.slice(0, 60)}…` : row.notas) : '—'}
+                          </td>
+                          <td className={styles.cellLlamado}>
+                            <button
+                              type="button"
+                              className={(row.llamado ?? false) ? styles.phoneIconCalled : styles.phoneIconNotCalled}
+                              onClick={() => openPhoneDialog(row)}
+                              title={(row.llamado ?? false) ? 'Ya llamé' : 'Teléfono / ¿Llamé?'}
+                              aria-label="Abrir diálogo teléfono y llamada"
+                            >
+                              <PhoneIcon />
+                            </button>
+                          </td>
+                          <td className={styles.cellVisitado}>
+                            <button
+                              type="button"
+                              className={(row.visitado ?? false) ? styles.visitadoIconVisitado : styles.visitadoIconNotVisitado}
+                              onClick={() => handleToggleVisitado(row)}
+                              disabled={visitadoTogglingId === row.id}
+                              title={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+                              aria-label={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+                            >
+                              <VisitadoIcon />
+                            </button>
+                          </td>
+                          <td className={styles.cellActions}>
+                            <span className={styles.cellActionsButtons}>
+                              <button
+                                type="button"
+                                className={styles.btnEdit}
+                                onClick={() => openEdit(row)}
+                                aria-label="Editar"
+                                title="Editar"
+                              >
+                                <EditIcon />
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.btnDanger}
+                                onClick={() => handleDelete(row.id)}
+                                aria-label="Eliminar"
+                                title="Eliminar"
+                              >
+                                <TrashIcon />
+                              </button>
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className={styles.noData}>No hay citas pasadas.</p>
               )}
             </section>
 
