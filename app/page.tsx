@@ -173,7 +173,21 @@ export default function Home() {
         {/* Header */}
         <div className={styles.header}>
           <h1 className={styles.title}>🏠 Gestor de Pisos Idealista</h1>
-          <div className={styles.headerActions}>
+          <div className={styles.headerRight}>
+            <span className={styles.dbStatus} title="Estado de la base de datos">
+              {loading ? (
+                <span className={styles.dbStatusLoading}>BD: Conectando...</span>
+              ) : error ? (
+                <a href="/api/health/db" target="_blank" rel="noopener noreferrer" className={styles.dbStatusError}>
+                  BD: Error →
+                </a>
+              ) : (
+                <span className={styles.dbStatusOk}>
+                  BD: OK{listings.length > 0 ? ` (${listings.length} pisos)` : ' (vacía)'}
+                </span>
+              )}
+            </span>
+            <div className={styles.headerActions}>
             <Link href="/calculadora" className={styles.reportLink}>
               <span className={styles.linkIcon} aria-hidden>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -189,6 +203,7 @@ export default function Home() {
             </Link>
             <Link href="/recomendaciones" className={styles.reportLink}>📋 Ajustes</Link>
             <Link href="/contactos" className={styles.reportLink}>📇 Contactos</Link>
+            </div>
           </div>
         </div>
 

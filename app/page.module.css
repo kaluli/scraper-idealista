@@ -16,10 +16,38 @@
   margin-bottom: 24px;
 }
 
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
 .headerActions {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.dbStatus {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.dbStatusLoading {
+  color: #666;
+}
+
+.dbStatusOk {
+  color: #0a6b0a;
+}
+
+.dbStatusError {
+  color: #c00;
+  text-decoration: none;
+}
+
+.dbStatusError:hover {
+  text-decoration: underline;
 }
 
 .hiddenFileInput {
