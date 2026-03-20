@@ -357,6 +357,11 @@ export default function Home() {
             <p className={styles.errorMessage} style={{ fontSize: '0.9rem', marginTop: '8px' }}>
               Verifica que la base de datos esté configurada correctamente y que las variables de entorno estén establecidas.
             </p>
+            <p className={styles.errorMessage} style={{ fontSize: '0.85rem', marginTop: '8px' }}>
+              <a href="/api/health/db" target="_blank" rel="noopener noreferrer" style={{ color: '#0066cc' }}>
+                Ver diagnóstico de conexión →
+              </a>
+            </p>
             <button className={styles.btnPrimary} onClick={() => {
               setError(null)
               loadListings()
