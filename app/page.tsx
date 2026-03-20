@@ -44,8 +44,8 @@ export default function Home() {
     rooms: '',
   })
 
-  // Cargar pisos
-  const loadListings = async () => {
+  // Cargar todos los datos en una sola petición (4 conexiones → 1)
+  const loadHomeData = async () => {
     setLoading(true)
     setError(null)
     try {
@@ -63,20 +63,32 @@ export default function Home() {
         params.append('maxPrice', selectedMaxPrice)
       }
 
-      const response = await fetch(`/api/listings?${params.toString()}`)
+      const response = await fetch(`/api/home-data?${params.toString()}`)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       const result = await response.json()
-      if (result.success) {
-        setListings(result.data || [])
+      if (result.success && result.data) {
+        const { listings: list, stats: s, neighborhoods: n, provinces: p } = result.data
+        setListings(list || [])
+        setStats(s ?? null)
+        setNeighborhoods(n || [])
+        if (p && p.length > 0) {
+          setProvinces(p)
+          if (selectedProvince !== 'all' && !p.includes(selectedProvince)) {
+            setSelectedProvince(p[0])
+          } else if (p.includes('Madrid') && selectedProvince === 'all') {
+            setSelectedProvince('Madrid')
+          }
+        }
       } else {
         console.error('API returned error:', result.error)
         setError(result.error || 'Error al cargar los pisos')
         setListings([])
+        setStats(null)
       }
     } catch (error) {
-      console.error('Error loading listings:', error)
+      console.error('Error loading home data:', error)
       setError(error instanceof Error ? error.message : 'Error al cargar los pisos')
       setListings([])
     } finally {
@@ -84,91 +96,10 @@ export default function Home() {
     }
   }
 
-  // Cargar estadísticas
-  const loadStats = async () => {
-    try {
-      const params = new URLSearchParams()
-      if (selectedType !== 'all') {
-        params.append('type', selectedType)
-      }
-      if (selectedNeighborhood !== 'all') {
-        params.append('neighborhood', selectedNeighborhood)
-      }
-      if (selectedProvince !== 'all') {
-        params.append('province', selectedProvince)
-      }
-      if (selectedMaxPrice !== 'all') {
-        params.append('maxPrice', selectedMaxPrice)
-      }
-
-      const response = await fetch(`/api/stats?${params.toString()}`)
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      const result = await response.json()
-      if (result.success) {
-        setStats(result.data)
-      } else {
-        console.error('API returned error:', result.error)
-        setStats(null)
-      }
-    } catch (error) {
-      console.error('Error loading stats:', error)
-      setStats(null)
-    }
-  }
-
-  // Cargar barrios
-  const loadNeighborhoods = async () => {
-    try {
-      // Obtener todos los barrios disponibles (filtrados por provincia si está seleccionada)
-      const params = new URLSearchParams()
-      params.append('all', 'true')
-      if (selectedProvince !== 'all') {
-        params.append('province', selectedProvince)
-      }
-      
-      const response = await fetch(`/api/neighborhoods?${params.toString()}`)
-      const result = await response.json()
-      if (result.success) {
-        setNeighborhoods(result.data)
-      }
-    } catch (error) {
-      console.error('Error loading neighborhoods:', error)
-    }
-  }
-
-  // Cargar provincias
-  const loadProvinces = async () => {
-    try {
-      const response = await fetch('/api/provinces')
-      const result = await response.json()
-      if (result.success) {
-        const list = result.data as string[]
-        setProvinces(list)
-        // Si la provincia actual no está en la lista, usar la primera disponible
-        if (list.length > 0 && selectedProvince !== 'all' && !list.includes(selectedProvince)) {
-          setSelectedProvince(list[0])
-        } else if (list.length > 0 && list.includes('Madrid') && selectedProvince === 'all') {
-          setSelectedProvince('Madrid')
-        }
-      }
-    } catch (error) {
-      console.error('Error loading provinces:', error)
-    }
-  }
-
   useEffect(() => {
-    loadListings()
-    loadNeighborhoods()
-    loadStats()
+    loadHomeData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedType, selectedNeighborhood, selectedProvince, selectedMaxPrice])
-
-  useEffect(() => {
-    loadProvinces()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   // Crear nuevo piso
   const handleSubmit = async (e: React.FormEvent) => {
@@ -195,8 +126,7 @@ export default function Home() {
           publishedAddress: '',
           rooms: '',
         })
-        loadListings()
-        loadNeighborhoods()
+        loadHomeData()
       } else {
         alert(result.error || 'Error al crear el piso')
       }
@@ -219,7 +149,7 @@ export default function Home() {
 
       const result = await response.json()
       if (result.success) {
-        loadListings()
+        loadHomeData()
       } else {
         alert(result.error || 'Error al eliminar el piso')
       }
@@ -364,8 +294,7 @@ export default function Home() {
             </p>
             <button className={styles.btnPrimary} onClick={() => {
               setError(null)
-              loadListings()
-              loadStats()
+              loadHomeData()
             }}>
               Reintentar
             </button>
@@ -576,9 +505,7 @@ export default function Home() {
                 setSelectedNeighborhood('all')
                 setSelectedProvince('all')
                 setSelectedMaxPrice('all')
-                loadListings()
-                loadStats()
-                loadNeighborhoods()
+                loadHomeData()
               }}
               style={{ marginTop: '16px' }}
             >
