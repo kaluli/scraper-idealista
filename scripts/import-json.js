@@ -12,6 +12,24 @@ const { PrismaClient } = require('@prisma/client')
 const fs = require('fs')
 const path = require('path')
 
+// Misma prioridad que Next en dev → misma BD que `npm run dev`
+const root = path.resolve(__dirname, '..')
+for (const name of ['.env', '.env.local', '.env.development', '.env.development.local']) {
+  const p = path.join(root, name)
+  if (!fs.existsSync(p)) continue
+  fs.readFileSync(p, 'utf8')
+    .split('\n')
+    .forEach((line) => {
+      const match = line.match(/^([^#=]+)=(.*)$/)
+      if (!match) return
+      const key = match[1].trim()
+      let val = match[2].trim()
+      if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1)
+      if (val.startsWith("'") && val.endsWith("'")) val = val.slice(1, -1)
+      process.env[key] = val
+    })
+}
+
 const prisma = new PrismaClient()
 
 async function importListing(data) {

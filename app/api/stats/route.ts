@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { listingNeighborhoodClause } from '@/lib/neighborhood-filter'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -27,9 +28,8 @@ export async function GET(request: NextRequest) {
       where.type = type
     }
     
-    if (neighborhood) {
-      where.neighborhood = neighborhood
-    }
+    const nbClause = listingNeighborhoodClause(neighborhood)
+    if (nbClause) Object.assign(where, nbClause)
     
     if (province && province !== 'all') {
       if (province === 'Madrid') {

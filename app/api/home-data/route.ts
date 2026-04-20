@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { Prisma } from '@prisma/client'
+import { listingNeighborhoodClause } from '@/lib/neighborhood-filter'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -34,13 +36,12 @@ export async function GET(request: NextRequest) {
     const province = searchParams.get('province')
     const maxPrice = searchParams.get('maxPrice')
 
-    const where: Record<string, unknown> = {}
+    const where: Prisma.ListingWhereInput = {}
     if (type && (type === 'alquiler' || type === 'compra')) {
       where.type = type
     }
-    if (neighborhood) {
-      where.neighborhood = neighborhood
-    }
+    const nbClause = listingNeighborhoodClause(neighborhood)
+    if (nbClause) Object.assign(where, nbClause)
     if (province && province !== 'all') {
       where.province =
         province === 'Madrid'
