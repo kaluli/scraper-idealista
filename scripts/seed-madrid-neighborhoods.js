@@ -1,5 +1,5 @@
 /**
- * Seed script: añade la provincia Madrid y los 21 distritos/barrios de Madrid
+ * Seed script: añade la provincia Madrid y distritos + municipios (Idealista)
  * que utiliza Idealista en sus listados.
  *
  * Uso:
@@ -59,6 +59,7 @@ const MADRID_NEIGHBORHOODS = [
   'Vicálvaro',
   // Municipios de la Comunidad de Madrid
   'Alcalá de Henares',
+  'Alcobendas',
 ]
 
 const PROVINCE = 'Madrid'
