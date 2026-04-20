@@ -32,6 +32,19 @@ for (const name of ['.env', '.env.local', '.env.development', '.env.development.
 
 const prisma = new PrismaClient()
 
+function formatDbTarget(url) {
+  if (!url || typeof url !== 'string') return '(DATABASE_URL no definida)'
+  try {
+    const normalized = url.replace(/^mysql:\/\//i, 'http://')
+    const u = new URL(normalized)
+    const db = u.pathname.replace(/^\//, '').split('?')[0] || '(sin nombre)'
+    const port = u.port || '3306'
+    return `${u.hostname}:${port}/${db}`
+  } catch {
+    return '(URL no válida)'
+  }
+}
+
 async function importListing(data) {
   try {
     // Validar que tenga link (requerido)
@@ -113,6 +126,11 @@ async function importListing(data) {
 }
 
 async function main() {
+  console.log('')
+  console.log(`📍 Esta importación escribe en: ${formatDbTarget(process.env.DATABASE_URL)}`)
+  console.log('   (debe coincidir con lo que usa la web: revisá npm run db:status)')
+  console.log('')
+
   const args = process.argv.slice(2)
   let jsonData
 
@@ -165,6 +183,10 @@ async function main() {
       console.log('\n✅ Importación completada')
     }
   }
+
+  const total = await prisma.listing.count()
+  console.log('')
+  console.log(`📊 Pisos en la base DESPUÉS de esta importación: ${total} (${formatDbTarget(process.env.DATABASE_URL)})`)
 }
 
 main()

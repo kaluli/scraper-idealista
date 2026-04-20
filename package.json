@@ -10,6 +10,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
+    "db:status": "node scripts/db-status.js",
     "db:wipe:local": "node scripts/wipe-database.js local",
     "db:wipe:production": "node scripts/wipe-database.js production",
     "db:import": "node scripts/import-json.js",

@@ -11,6 +11,24 @@ const { execSync } = require('child_process')
 const fs = require('fs')
 const path = require('path')
 
+// Misma BD que import-json (no depender solo del cwd del padre)
+const root = path.resolve(__dirname, '..')
+for (const name of ['.env', '.env.local', '.env.development', '.env.development.local']) {
+  const p = path.join(root, name)
+  if (!fs.existsSync(p)) continue
+  fs.readFileSync(p, 'utf8')
+    .split('\n')
+    .forEach((line) => {
+      const match = line.match(/^([^#=]+)=(.*)$/)
+      if (!match) return
+      const key = match[1].trim()
+      let val = match[2].trim()
+      if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1)
+      if (val.startsWith("'") && val.endsWith("'")) val = val.slice(1, -1)
+      process.env[key] = val
+    })
+}
+
 const files = [
   'pisos_espinardo.json',
   'pisos_juan_carlos.json',
@@ -25,6 +43,16 @@ const files = [
 ]
 
 console.log('🚀 Iniciando importación de todos los archivos...\n')
+
+const existingJson = files.filter((f) => fs.existsSync(path.join(process.cwd(), f)))
+if (existingJson.length === 0) {
+  console.error('❌ No hay ningún archivo JSON de la lista en la raíz del proyecto.')
+  console.error('   Colocá aquí al menos uno (ej. pisos.json) o importá con:')
+  console.error('   node scripts/import-json.js /ruta/completa/archivo.json')
+  console.error('')
+  process.exit(1)
+}
+console.log(`📁 Archivos encontrados (${existingJson.length}): ${existingJson.join(', ')}\n`)
 
 let totalImported = 0
 let totalSkipped = 0

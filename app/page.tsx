@@ -407,10 +407,10 @@ export default function Home() {
               Esta aplicación te permite gestionar y analizar pisos de alquiler y compra.
             </p>
             <p className={styles.welcomeMessage} style={{ fontSize: '0.9rem', marginTop: '12px' }}>
-              La cabecera muestra <strong>cuántos pisos hay en la base</strong> (no solo los filtrados).
-              Para importar en local:{' '}
-              <code style={{ fontSize: '0.85rem' }}>node scripts/import-json.js archivo.json</code>
-              {' '}(misma URL que <code style={{ fontSize: '0.85rem' }}>npm run dev</code>) o desde Ajustes.
+              <strong>0 en base</strong> con import hecho suele ser: importaste en <strong>producción (Vercel)</strong> y
+              estás mirando <strong>local</strong> — entonces hacé <code style={{ fontSize: '0.85rem' }}>npm run db:sync-from-prod</code>, o
+              importá otra vez con <code style={{ fontSize: '0.85rem' }}>node scripts/import-json.js ruta/archivo.json</code> y
+              comprobá con <code style={{ fontSize: '0.85rem' }}>npm run db:status</code>.
             </p>
             <div className={styles.welcomeFeatures}>
               <p><strong>Características:</strong></p>
