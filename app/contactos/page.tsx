@@ -426,9 +426,6 @@ export default function ContactosPage() {
             </Link>
           </div>
           <h1 className={styles.title}>📇 Pisos en venta – Contactos</h1>
-          <p className={styles.subtitle}>
-            Índice de barrios y listado de pisos en compra. Edita cita y notas; se guardan en la base de datos.
-          </p>
         </header>
 
         {loading && (
