@@ -28,6 +28,8 @@ export default function Home() {
   const [barrioOptions, setBarrioOptions] = useState<string[]>([])
   const [provinces, setProvinces] = useState<string[]>([])
   const [stats, setStats] = useState<any>(null)
+  /** Total de filas en `listings` (sin aplicar filtros de la query). */
+  const [totalInDb, setTotalInDb] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedType, setSelectedType] = useState<'alquiler' | 'compra' | 'all'>('all')
@@ -76,9 +78,10 @@ export default function Home() {
       }
       const result = await response.json()
       if (result.success && result.data) {
-        const { listings: list, stats: s, provinces: p } = result.data
+        const { listings: list, stats: s, provinces: p, totalInDb: total } = result.data
         setListings(list || [])
         setStats(s ?? null)
+        setTotalInDb(typeof total === 'number' ? total : 0)
         if (p && p.length > 0) {
           setProvinces(p)
           if (selectedProvince !== 'all' && !p.includes(selectedProvince)) {
@@ -92,11 +95,13 @@ export default function Home() {
         setError(result.error || 'Error al cargar los pisos')
         setListings([])
         setStats(null)
+        setTotalInDb(0)
       }
     } catch (error) {
       console.error('Error loading home data:', error)
       setError(error instanceof Error ? error.message : 'Error al cargar los pisos')
       setListings([])
+      setTotalInDb(null)
     } finally {
       setLoading(false)
     }
@@ -227,8 +232,15 @@ export default function Home() {
                   BD: Error →
                 </a>
               ) : (
-                <span className={styles.dbStatusOk}>
-                  BD: OK{listings.length > 0 ? ` (${listings.length} pisos)` : ' (vacía)'}
+                <span className={styles.dbStatusOk} title="total en tabla listings vs. resultados filtrados">
+                  BD: OK
+                  {totalInDb !== null &&
+                    ` — ${totalInDb} en base` +
+                      (totalInDb > 0 && listings.length !== totalInDb
+                        ? ` (${listings.length} visibles)`
+                        : totalInDb === 0
+                          ? ' (vacía)'
+                          : '')}
                 </span>
               )}
             </span>
@@ -342,6 +354,29 @@ export default function Home() {
           </div>
         </div>
 
+        {!loading &&
+          !error &&
+          totalInDb !== null &&
+          totalInDb > 0 &&
+          listings.length === 0 && (
+            <div className={styles.filterMismatchBanner}>
+              Hay <strong>{totalInDb}</strong> pisos en la base;{' '}
+              <strong>ninguno cumple los filtros</strong> (provincia, barrio, precio o tipo).
+              <button
+                type="button"
+                className={styles.btnFiltersReset}
+                onClick={() => {
+                  setSelectedProvince('all')
+                  setSelectedNeighborhood('all')
+                  setSelectedMaxPrice('all')
+                  setSelectedType('all')
+                }}
+              >
+                Ver todos los pisos (quitar filtros)
+              </button>
+            </div>
+          )}
+
         {/* Error message */}
         {error && (
           <div className={styles.errorCard}>
@@ -365,14 +400,17 @@ export default function Home() {
         )}
 
         {/* Welcome message when no data (primera carga sin nada en la base) */}
-        {!loading && !error && listings.length === 0 && !stats && (
+        {!loading && !error && totalInDb === 0 && (
           <div className={styles.welcomeCard}>
             <h2 className={styles.welcomeTitle}>¡Bienvenido al Gestor de Pisos Idealista!</h2>
             <p className={styles.welcomeMessage}>
               Esta aplicación te permite gestionar y analizar pisos de alquiler y compra.
             </p>
             <p className={styles.welcomeMessage} style={{ fontSize: '0.9rem', marginTop: '12px' }}>
-              Si ya tenés datos en la base y no ves nada, probá «Ver todos los pisos» más abajo o revisá la conexión (variable <code>DATABASE_URL</code> en .env.local o en Vercel).
+              La cabecera muestra <strong>cuántos pisos hay en la base</strong> (no solo los filtrados).
+              Para importar en local:{' '}
+              <code style={{ fontSize: '0.85rem' }}>node scripts/import-json.js archivo.json</code>
+              {' '}(misma URL que <code style={{ fontSize: '0.85rem' }}>npm run dev</code>) o desde Ajustes.
             </p>
             <div className={styles.welcomeFeatures}>
               <p><strong>Características:</strong></p>

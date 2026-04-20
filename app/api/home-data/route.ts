@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
           stats: null,
           neighborhoods: [],
           provinces: [],
+          totalInDb: 0,
         },
       },
       { status: 200, headers: { 'Cache-Control': 'no-store' } }
@@ -76,14 +77,17 @@ export async function GET(request: NextRequest) {
         .sort()
     }
 
-    // 2. Listings con filtros (una sola query)
-    const listings = await prisma.listing.findMany({
-      where,
-      orderBy: [
-        { profitabilityRate: 'desc' },
-        { createdAt: 'desc' },
-      ],
-    })
+    // 2. Total sin filtros + listings filtrados
+    const [totalInDb, listings] = await Promise.all([
+      prisma.listing.count(),
+      prisma.listing.findMany({
+        where,
+        orderBy: [
+          { profitabilityRate: 'desc' },
+          { createdAt: 'desc' },
+        ],
+      }),
+    ])
 
     // 3. Stats calculadas desde listings (en memoria)
     const stats = computeStats(listings, type ?? undefined)
@@ -104,6 +108,7 @@ export async function GET(request: NextRequest) {
         stats,
         neighborhoods,
         provinces,
+        totalInDb,
       },
     })
     res.headers.set(
@@ -122,6 +127,7 @@ export async function GET(request: NextRequest) {
           stats: null,
           neighborhoods: [],
           provinces: [],
+          totalInDb: 0,
         },
       },
       { status: 200, headers: { 'Cache-Control': 'no-store' } }

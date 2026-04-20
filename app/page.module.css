@@ -82,6 +82,36 @@
   vertical-align: middle;
 }
 
+.filterMismatchBanner {
+  background: #fff8e1;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+  color: #5d4200;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.btnFiltersReset {
+  margin-left: auto;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #996600;
+  background: white;
+  color: #663d00;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnFiltersReset:hover {
+  background: #fffbf0;
+}
+
 /* Estadísticas */
 .statsCard {
   background: white;
