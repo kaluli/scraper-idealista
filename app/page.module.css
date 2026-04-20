@@ -20,12 +20,15 @@
   display: flex;
   align-items: center;
   gap: 20px;
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .headerActions {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: nowrap;
 }
 
 .dbStatus {
@@ -729,10 +732,48 @@
     padding: 16px;
   }
 
+  /* Una sola línea: sin estado BD en móvil; título + enlaces en fila */
+  .dbStatus {
+    display: none;
+  }
+
   .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: nowrap;
+    margin-bottom: 20px;
+  }
+
+  .title {
+    font-size: 1.05rem;
+    line-height: 1.25;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 4px;
+  }
+
+  .headerRight {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .headerActions {
+    gap: 10px;
+    flex-wrap: nowrap;
+  }
+
+  .reportLink {
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  .reportLink .linkIcon {
+    margin-right: 4px;
   }
 
   .filters {

@@ -81,7 +81,7 @@ async function importListing(data) {
         type: (data.precio_mensual_eur || data.precio_eur_mes) ? 'alquiler' : (data.precio_venta_eur || data.precio_total_eur ? 'compra' : 'compra'),
         title: data.titulo || data.title || null,
         city: city,
-        province: data.province || 'Murcia', // Por defecto Murcia
+        province: data.province || 'Madrid',
         profitabilityRate: data.tasa_rentabilidad || data.profitabilityRate || null,
       },
     })

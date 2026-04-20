@@ -2,10 +2,33 @@
  * Seed script: añade la provincia Madrid y los 21 distritos/barrios de Madrid
  * que utiliza Idealista en sus listados.
  *
- * Uso: node scripts/seed-madrid-neighborhoods.js
- *
- * Requiere: DATABASE_URL en .env
+ * Uso:
+ *   node scripts/seed-madrid-neighborhoods.js           (DATABASE_URL del entorno / .env de Prisma)
+ *   node scripts/seed-madrid-neighborhoods.js production (carga .env.production antes de conectar)
  */
+
+const path = require('path')
+const fs = require('fs')
+
+function loadEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return
+  const content = fs.readFileSync(filePath, 'utf8')
+  content.split('\n').forEach((line) => {
+    const match = line.match(/^([^#=]+)=(.*)$/)
+    if (!match) return
+    const key = match[1].trim()
+    let val = match[2].trim()
+    if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1)
+    if (val.startsWith("'") && val.endsWith("'")) val = val.slice(1, -1)
+    process.env[key] = val
+  })
+}
+
+const root = path.resolve(__dirname, '..')
+if (process.argv[2] === 'production') {
+  loadEnvFile(path.join(root, '.env.production'))
+  console.log('📎 Usando DATABASE_URL de .env.production\n')
+}
 
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()

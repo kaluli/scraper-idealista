@@ -19,17 +19,23 @@ interface Listing {
   rooms: number | null
 }
 
+/** Provincia y barrio por defecto (filtros + altas manuales + import JSON sin provincia). */
+const DEFAULT_PROVINCE = 'Madrid'
+const DEFAULT_NEIGHBORHOOD = 'Alcalá de Henares'
+
 export default function Home() {
   const [listings, setListings] = useState<Listing[]>([])
-  const [neighborhoods, setNeighborhoods] = useState<string[]>([])
+  const [barrioOptions, setBarrioOptions] = useState<string[]>([])
   const [provinces, setProvinces] = useState<string[]>([])
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedType, setSelectedType] = useState<'alquiler' | 'compra' | 'all'>('all')
-  const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>('all')
-  const [selectedProvince, setSelectedProvince] = useState<string>('all') // Primera carga sin filtro (local+prod OK); loadProvinces pone Madrid si existe
-  const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('200000') // Por defecto ocultar pisos > 200.000 €
+  const [selectedNeighborhood, setSelectedNeighborhood] =
+    useState<string>(DEFAULT_NEIGHBORHOOD)
+  const [selectedProvince, setSelectedProvince] = useState<string>(DEFAULT_PROVINCE)
+  /** Sin tope por defecto: compras > 200k no desaparecen tras importar. */
+  const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('all')
   const [showModal, setShowModal] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
@@ -38,8 +44,9 @@ export default function Home() {
     link: '',
     profitabilityRate: '',
     type: 'alquiler' as 'alquiler' | 'compra',
-    neighborhood: '',
-    city: '',
+    neighborhood: DEFAULT_NEIGHBORHOOD,
+    city: DEFAULT_NEIGHBORHOOD,
+    province: DEFAULT_PROVINCE,
     publishedAddress: '',
     rooms: '',
   })
@@ -69,16 +76,15 @@ export default function Home() {
       }
       const result = await response.json()
       if (result.success && result.data) {
-        const { listings: list, stats: s, neighborhoods: n, provinces: p } = result.data
+        const { listings: list, stats: s, provinces: p } = result.data
         setListings(list || [])
         setStats(s ?? null)
-        setNeighborhoods(n || [])
         if (p && p.length > 0) {
           setProvinces(p)
           if (selectedProvince !== 'all' && !p.includes(selectedProvince)) {
             setSelectedProvince(p[0])
-          } else if (p.includes('Madrid') && selectedProvince === 'all') {
-            setSelectedProvince('Madrid')
+          } else if (p.includes(DEFAULT_PROVINCE) && selectedProvince === 'all') {
+            setSelectedProvince(DEFAULT_PROVINCE)
           }
         }
       } else {
@@ -95,6 +101,44 @@ export default function Home() {
       setLoading(false)
     }
   }
+
+  /** Barrios según provincia (tabla `neighborhoods` + datos importados), no solo pisos ya filtrados. */
+  useEffect(() => {
+    let cancelled = false
+    async function loadBarrioOptions() {
+      if (selectedProvince === 'all') {
+        if (!cancelled) setBarrioOptions([])
+        return
+      }
+      try {
+        const res = await fetch(
+          `/api/neighborhoods?all=true&province=${encodeURIComponent(selectedProvince)}`
+        )
+        const json = await res.json()
+        if (!cancelled && json.success && Array.isArray(json.data)) {
+          const names = [...json.data]
+          if (
+            selectedProvince === DEFAULT_PROVINCE &&
+            !names.includes(DEFAULT_NEIGHBORHOOD)
+          ) {
+            names.push(DEFAULT_NEIGHBORHOOD)
+          }
+          names.sort((a, b) => a.localeCompare(b, 'es'))
+          setBarrioOptions(names)
+        } else if (!cancelled) {
+          setBarrioOptions(
+            selectedProvince === DEFAULT_PROVINCE ? [DEFAULT_NEIGHBORHOOD] : []
+          )
+        }
+      } catch {
+        if (!cancelled) setBarrioOptions([])
+      }
+    }
+    loadBarrioOptions()
+    return () => {
+      cancelled = true
+    }
+  }, [selectedProvince])
 
   useEffect(() => {
     loadHomeData()
@@ -121,8 +165,9 @@ export default function Home() {
           link: '',
           profitabilityRate: '',
           type: 'alquiler',
-          neighborhood: '',
-          city: '',
+          neighborhood: DEFAULT_NEIGHBORHOOD,
+          city: DEFAULT_NEIGHBORHOOD,
+          province: DEFAULT_PROVINCE,
           publishedAddress: '',
           rooms: '',
         })
@@ -242,8 +287,11 @@ export default function Home() {
                 className={styles.select}
                 value={provinces.length === 0 ? 'all' : selectedProvince}
                 onChange={(e) => {
-                  setSelectedProvince(e.target.value)
-                  setSelectedNeighborhood('all') // Reset barrio al cambiar provincia
+                  const v = e.target.value
+                  setSelectedProvince(v)
+                  setSelectedNeighborhood(
+                    v === DEFAULT_PROVINCE ? DEFAULT_NEIGHBORHOOD : 'all'
+                  )
                 }}
                 title="Filtrar por provincia"
               >
@@ -262,10 +310,10 @@ export default function Home() {
                 className={styles.select}
                 value={selectedNeighborhood}
                 onChange={(e) => setSelectedNeighborhood(e.target.value)}
-                disabled={selectedProvince === 'all' && neighborhoods.length === 0}
+                disabled={selectedProvince === 'all'}
               >
                 <option value="all">Todos los barrios</option>
-                {neighborhoods.map((n) => (
+                {barrioOptions.map((n) => (
                   <option key={n} value={n}>
                     {n}
                   </option>

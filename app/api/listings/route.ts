@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
         type: finalType,
         neighborhood: finalNeighborhood || null,
         city: city || null,
-        province: body.province || null,
+        province: body.province || 'Madrid',
         publishedAddress: finalPublishedAddress || null,
         rooms: finalRooms ? parseInt(finalRooms) : null,
       },
