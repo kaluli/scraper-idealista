@@ -19,9 +19,8 @@ interface Listing {
   rooms: number | null
 }
 
-/** Provincia y barrio por defecto (filtros + altas manuales + import JSON sin provincia). */
+/** Provincia por defecto en filtros y formulario; barrio del filtro sin valor por defecto (Todos). */
 const DEFAULT_PROVINCE = 'Madrid'
-const DEFAULT_NEIGHBORHOOD = 'Alcalá de Henares'
 
 export default function Home() {
   const [listings, setListings] = useState<Listing[]>([])
@@ -33,8 +32,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedType, setSelectedType] = useState<'alquiler' | 'compra' | 'all'>('all')
-  const [selectedNeighborhood, setSelectedNeighborhood] =
-    useState<string>(DEFAULT_NEIGHBORHOOD)
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>('all')
   const [selectedProvince, setSelectedProvince] = useState<string>(DEFAULT_PROVINCE)
   /** Sin tope por defecto: compras > 200k no desaparecen tras importar. */
   const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('all')
@@ -46,8 +44,8 @@ export default function Home() {
     link: '',
     profitabilityRate: '',
     type: 'alquiler' as 'alquiler' | 'compra',
-    neighborhood: DEFAULT_NEIGHBORHOOD,
-    city: DEFAULT_NEIGHBORHOOD,
+    neighborhood: '',
+    city: '',
     province: DEFAULT_PROVINCE,
     publishedAddress: '',
     rooms: '',
@@ -182,8 +180,8 @@ export default function Home() {
           link: '',
           profitabilityRate: '',
           type: 'alquiler',
-          neighborhood: DEFAULT_NEIGHBORHOOD,
-          city: DEFAULT_NEIGHBORHOOD,
+          neighborhood: '',
+          city: '',
           province: DEFAULT_PROVINCE,
           publishedAddress: '',
           rooms: '',
@@ -313,9 +311,7 @@ export default function Home() {
                 onChange={(e) => {
                   const v = e.target.value
                   setSelectedProvince(v)
-                  setSelectedNeighborhood(
-                    v === DEFAULT_PROVINCE ? DEFAULT_NEIGHBORHOOD : 'all'
-                  )
+                  setSelectedNeighborhood('all')
                 }}
                 title="Filtrar por provincia"
               >
