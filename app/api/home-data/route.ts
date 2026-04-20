@@ -36,6 +36,11 @@ export async function GET(request: NextRequest) {
     const neighborhood = searchParams.get('neighborhood')
     const province = searchParams.get('province')
     const maxPrice = searchParams.get('maxPrice')
+    const minSurfaceRaw = searchParams.get('minSurface')
+    const minSurfaceM2 =
+      minSurfaceRaw === '40' || minSurfaceRaw === '80'
+        ? Number(minSurfaceRaw)
+        : 40
 
     const where: Prisma.ListingWhereInput = {}
     if (type && (type === 'alquiler' || type === 'compra')) {
@@ -49,9 +54,13 @@ export async function GET(request: NextRequest) {
           ? { in: ['Madrid', 'Alcalá de Henares'] }
           : province
     }
-    if (maxPrice) {
-      where.price = { lte: parseFloat(maxPrice) }
+    if (maxPrice && maxPrice !== 'all') {
+      const mp = parseFloat(maxPrice)
+      if (!Number.isNaN(mp)) {
+        where.price = { lte: mp }
+      }
     }
+    where.surface = { gte: minSurfaceM2 }
 
     // 1. Provincias (desde neighborhoods o listings)
     let provinces: string[] = []

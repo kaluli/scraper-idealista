@@ -22,6 +22,11 @@ interface Listing {
 /** Provincia por defecto en filtros y formulario; barrio del filtro sin valor por defecto (Todos). */
 const DEFAULT_PROVINCE = 'Madrid'
 
+/** Superficie mínima por defecto (≥ 40 m²); opción ≥ 80 m². */
+const DEFAULT_MIN_SURFACE = '40' as const
+
+type MinSurfaceOption = '40' | '80'
+
 export default function Home() {
   const [listings, setListings] = useState<Listing[]>([])
   const [barrioOptions, setBarrioOptions] = useState<string[]>([])
@@ -36,6 +41,8 @@ export default function Home() {
   const [selectedProvince, setSelectedProvince] = useState<string>(DEFAULT_PROVINCE)
   /** Sin tope por defecto: compras > 200k no desaparecen tras importar. */
   const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('all')
+  const [selectedMinSurface, setSelectedMinSurface] =
+    useState<MinSurfaceOption>(DEFAULT_MIN_SURFACE)
   const [showModal, setShowModal] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
@@ -69,6 +76,7 @@ export default function Home() {
       if (selectedMaxPrice !== 'all') {
         params.append('maxPrice', selectedMaxPrice)
       }
+      params.append('minSurface', selectedMinSurface)
 
       const response = await fetch(`/api/home-data?${params.toString()}`)
       if (!response.ok) {
@@ -126,6 +134,7 @@ export default function Home() {
         if (selectedMaxPrice !== 'all') {
           params.set('maxPrice', selectedMaxPrice)
         }
+        params.set('minSurface', selectedMinSurface)
         const res = await fetch(`/api/neighborhoods?${params.toString()}`)
         const json = await res.json()
         if (!cancelled && json.success && Array.isArray(json.data)) {
@@ -153,12 +162,12 @@ export default function Home() {
     return () => {
       cancelled = true
     }
-  }, [selectedProvince, selectedType, selectedMaxPrice])
+  }, [selectedProvince, selectedType, selectedMaxPrice, selectedMinSurface])
 
   useEffect(() => {
     loadHomeData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedType, selectedNeighborhood, selectedProvince, selectedMaxPrice])
+  }, [selectedType, selectedNeighborhood, selectedProvince, selectedMaxPrice, selectedMinSurface])
 
   // Crear nuevo piso
   const handleSubmit = async (e: React.FormEvent) => {
@@ -359,6 +368,26 @@ export default function Home() {
                 <option value="500000">Menores de 500.000€</option>
               </select>
             </div>
+
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel}>Superficie</label>
+              <div className={styles.typeButtons} role="group" aria-label="Superficie mínima">
+                <button
+                  type="button"
+                  className={`${styles.btnType} ${selectedMinSurface === '40' ? styles.btnTypeActive : ''}`}
+                  onClick={() => setSelectedMinSurface('40')}
+                >
+                  {'>'} 40 m²
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.btnType} ${selectedMinSurface === '80' ? styles.btnTypeActive : ''}`}
+                  onClick={() => setSelectedMinSurface('80')}
+                >
+                  {'>'} 80 m²
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -369,7 +398,8 @@ export default function Home() {
           listings.length === 0 && (
             <div className={styles.filterMismatchBanner}>
               Hay <strong>{totalInDb}</strong> pisos en la base;{' '}
-              <strong>ninguno cumple los filtros</strong> (provincia, barrio, precio o tipo).
+              <strong>ninguno cumple los filtros</strong> (provincia, barrio, precio, tipo o
+              superficie).
               <button
                 type="button"
                 className={styles.btnFiltersReset}
@@ -378,6 +408,7 @@ export default function Home() {
                   setSelectedNeighborhood('all')
                   setSelectedMaxPrice('all')
                   setSelectedType('all')
+                  setSelectedMinSurface(DEFAULT_MIN_SURFACE)
                 }}
               >
                 Ver todos los pisos (quitar filtros)
@@ -486,9 +517,9 @@ export default function Home() {
               <div className={styles.statBox}>
                 <div className={styles.statLabel}>Habitaciones promedio</div>
                 <div className={styles.statValue}>{stats.avgRooms > 0 ? stats.avgRooms.toFixed(1) : 'N/A'}</div>
-                {Object.keys(stats.roomsDistribution).length > 0 && (
+                {Object.keys(stats.roomsDistribution ?? {}).length > 0 && (
                   <div className={styles.statRooms}>
-                    {Object.entries(stats.roomsDistribution)
+                    {Object.entries(stats.roomsDistribution ?? {})
                       .sort(([a], [b]) => {
                         if (a === 'N/A') return 1
                         if (b === 'N/A') return -1
@@ -505,7 +536,7 @@ export default function Home() {
             </div>
 
             {/* Estadísticas por barrio */}
-            {Object.keys(stats.byNeighborhood).length > 0 && (
+            {stats.byNeighborhood && Object.keys(stats.byNeighborhood).length > 0 && (
               <div className={styles.neighborhoodStats}>
                 <h3 className={styles.subsectionTitle}>Por barrio:</h3>
                 <div className={styles.neighborhoodStatsGrid}>
@@ -584,7 +615,6 @@ export default function Home() {
                   </p>
                   <div className={styles.criteriosLinks}>
                     <Link href="/reporte" className={styles.criteriosLink}>Ver reporte completo: fórmulas, circunstancias e índice de fiabilidad →</Link>
-                    <Link href="/recomendaciones" className={styles.criteriosLink}>Ver recomendaciones: qué barrio visitar primero y Top 5 para comprar en 2026 →</Link>
                   </div>
                 </div>
               </div>
@@ -614,6 +644,7 @@ export default function Home() {
                 setSelectedNeighborhood('all')
                 setSelectedProvince('all')
                 setSelectedMaxPrice('all')
+                setSelectedMinSurface(DEFAULT_MIN_SURFACE)
                 loadHomeData()
               }}
               style={{ marginTop: '16px' }}

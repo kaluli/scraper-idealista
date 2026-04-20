@@ -21,6 +21,11 @@ export async function GET(request: NextRequest) {
     const all = searchParams.get('all') === 'true' // barrios derivados de pisos (no tabla seed)
     const province = searchParams.get('province') // filtrar por provincia
     const maxPrice = searchParams.get('maxPrice')
+    const minSurfaceRaw = searchParams.get('minSurface')
+    const minSurfaceM2 =
+      minSurfaceRaw === '40' || minSurfaceRaw === '80'
+        ? Number(minSurfaceRaw)
+        : 40
 
     /** Solo barrios donde hay ≥1 listing que cumpla provincia / tipo / precio (como la home). */
     if (all) {
@@ -42,6 +47,7 @@ export async function GET(request: NextRequest) {
           listingWhere.price = { lte: n }
         }
       }
+      listingWhere.surface = { gte: minSurfaceM2 }
       const fromListings = await prisma.listing.findMany({
         where: listingWhere,
         select: { neighborhood: true },
