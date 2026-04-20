@@ -23,7 +23,7 @@
     "import-idealista-html": "node scripts/import-idealista-html.js",
     "backup-prod": "node scripts/backup-prod.js",
     "postinstall": "prisma generate",
-    "deploy": "vercel --prod"
+    "deploy": "npx vercel --prod"
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",
