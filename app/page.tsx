@@ -107,43 +107,55 @@ export default function Home() {
     }
   }
 
-  /** Barrios según provincia (tabla `neighborhoods` + datos importados), no solo pisos ya filtrados. */
+  /** Solo barrios con ≥1 piso (según provincia / tipo / precio máximo). */
   useEffect(() => {
     let cancelled = false
     async function loadBarrioOptions() {
       if (selectedProvince === 'all') {
-        if (!cancelled) setBarrioOptions([])
+        if (!cancelled) {
+          setBarrioOptions([])
+          setSelectedNeighborhood('all')
+        }
         return
       }
       try {
-        const res = await fetch(
-          `/api/neighborhoods?all=true&province=${encodeURIComponent(selectedProvince)}`
-        )
+        const params = new URLSearchParams()
+        params.set('all', 'true')
+        params.set('province', selectedProvince)
+        if (selectedType !== 'all') {
+          params.set('type', selectedType)
+        }
+        if (selectedMaxPrice !== 'all') {
+          params.set('maxPrice', selectedMaxPrice)
+        }
+        const res = await fetch(`/api/neighborhoods?${params.toString()}`)
         const json = await res.json()
         if (!cancelled && json.success && Array.isArray(json.data)) {
-          const names = [...json.data]
-          if (
-            selectedProvince === DEFAULT_PROVINCE &&
-            !names.includes(DEFAULT_NEIGHBORHOOD)
-          ) {
-            names.push(DEFAULT_NEIGHBORHOOD)
-          }
-          names.sort((a, b) => a.localeCompare(b, 'es'))
-          setBarrioOptions(names)
-        } else if (!cancelled) {
-          setBarrioOptions(
-            selectedProvince === DEFAULT_PROVINCE ? [DEFAULT_NEIGHBORHOOD] : []
+          const names = [...json.data].sort((a, b) =>
+            a.localeCompare(b, 'es')
           )
+          setBarrioOptions(names)
+          setSelectedNeighborhood((prev) => {
+            if (prev === 'all') return prev
+            if (names.length === 0 || !names.includes(prev)) return 'all'
+            return prev
+          })
+        } else if (!cancelled) {
+          setBarrioOptions([])
+          setSelectedNeighborhood((prev) => (prev !== 'all' ? 'all' : prev))
         }
       } catch {
-        if (!cancelled) setBarrioOptions([])
+        if (!cancelled) {
+          setBarrioOptions([])
+          setSelectedNeighborhood((prev) => (prev !== 'all' ? 'all' : prev))
+        }
       }
     }
     loadBarrioOptions()
     return () => {
       cancelled = true
     }
-  }, [selectedProvince])
+  }, [selectedProvince, selectedType, selectedMaxPrice])
 
   useEffect(() => {
     loadHomeData()

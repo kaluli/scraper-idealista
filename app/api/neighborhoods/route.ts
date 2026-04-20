@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -17,34 +18,39 @@ export async function GET(request: NextRequest) {
     await prisma.$connect()
     const searchParams = request.nextUrl.searchParams
     const type = searchParams.get('type') // filtrar por tipo
-    const all = searchParams.get('all') === 'true' // obtener todos los barrios disponibles
+    const all = searchParams.get('all') === 'true' // barrios derivados de pisos (no tabla seed)
     const province = searchParams.get('province') // filtrar por provincia
+    const maxPrice = searchParams.get('maxPrice')
 
+    /** Solo barrios donde hay ≥1 listing que cumpla provincia / tipo / precio (como la home). */
     if (all) {
-      const where: any = {}
+      const listingWhere: Prisma.ListingWhereInput = {
+        neighborhood: { not: null },
+      }
       if (province && province !== 'all') {
-        where.province = province === 'Madrid' ? { in: ['Madrid', 'Alcalá de Henares'] } : province
+        listingWhere.province =
+          province === 'Madrid'
+            ? { in: ['Madrid', 'Alcalá de Henares'] }
+            : province
       }
-      const neighborhoods = await prisma.neighborhood.findMany({
-        where,
-        orderBy: { name: 'asc' },
-      })
-      let names = neighborhoods.map((n) => n.name)
-      if (names.length === 0) {
-        const listingWhere: any = { neighborhood: { not: null } }
-        if (province && province !== 'all') {
-          listingWhere.province = province === 'Madrid' ? { in: ['Madrid', 'Alcalá de Henares'] } : province
+      if (type && (type === 'alquiler' || type === 'compra')) {
+        listingWhere.type = type
+      }
+      if (maxPrice && maxPrice !== 'all') {
+        const n = parseFloat(maxPrice)
+        if (!Number.isNaN(n)) {
+          listingWhere.price = { lte: n }
         }
-        const fromListings = await prisma.listing.findMany({
-          where: listingWhere,
-          select: { neighborhood: true },
-          distinct: ['neighborhood'],
-        })
-        names = fromListings
-          .map((l) => l.neighborhood)
-          .filter((n): n is string => n !== null && n !== '')
-          .sort()
       }
+      const fromListings = await prisma.listing.findMany({
+        where: listingWhere,
+        select: { neighborhood: true },
+        distinct: ['neighborhood'],
+      })
+      const names = fromListings
+        .map((l) => l.neighborhood)
+        .filter((n): n is string => n !== null && String(n).trim() !== '')
+        .sort((a, b) => a.localeCompare(b, 'es'))
       return NextResponse.json({ success: true, data: names })
     }
 
