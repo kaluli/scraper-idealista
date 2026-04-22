@@ -8,6 +8,7 @@
     "build": "prisma generate && next build",
     "build:clean": "rm -rf .next && prisma generate && next build",
     "start": "next start",
+    "start:3100": "next start -p 3100",
     "lint": "next lint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
