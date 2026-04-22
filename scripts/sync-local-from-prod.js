@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 /**
- * Sync LOCAL ← PRODUCCIÓN (los datos correctos están en producción).
- * - LEE solo de la base de producción (FreeDB).
- * - ESCRIBE solo en la base local (localhost).
+ * Sync LOCAL ← PRODUCCIÓN (traer prod a tu máquina; NO es el camino inverso).
+ * - LEE solo de la base de producción (MySQL remoto desde .env.production).
+ * - ESCRIBE solo en la base local (localhost): listings + neighborhoods.
+ * - La web en local (incl. /contactos) usa esa BD local; tras este sync coincide con prod.
  * - NO modifica nunca la base de producción.
  * - NO escribe ni cambia process.env ni ningún archivo .env (solo LEE las URLs).
  *
  * Requiere:
- *   .env.production           → DATABASE_URL de producción (FreeDB)
+ *   .env.production           → DATABASE_URL de producción (MySQL remoto)
  *   .env.development.local    → DATABASE_URL local (localhost)
  *
  * Uso: node scripts/sync-local-from-prod.js
@@ -46,8 +47,16 @@ if (!prodUrl || !prodUrl.startsWith('mysql://')) {
   console.error('❌ Falta DATABASE_URL de producción en .env.production')
   process.exit(1)
 }
-if (!prodUrl.includes('freedb.tech')) {
-  console.error('❌ .env.production no parece producción (freedb.tech). No sync para no tocar la base equivocada.')
+const prodLooksLocal =
+  prodUrl.includes('localhost') || prodUrl.includes('127.0.0.1')
+if (prodLooksLocal) {
+  console.error(
+    '❌ .env.production no debe ser localhost: ahí va la URL de PRODUCCIÓN remota.'
+  )
+  process.exit(1)
+}
+if (prodUrl === localUrl) {
+  console.error('❌ Producción y local tienen la misma DATABASE_URL.')
   process.exit(1)
 }
 if (!localUrl || !localUrl.startsWith('mysql://')) {
@@ -71,7 +80,7 @@ async function main() {
   let neighborhoods = []
 
   try {
-    console.log('   Leyendo desde producción (FreeDB)...')
+    console.log('   Leyendo desde producción...')
     const [l, n] = await Promise.all([
       prismaProd.listing.findMany({ orderBy: { id: 'asc' } }),
       prismaProd.neighborhood.findMany({ orderBy: { id: 'asc' } }),
