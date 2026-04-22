@@ -31,6 +31,22 @@ for (const name of ['.env', '.env.local', '.env.development', '.env.development.
   }
 }
 
+try {
+  const { execSync } = require('child_process')
+  execSync('lsof -iTCP:3000 -sTCP:LISTEN', { stdio: 'pipe' })
+  console.warn('')
+  console.warn(
+    '⚠️  El puerto 3000 ya está en uso. Next.js usará otro (p. ej. 3001).'
+  )
+  console.warn(
+    '   Abrí la URL exacta que muestre la terminal, o liberá el puerto:'
+  )
+  console.warn('     kill $(lsof -ti:3000)')
+  console.warn('')
+} catch (_) {
+  // nadie escuchando en 3000
+}
+
 const url = process.env.DATABASE_URL || ''
 if (!url.startsWith('mysql://')) {
   console.error('❌ DATABASE_URL no está definida o no es mysql://')

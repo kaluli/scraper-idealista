@@ -56,23 +56,34 @@ function minDateToday(): string {
   return `${y}-${m}-${day}`
 }
 
-/** Hora mínima para el selector: si la fecha es hoy, siguiente slot de 10 min (entre 07:00 y 21:50); si no, "07:00". */
-function minTimeForDate(dateStr: string): string {
+/** Minutos desde medianoche para un slot "HH:mm". */
+function slotMinutes(slot: string): number {
+  const [h, m] = slot.split(':').map(Number)
+  return h * 60 + m
+}
+
+const DAY_START_MIN = 7 * 60
+const LAST_SLOT_MIN = 21 * 60 + 50 // 21:50
+
+/**
+ * Si la fecha es hoy: minutos del primer slot permitido (múltiplos de 10 desde ahora).
+ * Si ya pasó el último slot (21:50), null (no hay opciones).
+ * Para otros días: desde 07:00.
+ */
+function minSlotMinutesForDate(dateStr: string): number | null {
   const today = minDateToday()
-  if (!dateStr || dateStr !== today) return '07:00'
-  const d = new Date()
-  const mins = d.getMinutes() + d.getSeconds() / 60 + d.getMilliseconds() / 60000
-  const nextSlot = Math.ceil(mins / 10) * 10
-  let h = d.getHours()
-  let m = nextSlot
-  if (nextSlot >= 60) {
-    h += 1
-    m = 0
+  if (!dateStr || dateStr !== today) {
+    return DAY_START_MIN
   }
-  const slot = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-  if (slot < '07:00') return '07:00'
-  if (slot > '21:50') return '22:00' // hoy ya no hay slots; el filtro no mostrará opciones
-  return slot
+  const d = new Date()
+  const nowMin =
+    d.getHours() * 60 +
+    d.getMinutes() +
+    d.getSeconds() / 60 +
+    d.getMilliseconds() / 60000
+  const nextStart = Math.ceil(nowMin / 10) * 10
+  if (nextStart > LAST_SLOT_MIN) return null
+  return Math.max(nextStart, DAY_START_MIN)
 }
 
 function toDatetimeLocal(iso: string | null): string {
@@ -852,10 +863,15 @@ export default function ContactosPage() {
                     }}
                   >
                     <option value="">—</option>
-                    {(editForm.citaAt?.slice(0, 10) === minDateToday()
-                      ? TIME_SLOTS_10.filter((slot) => slot >= minTimeForDate(minDateToday()))
-                      : TIME_SLOTS_10
-                    ).map((slot) => (
+                    {((): string[] => {
+                      const datePart = editForm.citaAt?.slice(0, 10) || ''
+                      const minM = minSlotMinutesForDate(datePart)
+                      if (datePart === minDateToday() && minM === null) return []
+                      if (datePart === minDateToday() && minM !== null) {
+                        return TIME_SLOTS_10.filter((slot) => slotMinutes(slot) >= minM)
+                      }
+                      return TIME_SLOTS_10
+                    })().map((slot) => (
                       <option key={slot} value={slot}>
                         {slot}
                       </option>
