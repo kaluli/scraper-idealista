@@ -24,6 +24,7 @@
     "db:prod-to-local": "node scripts/sync-local-from-prod.js",
     "db:sync-to-prod": "node scripts/sync-local-to-prod.js",
     "db:push-vercel": "node scripts/push-local-to-vercel.js",
+    "db:pull-vercel": "node scripts/pull-prod-via-vercel.js",
     "import-idealista-html": "node scripts/import-idealista-html.js",
     "backup-prod": "node scripts/backup-prod.js",
     "postinstall": "prisma generate",

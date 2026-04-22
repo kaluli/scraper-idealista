@@ -15,6 +15,9 @@
  *
  * Uso: node scripts/sync-local-from-prod.js
  *  o:  npm run db:sync-from-prod
+ *
+ * Si "Can't reach database server" a FreeDB: usá npm run db:pull-vercel
+ * (mismo dato vía GET /api/admin/export, sin puerto 3306).
  */
 
 const path = require('path')
