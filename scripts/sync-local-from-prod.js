@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /**
- * Sync LOCAL ← PRODUCCIÓN (traer prod a tu máquina; NO es el camino inverso).
+ * Backup / copia PRODUCCIÓN → LOCAL (no al revés).
+ * Equivalencias npm: db:sync-from-prod | db:prod-to-local
+ *
  * - LEE solo de la base de producción (MySQL remoto desde .env.production).
  * - ESCRIBE solo en la base local (localhost): listings + neighborhoods.
  * - La web en local (incl. /contactos) usa esa BD local; tras este sync coincide con prod.
