@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 // GET - Verificar estado de la conexión a la base de datos
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
