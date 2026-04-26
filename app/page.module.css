@@ -758,10 +758,6 @@
 }
 
 .neighborhoodHeaderRow {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid hsl(var(--border) / 0.5);
 }
@@ -775,12 +771,16 @@
   letter-spacing: -0.02em;
   color: hsl(var(--foreground));
   word-break: break-word;
-  flex: 1;
   min-width: 0;
+  width: 100%;
 }
 
 .neighborhoodCountBadge {
-  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
   padding: 0.2rem 0.45rem;
   border-radius: 9999px;
   border: 1px solid hsl(var(--border) / 0.85);
@@ -792,11 +792,26 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* “N pisos” debajo del m² o de Hab. (misma fila lógica que en móvil con Hab.) */
+.neighborhoodCountPillInMeta {
+  margin-top: 0.35rem;
+}
+
+.neighborhoodPisosFallback {
+  margin-top: 0.35rem;
+  padding-top: 0.15rem;
+}
+
 .neighborhoodMetaGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.45rem 0.55rem;
   align-items: start;
+}
+
+/* Columna habitaciones + conteo: misma malla, tag alineado con el bloque Hab. */
+.neighborhoodMetaCellHab {
+  min-height: 0;
 }
 
 .neighborhoodMetaCell {
@@ -1740,6 +1755,19 @@
 
   .neighborhoodCardBody {
     padding: 0.55rem 0.6rem 0.65rem;
+  }
+
+  /* Precio, Superficie y Hab. (con “N pisos” debajo) en columna: alineado con el bloque habitaciones en móvil */
+  .neighborhoodMetaGrid {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .neighborhoodMetaCellHab {
+    /* El tag queda bajo el valor de Hab. en el mismo ancho; sin columna “vacía” a la derecha */
+    max-width: 100%;
   }
 
   .listingSearchSection {

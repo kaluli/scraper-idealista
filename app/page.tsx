@@ -783,7 +783,6 @@ export default function Home() {
                           <div className={styles.neighborhoodCardBody}>
                             <div className={styles.neighborhoodHeaderRow}>
                               <p className={styles.neighborhoodName}>{neighborhood}</p>
-                              <span className={styles.neighborhoodCountBadge}>{data.total} pisos</span>
                             </div>
                             <div className={styles.neighborhoodMetaGrid}>
                               <div className={styles.neighborhoodMetaCell}>
@@ -799,15 +798,34 @@ export default function Home() {
                                 <div className={styles.neighborhoodMetaCell}>
                                   <span className={styles.neighborhoodMetaLabel}>Superficie</span>
                                   <span className={styles.neighborhoodMetaValue}>{data.avgSurface.toFixed(1)} m²</span>
+                                  {data.avgRooms <= 0 && (
+                                    <span
+                                      className={`${styles.neighborhoodCountBadge} ${styles.neighborhoodCountPillInMeta}`}
+                                    >
+                                      {data.total} pisos
+                                    </span>
+                                  )}
                                 </div>
                               )}
                               {data.avgRooms > 0 && (
-                                <div className={styles.neighborhoodMetaCell}>
+                                <div
+                                  className={`${styles.neighborhoodMetaCell} ${styles.neighborhoodMetaCellHab}`}
+                                >
                                   <span className={styles.neighborhoodMetaLabel}>Hab.</span>
                                   <span className={styles.neighborhoodMetaValue}>{data.avgRooms.toFixed(1)}</span>
+                                  <span
+                                    className={`${styles.neighborhoodCountBadge} ${styles.neighborhoodCountPillInMeta}`}
+                                  >
+                                    {data.total} pisos
+                                  </span>
                                 </div>
                               )}
                             </div>
+                            {data.avgSurface <= 0 && data.avgRooms <= 0 && (
+                              <div className={styles.neighborhoodPisosFallback}>
+                                <span className={styles.neighborhoodCountBadge}>{data.total} pisos</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )

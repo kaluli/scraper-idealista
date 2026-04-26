@@ -29,7 +29,7 @@ export default function RecomendacionesPage() {
         if (json.errorsCount > 0) {
           msg += `\n\n${json.errorsCount} anuncio(s) fallaron.`
           if (json.errors?.length) {
-            msg += '\n' + json.errors.slice(0, 5).map((err: { link: string; error: string }) => `${err.error}`).join('\n')
+            msg += '\n' + json.errors.slice(0, 5).map((err: { error: string }) => `${err.error}`).join('\n')
             if (json.errorsCount > 5) msg += `\n... y ${json.errorsCount - 5} más`
           }
         }
@@ -75,22 +75,36 @@ export default function RecomendacionesPage() {
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.content}>
-        <header className={styles.header}>
-          <div className={styles.headerLinks}>
-            <Link href="/" className={styles.backLink}>← Volver al Gestor</Link>
-          </div>
-          <h1 className={styles.title}>🏘️ Ajustes</h1>
+    <div className={styles.page}>
+      <div className={styles.inner}>
+        <nav className={styles.breadcrumb} aria-label="Migas de navegación">
+          <Link href="/" className={styles.breadcrumbLink}>
+            ← Inicio / gestor
+          </Link>
+        </nav>
+
+        <header className={styles.pageHeader}>
+          <p className={styles.kicker}>
+            <span className={styles.kickerDot} aria-hidden />
+            <span>Importación</span>
+          </p>
+          <h1 className={styles.h1}>
+            Ajustes
+            <span className={styles.h1Grad}> e importación</span>
+          </h1>
           <p className={styles.subtitle}>
-            Importar pisos desde archivos HTML guardados de Idealista.
+            Cargá archivos .html exportados de Idealista para añadir anuncios a la base, sin
+            duplicar enlaces existentes.
           </p>
         </header>
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>📥 Importar pisos desde HTML</h2>
-          <p className={styles.intro}>
-            Subí un archivo .html guardado desde Idealista (lista de búsqueda) para importar varios anuncios. Los duplicados (mismo link) se omiten.
+        <section className={styles.card} aria-labelledby="ajustes-listado-title">
+          <h2 id="ajustes-listado-title" className={styles.cardTitle}>
+            Listado (varios anuncios)
+          </h2>
+          <p className={styles.cardText}>
+            Archivo <strong>.html</strong> de una búsqueda o listado en Idealista. Se importan
+            múltiples anuncios; los duplicados (mismo enlace) se omiten.
           </p>
           <input
             type="file"
@@ -106,14 +120,17 @@ export default function RecomendacionesPage() {
             disabled={importing}
             onClick={() => fileInputRef.current?.click()}
           >
-            {importing ? 'Importando…' : '📥 Importar pisos desde HTML'}
+            {importing ? 'Importando…' : 'Importar desde listado HTML'}
           </button>
         </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>📄 Importar un solo piso desde HTML</h2>
-          <p className={styles.intro}>
-            Subí el archivo .html de la página de detalle de un anuncio (guardá la página del piso en Idealista). Los duplicados se omiten.
+        <section className={styles.card} aria-labelledby="ajustes-ficha-title">
+          <h2 id="ajustes-ficha-title" className={styles.cardTitle}>
+            Ficha (un anuncio)
+          </h2>
+          <p className={styles.cardText}>
+            <strong>.html</strong> de la página de detalle de un piso (guardar página en el
+            navegador). Si el enlace ya existe, se omite.
           </p>
           <input
             type="file"
@@ -121,7 +138,7 @@ export default function RecomendacionesPage() {
             accept=".html"
             className={styles.hiddenFileInput}
             onChange={handleImportSingleHtml}
-            aria-label="Seleccionar archivo HTML de detalle"
+            aria-label="Seleccionar archivo HTML de ficha de detalle"
           />
           <button
             type="button"
@@ -129,12 +146,8 @@ export default function RecomendacionesPage() {
             disabled={importingSingle}
             onClick={() => singleFileInputRef.current?.click()}
           >
-            {importingSingle ? 'Importando…' : '📄 Importar un solo piso desde HTML'}
+            {importingSingle ? 'Importando…' : 'Importar ficha (un piso)'}
           </button>
-        </section>
-
-        <section className={styles.section}>
-          <Link href="/" className={styles.backButton}>Volver al Gestor de Pisos</Link>
         </section>
       </div>
     </div>

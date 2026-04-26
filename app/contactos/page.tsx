@@ -344,6 +344,146 @@ function formatCita(iso: string | null): string {
   })
 }
 
+/** Iconos estilo idealista-pro-makeover (lucide-like) para tarjetas móvil */
+function CardIconMapPin({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width={16}
+      height={16}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </svg>
+  )
+}
+
+function CardIconBed({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width={16}
+      height={16}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M2 4v16" />
+      <path d="M2 8h3.5a1 1 0 0 1 .8.4l.9 1.2a1 1 0 0 0 1.6 0l.8-1.6a1 1 0 0 1 1.8 0l.8 1.6a1 1 0 0 0 1.6 0l.9-1.2a1 1 0 0 1 .8-.4H22" />
+      <path d="M2 12h20" />
+    </svg>
+  )
+}
+
+function CardIconMaximize({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width={16}
+      height={16}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" />
+    </svg>
+  )
+}
+
+function CardIconEye({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width={18}
+      height={18}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+function CardIconCalendar({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width={15}
+      height={15}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+  )
+}
+
+function CardIconFile({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width={15}
+      height={15}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M4 2h9l5 5v15a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" />
+      <path d="M13 2v5h5" />
+    </svg>
+  )
+}
+
+function CardIconChevronDown({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width={20}
+      height={20}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  )
+}
+
 function PhoneIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -441,68 +581,203 @@ function AddressCell({
   )
 }
 
-/** Bloque de dirección para tarjetas móviles (misma info que AddressCell). */
-function AddressBlock({
+function ContactoListingCard({
   row,
+  formatPrice: fmtPrice,
+  formatCita: fmtCita,
   onToggleSimilar,
+  onOpenPhone,
+  onToggleVisitado,
+  visitadoTogglingId,
+  onOpenEdit,
+  onDelete,
 }: {
   row: Listing
-  onToggleSimilar?: (row: Listing, anchor: HTMLElement) => void
+  formatPrice: (n: number) => string
+  formatCita: (iso: string | null) => string
+  onToggleSimilar: (row: Listing, anchor: HTMLElement) => void
+  onOpenPhone: (row: Listing) => void
+  onToggleVisitado: (row: Listing) => void
+  visitadoTogglingId: number | null
+  onOpenEdit: (row: Listing) => void
+  onDelete: (id: number) => void
 }) {
+  const [detailsOpen, setDetailsOpen] = useState(false)
   const addr = row.publishedAddress || row.title || '—'
-  const canSimilar = row.type === 'compra' && onToggleSimilar
+  const canSimilar = row.type === 'compra'
+  const locLabel = row.province?.trim() || row.city?.trim() || '—'
+  const barrio = row.neighborhood?.trim() || ''
+  const titleText =
+    barrio && !addr.toLowerCase().includes(barrio.toLowerCase()) ? `${addr} · ${barrio}` : addr
 
   const openSimilar = (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation()
-    if (!canSimilar || !onToggleSimilar) return
+    if (!canSimilar) return
     const article = e.currentTarget.closest('article')
     if (article) onToggleSimilar(row, article)
   }
 
   return (
-    <div className={styles.cardAddress}>
-      <div className={styles.cardAddressRow}>
-        {canSimilar ? (
-          <>
-            <div
-              className={`${styles.cardAddressMain} ${styles.cellAddressClickable}`}
-              role="button"
-              tabIndex={0}
-              title={addr !== '—' ? (row.publishedAddress || row.title || undefined) : undefined}
-              onClick={openSimilar}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  const a = (e.currentTarget as HTMLElement).closest('article')
-                  if (a && onToggleSimilar) onToggleSimilar(row, a)
-                }
-              }}
-            >
-              {addr}
-            </div>
-            <button
-              type="button"
-              className={styles.similarOpenBtn}
-              onClick={openSimilar}
-              aria-label="Ver alquileres similares en la zona"
-              title="Alquileres similares"
-            >
-              <span aria-hidden>➕</span>
-            </button>
-          </>
-        ) : (
-          <div
-            className={styles.cardAddressMain}
-            title={addr !== '—' ? (row.publishedAddress || row.title || undefined) : undefined}
+    <article
+      className={styles.listingCard}
+      role="listitem"
+    >
+      <div className={styles.listingCardTopBar}>
+        <div className={styles.listingCardPriceBig} aria-label="Precio de venta o alquiler">
+          {fmtPrice(row.price)}
+        </div>
+        <span className={styles.listingCardPill} data-variant="sale">
+          {row.type === 'compra' ? 'En venta' : 'En alquiler'}
+        </span>
+      </div>
+      <p className={styles.listingCardLocLine}>
+        <CardIconMapPin className={styles.listingCardLocIcon} />
+        {locLabel}
+      </p>
+      {canSimilar ? (
+        <h3
+          className={`${styles.listingCardPropertyTitle} ${styles.cellAddressClickable}`}
+          title={addr !== '—' ? (row.publishedAddress || row.title || undefined) : undefined}
+          role="button"
+          tabIndex={0}
+          onClick={openSimilar}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              const a = (e.currentTarget as HTMLElement).closest('article')
+              if (a) onToggleSimilar(row, a)
+            }
+          }}
+        >
+          {titleText}
+        </h3>
+      ) : (
+        <h3 className={styles.listingCardPropertyTitle}>{titleText}</h3>
+      )}
+      <div className={styles.listingCardChips} aria-label="Habitaciones y superficie">
+        <span className={styles.listingCardChip}>
+          <CardIconBed className={styles.listingCardChipIcon} />
+          {row.rooms != null ? `${row.rooms} hab.` : '— hab.'}
+        </span>
+        <span className={styles.listingCardChip}>
+          <CardIconMaximize className={styles.listingCardChipIcon} />
+          {row.surface != null ? `${row.surface} m²` : '— m²'}
+        </span>
+      </div>
+      <div className={styles.listingCardCtaRow}>
+        <a
+          href={row.link}
+          className={styles.listingCardVerCta}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span className={styles.listingCardVerCtaInner}>
+            <CardIconEye className={styles.listingCardVerCtaIcon} />
+            <span>Ver</span>
+          </span>
+        </a>
+        {canSimilar && (
+          <button
+            type="button"
+            className={styles.listingCardPlusCta}
+            onClick={openSimilar}
+            aria-label="Ver alquileres similares en la zona"
+            title="Alquileres similares"
           >
-            {addr}
+            +
+          </button>
+        )}
+      </div>
+      <div className={styles.listingCardMetaSection}>
+        <button
+          type="button"
+          className={styles.listingCardAccordionHead}
+          onClick={() => setDetailsOpen((v) => !v)}
+          aria-expanded={detailsOpen}
+          aria-controls={`card-panel-${row.id}`}
+          id={`card-head-${row.id}`}
+        >
+          <div className={styles.listingCardAccordionHeadLeft}>
+            <span className={styles.listingCardMetaPillLabel}>
+              <CardIconCalendar className={styles.listingCardMetaPillIcon} />
+              Cita
+            </span>
+            <span className={styles.listingCardMetaPillLabel}>
+              <CardIconFile className={styles.listingCardMetaPillIcon} />
+              Notas
+              {row.notas && row.notas.trim() !== '' && <span className={styles.listingCardNotasDot} aria-hidden />}
+            </span>
+          </div>
+          <CardIconChevronDown
+            className={detailsOpen ? `${styles.listingCardChevron} ${styles.listingCardChevronOpen}` : styles.listingCardChevron}
+          />
+        </button>
+        {detailsOpen && (
+          <div
+            className={styles.listingCardAccordionBody}
+            id={`card-panel-${row.id}`}
+            role="region"
+            aria-labelledby={`card-head-${row.id}`}
+          >
+            <div>
+              <div className={styles.listingCardFieldLabel}>Cita</div>
+              <div className={styles.listingCardFieldValue}>{fmtCita(row.citaAt)}</div>
+            </div>
+            <div>
+              <div className={styles.listingCardFieldLabel}>Notas</div>
+              <div className={styles.listingCardNotasText}>{row.notas || '—'}</div>
+            </div>
           </div>
         )}
       </div>
-      <p className={styles.cardAddressMeta} aria-label="Habitaciones y metros cuadrados">
-        {row.rooms != null ? `${row.rooms} hab.` : '— hab.'} · {row.surface != null ? `${row.surface} m²` : '— m²'}
-      </p>
-    </div>
+      <div className={styles.listingCardBottomBar}>
+        <div className={styles.listingCardBottomBarLeft}>
+          <button
+            type="button"
+            className={`${(row.llamado ?? false) ? styles.phoneIconCalled : styles.phoneIconNotCalled} ${
+              styles.listingCardRoundIcon
+            }`}
+            onClick={() => onOpenPhone(row)}
+            title={(row.llamado ?? false) ? 'Ya llamé' : 'Teléfono / ¿Llamé?'}
+            aria-label="Abrir diálogo teléfono y llamada"
+          >
+            <PhoneIcon />
+          </button>
+          <button
+            type="button"
+            className={`${(row.visitado ?? false) ? styles.visitadoIconVisitado : styles.visitadoIconNotVisitado} ${
+              styles.listingCardRoundIcon
+            }`}
+            onClick={() => onToggleVisitado(row)}
+            disabled={visitadoTogglingId === row.id}
+            title={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+            aria-label={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+          >
+            <VisitadoIcon />
+          </button>
+        </div>
+        <div className={styles.listingCardBottomBarRight}>
+          <button
+            type="button"
+            className={`${styles.btnEdit} ${styles.listingCardFabEdit}`}
+            onClick={() => onOpenEdit(row)}
+            aria-label="Editar"
+            title="Editar"
+          >
+            <EditIcon />
+          </button>
+          <button
+            type="button"
+            className={`${styles.btnDanger} ${styles.listingCardFabTrash}`}
+            onClick={() => onDelete(row.id)}
+            aria-label="Eliminar"
+            title="Eliminar"
+          >
+            <TrashIcon />
+          </button>
+        </div>
+      </div>
+    </article>
   )
 }
 
@@ -611,6 +886,126 @@ function listingToEditForm(row: Listing): EditListingForm {
 
 type SortKey = 'publishedAddress' | 'neighborhood' | 'price' | 'citaAt' | 'notas'
 type SortDir = 'asc' | 'desc'
+
+function compareListings(
+  a: Listing,
+  b: Listing,
+  sortBy: SortKey,
+  sortDir: SortDir
+): number {
+  const va: string | number | null =
+    sortBy === 'publishedAddress'
+      ? a.publishedAddress || a.title || ''
+      : sortBy === 'neighborhood'
+        ? a.neighborhood || ''
+        : sortBy === 'price'
+          ? a.price
+          : sortBy === 'citaAt'
+            ? a.citaAt || ''
+            : a.notas || ''
+  const vb: string | number | null =
+    sortBy === 'publishedAddress'
+      ? b.publishedAddress || b.title || ''
+      : sortBy === 'neighborhood'
+        ? b.neighborhood || ''
+        : sortBy === 'price'
+          ? b.price
+          : sortBy === 'citaAt'
+            ? b.citaAt || ''
+            : b.notas || ''
+  if (sortBy === 'price') {
+    const diff = (va as number) - (vb as number)
+    return sortDir === 'asc' ? diff : -diff
+  }
+  if (sortBy === 'citaAt') {
+    const da = va ? new Date(va as string).getTime() : 0
+    const db = vb ? new Date(vb as string).getTime() : 0
+    const diff = da - db
+    return sortDir === 'asc' ? diff : -diff
+  }
+  const sa = String(va).localeCompare(String(vb), 'es')
+  return sortDir === 'asc' ? sa : -sa
+}
+
+function SortChevronsIcon() {
+  return (
+    <svg
+      className={styles.thSortIconSvg}
+      width={16}
+      height={16}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M8 9l4-4 4 4" />
+      <path d="M8 15l4 4 4-4" />
+    </svg>
+  )
+}
+
+function SortDirIcon({ dir }: { dir: 'asc' | 'desc' }) {
+  return (
+    <svg
+      className={styles.thSortIconSvg}
+      width={16}
+      height={16}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      {dir === 'asc' ? <path d="M6 15l6-6 6 6" /> : <path d="M6 9l6 6 6-6" />}
+    </svg>
+  )
+}
+
+function SortableTh({
+  label,
+  sortKey: columnKey,
+  sortBy,
+  sortDir,
+  onSort,
+}: {
+  label: string
+  sortKey: SortKey
+  sortBy: SortKey | null
+  sortDir: SortDir
+  onSort: (k: SortKey) => void
+}) {
+  const active = sortBy === columnKey
+  return (
+    <th
+      scope="col"
+      className={styles.thSortable}
+      aria-sort={active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
+    >
+      <button
+        type="button"
+        className={styles.thSortButton}
+        onClick={() => onSort(columnKey)}
+        title={`Ordenar por ${label}`}
+      >
+        <span className={styles.thSortButtonLabel}>{label}</span>
+        <span
+          className={
+            active
+              ? `${styles.thSortIconSlot} ${styles.thSortIconActive}`
+              : styles.thSortIconSlot
+          }
+        >
+          {active ? <SortDirIcon dir={sortDir} /> : <SortChevronsIcon />}
+        </span>
+      </button>
+    </th>
+  )
+}
 
 export default function ContactosPage() {
   const [listings, setListings] = useState<Listing[]>([])
@@ -1003,22 +1398,7 @@ export default function ContactosPage() {
     : filteredByBarrio
 
   const sortedListings = sortBy
-    ? [...filteredBySearch].sort((a, b) => {
-        let va: string | number | null = sortBy === 'publishedAddress' ? (a.publishedAddress || a.title || '') : sortBy === 'neighborhood' ? (a.neighborhood || '') : sortBy === 'price' ? a.price : sortBy === 'citaAt' ? (a.citaAt || '') : (a.notas || '')
-        let vb: string | number | null = sortBy === 'publishedAddress' ? (b.publishedAddress || b.title || '') : sortBy === 'neighborhood' ? (b.neighborhood || '') : sortBy === 'price' ? b.price : sortBy === 'citaAt' ? (b.citaAt || '') : (b.notas || '')
-        if (sortBy === 'price') {
-          const diff = (va as number) - (vb as number)
-          return sortDir === 'asc' ? diff : -diff
-        }
-        if (sortBy === 'citaAt') {
-          const da = va ? new Date(va as string).getTime() : 0
-          const db = vb ? new Date(vb as string).getTime() : 0
-          const diff = da - db
-          return sortDir === 'asc' ? diff : -diff
-        }
-        const sa = String(va).localeCompare(String(vb), 'es')
-        return sortDir === 'asc' ? sa : -sa
-      })
+    ? [...filteredBySearch].sort((a, b) => compareListings(a, b, sortBy, sortDir))
     : filteredBySearch
 
   const visitedListings = listings.filter((l) => l.visitado === true)
@@ -1026,27 +1406,14 @@ export default function ContactosPage() {
   const upcomingCitasListings = listings.filter(
     (l) => l.citaAt != null && new Date(l.citaAt).getTime() > now
   )
-  const sortedUpcomingCitasListings = [...upcomingCitasListings].sort(
-    (a, b) =>
-      new Date(a.citaAt!).getTime() - new Date(b.citaAt!).getTime()
-  )
+  const sortedUpcomingCitasListings = sortBy
+    ? [...upcomingCitasListings].sort((a, b) => compareListings(a, b, sortBy, sortDir))
+    : [...upcomingCitasListings].sort(
+        (a, b) =>
+          new Date(a.citaAt!).getTime() - new Date(b.citaAt!).getTime()
+      )
   const sortedVisitedListings = sortBy
-    ? [...visitedListings].sort((a, b) => {
-        let va: string | number | null = sortBy === 'publishedAddress' ? (a.publishedAddress || a.title || '') : sortBy === 'neighborhood' ? (a.neighborhood || '') : sortBy === 'price' ? a.price : sortBy === 'citaAt' ? (a.citaAt || '') : (a.notas || '')
-        let vb: string | number | null = sortBy === 'publishedAddress' ? (b.publishedAddress || b.title || '') : sortBy === 'neighborhood' ? (b.neighborhood || '') : sortBy === 'price' ? b.price : sortBy === 'citaAt' ? (b.citaAt || '') : (b.notas || '')
-        if (sortBy === 'price') {
-          const diff = (va as number) - (vb as number)
-          return sortDir === 'asc' ? diff : -diff
-        }
-        if (sortBy === 'citaAt') {
-          const da = va ? new Date(va as string).getTime() : 0
-          const db = vb ? new Date(vb as string).getTime() : 0
-          const diff = da - db
-          return sortDir === 'asc' ? diff : -diff
-        }
-        const sa = String(va).localeCompare(String(vb), 'es')
-        return sortDir === 'asc' ? sa : -sa
-      })
+    ? [...visitedListings].sort((a, b) => compareListings(a, b, sortBy, sortDir))
     : visitedListings
 
   const handleSort = (key: SortKey) => {
@@ -1107,77 +1474,18 @@ export default function ContactosPage() {
   )
 
   const renderListingCard = (row: Listing) => (
-    <article key={row.id} role="listitem" className={styles.listingCard}>
-      <div className={styles.listingCardTop}>
-        <AddressBlock row={row} onToggleSimilar={toggleSimilarPanel} />
-        <div className={styles.listingCardPrice}>{formatPrice(row.price)}</div>
-      </div>
-      <div className={styles.listingCardMetaRow}>
-        <div className={styles.listingCardBarrioGroup}>
-          <span className={styles.listingCardFieldLabel}>Barrio</span>
-          <span className={styles.listingCardBarrioVal}>{row.neighborhood || '—'}</span>
-        </div>
-        <div className={styles.listingCardIdealista}>
-          <IdealistaLinkIcon
-            href={row.link}
-            className={styles.linkIdealista}
-            imgClassName={styles.linkIdealistaImg}
-          />
-        </div>
-      </div>
-      <div className={styles.listingCardGrid2}>
-        <div>
-          <div className={styles.listingCardFieldLabel}>Cita</div>
-          <div className={styles.listingCardFieldValue}>{formatCita(row.citaAt)}</div>
-        </div>
-        <div>
-          <div className={styles.listingCardFieldLabel}>Notas</div>
-          <div className={styles.listingCardNotas}>
-            {row.notas ? <span title={row.notas}>{row.notas}</span> : '—'}
-          </div>
-        </div>
-      </div>
-      <div className={styles.listingCardActions}>
-        <button
-          type="button"
-          className={(row.llamado ?? false) ? styles.phoneIconCalled : styles.phoneIconNotCalled}
-          onClick={() => openPhoneDialog(row)}
-          title={(row.llamado ?? false) ? 'Ya llamé' : 'Teléfono / ¿Llamé?'}
-          aria-label="Abrir diálogo teléfono y llamada"
-        >
-          <PhoneIcon />
-        </button>
-        <button
-          type="button"
-          className={(row.visitado ?? false) ? styles.visitadoIconVisitado : styles.visitadoIconNotVisitado}
-          onClick={() => handleToggleVisitado(row)}
-          disabled={visitadoTogglingId === row.id}
-          title={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
-          aria-label={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
-        >
-          <VisitadoIcon />
-        </button>
-        <div className={styles.listingCardActionsGrow} />
-        <button
-          type="button"
-          className={styles.btnEdit}
-          onClick={() => openEdit(row)}
-          aria-label="Editar"
-          title="Editar"
-        >
-          <EditIcon />
-        </button>
-        <button
-          type="button"
-          className={styles.btnDanger}
-          onClick={() => handleDelete(row.id)}
-          aria-label="Eliminar"
-          title="Eliminar"
-        >
-          <TrashIcon />
-        </button>
-      </div>
-    </article>
+    <ContactoListingCard
+      key={row.id}
+      row={row}
+      formatPrice={formatPrice}
+      formatCita={formatCita}
+      onToggleSimilar={toggleSimilarPanel}
+      onOpenPhone={openPhoneDialog}
+      onToggleVisitado={handleToggleVisitado}
+      visitadoTogglingId={visitadoTogglingId}
+      onOpenEdit={openEdit}
+      onDelete={handleDelete}
+    />
   )
 
   return (
@@ -1221,15 +1529,53 @@ export default function ContactosPage() {
                       <table className={styles.table}>
                         <thead>
                           <tr>
-                            <th>Dirección</th>
-                            <th>Barrio</th>
-                            <th className={styles.thLinkIdealista}>Idealista</th>
-                            <th>Precio</th>
-                            <th>Cita</th>
-                            <th>Notas</th>
-                            <th className={styles.thLlamado}>Llamé</th>
-                            <th className={styles.thVisitado}>Visitado</th>
-                            <th className={styles.thActions}>Acciones</th>
+                            <SortableTh
+                              label="Nombre"
+                              sortKey="publishedAddress"
+                              sortBy={sortBy}
+                              sortDir={sortDir}
+                              onSort={handleSort}
+                            />
+                            <SortableTh
+                              label="Barrio"
+                              sortKey="neighborhood"
+                              sortBy={sortBy}
+                              sortDir={sortDir}
+                              onSort={handleSort}
+                            />
+                            <th className={styles.thLinkIdealista} scope="col">
+                              Idealista
+                            </th>
+                            <SortableTh
+                              label="Precio"
+                              sortKey="price"
+                              sortBy={sortBy}
+                              sortDir={sortDir}
+                              onSort={handleSort}
+                            />
+                            <SortableTh
+                              label="Cita"
+                              sortKey="citaAt"
+                              sortBy={sortBy}
+                              sortDir={sortDir}
+                              onSort={handleSort}
+                            />
+                            <SortableTh
+                              label="Notas"
+                              sortKey="notas"
+                              sortBy={sortBy}
+                              sortDir={sortDir}
+                              onSort={handleSort}
+                            />
+                            <th className={styles.thLlamado} scope="col">
+                              Llamé
+                            </th>
+                            <th className={styles.thVisitado} scope="col">
+                              Visitado
+                            </th>
+                            <th className={styles.thActions} scope="col">
+                              Acciones
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1324,25 +1670,53 @@ export default function ContactosPage() {
                       <table className={styles.table}>
                         <thead>
                           <tr>
-                            <th className={styles.thSortable} onClick={() => handleSort('publishedAddress')}>
-                              Dirección {sortBy === 'publishedAddress' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                            <SortableTh
+                              label="Nombre"
+                              sortKey="publishedAddress"
+                              sortBy={sortBy}
+                              sortDir={sortDir}
+                              onSort={handleSort}
+                            />
+                            <SortableTh
+                              label="Barrio"
+                              sortKey="neighborhood"
+                              sortBy={sortBy}
+                              sortDir={sortDir}
+                              onSort={handleSort}
+                            />
+                            <th className={styles.thLinkIdealista} scope="col">
+                              Idealista
                             </th>
-                            <th className={styles.thSortable} onClick={() => handleSort('neighborhood')}>
-                              Barrio {sortBy === 'neighborhood' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                            <SortableTh
+                              label="Precio"
+                              sortKey="price"
+                              sortBy={sortBy}
+                              sortDir={sortDir}
+                              onSort={handleSort}
+                            />
+                            <SortableTh
+                              label="Cita"
+                              sortKey="citaAt"
+                              sortBy={sortBy}
+                              sortDir={sortDir}
+                              onSort={handleSort}
+                            />
+                            <SortableTh
+                              label="Notas"
+                              sortKey="notas"
+                              sortBy={sortBy}
+                              sortDir={sortDir}
+                              onSort={handleSort}
+                            />
+                            <th className={styles.thLlamado} scope="col">
+                              Llamé
                             </th>
-                            <th className={styles.thLinkIdealista}>Idealista</th>
-                            <th className={styles.thSortable} onClick={() => handleSort('price')}>
-                              Precio {sortBy === 'price' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                            <th className={styles.thVisitado} scope="col">
+                              Visitado
                             </th>
-                            <th className={styles.thSortable} onClick={() => handleSort('citaAt')}>
-                              Cita {sortBy === 'citaAt' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                            <th className={styles.thActions} scope="col">
+                              Acciones
                             </th>
-                            <th className={styles.thSortable} onClick={() => handleSort('notas')}>
-                              Notas {sortBy === 'notas' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                            </th>
-                            <th className={styles.thLlamado}>Llamé</th>
-                            <th className={styles.thVisitado}>Visitado</th>
-                            <th className={styles.thActions}>Acciones</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1498,6 +1872,56 @@ export default function ContactosPage() {
                       <option value="500000">Menores de 500.000€</option>
                     </select>
                   </div>
+                  <div
+                    className={styles.mobileSortBlock}
+                    role="group"
+                    aria-label="Ordenar listado en móvil"
+                  >
+                    <label className={styles.filterLabel} htmlFor="contactos-sort-key-m">
+                      Ordenar por
+                    </label>
+                    <div className={styles.mobileSortControls}>
+                      <select
+                        id="contactos-sort-key-m"
+                        className={styles.select}
+                        value={sortBy ?? ''}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          if (v === '') {
+                            setSortBy(null)
+                            return
+                          }
+                          setSortBy(v as SortKey)
+                          setSortDir('asc')
+                        }}
+                      >
+                        <option value="">Predeterminado (orden de carga)</option>
+                        <option value="publishedAddress">Nombre</option>
+                        <option value="neighborhood">Barrio</option>
+                        <option value="price">Precio</option>
+                        <option value="citaAt">Cita</option>
+                        <option value="notas">Notas</option>
+                      </select>
+                      <button
+                        type="button"
+                        className={styles.sortDirButton}
+                        disabled={sortBy == null}
+                        onClick={() => sortBy != null && handleSort(sortBy)}
+                        title={sortBy ? 'Invertir ascendente / descendente' : 'Elegí un criterio de orden primero'}
+                        aria-label="Invertir orden ascendente o descendente"
+                      >
+                        {sortBy == null ? (
+                          <span className={styles.sortDirButtonPlaceholder} aria-hidden>
+                            —
+                          </span>
+                        ) : (
+                          <span className={styles.sortDirButtonIcon}>
+                            <SortDirIcon dir={sortDir} />
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 </div>
                 <div className={styles.tableOnly}>
@@ -1505,25 +1929,53 @@ export default function ContactosPage() {
                     <table className={styles.table}>
                       <thead>
                         <tr>
-                          <th className={styles.thSortable} onClick={() => handleSort('publishedAddress')}>
-                            Dirección {sortBy === 'publishedAddress' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                          <SortableTh
+                            label="Nombre"
+                            sortKey="publishedAddress"
+                            sortBy={sortBy}
+                            sortDir={sortDir}
+                            onSort={handleSort}
+                          />
+                          <SortableTh
+                            label="Barrio"
+                            sortKey="neighborhood"
+                            sortBy={sortBy}
+                            sortDir={sortDir}
+                            onSort={handleSort}
+                          />
+                          <th className={styles.thLinkIdealista} scope="col">
+                            Idealista
                           </th>
-                          <th className={styles.thSortable} onClick={() => handleSort('neighborhood')}>
-                            Barrio {sortBy === 'neighborhood' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                          <SortableTh
+                            label="Precio"
+                            sortKey="price"
+                            sortBy={sortBy}
+                            sortDir={sortDir}
+                            onSort={handleSort}
+                          />
+                          <SortableTh
+                            label="Cita"
+                            sortKey="citaAt"
+                            sortBy={sortBy}
+                            sortDir={sortDir}
+                            onSort={handleSort}
+                          />
+                          <SortableTh
+                            label="Notas"
+                            sortKey="notas"
+                            sortBy={sortBy}
+                            sortDir={sortDir}
+                            onSort={handleSort}
+                          />
+                          <th className={styles.thLlamado} scope="col">
+                            Llamé
                           </th>
-                          <th className={styles.thLinkIdealista}>Idealista</th>
-                          <th className={styles.thSortable} onClick={() => handleSort('price')}>
-                            Precio {sortBy === 'price' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                          <th className={styles.thVisitado} scope="col">
+                            Visitado
                           </th>
-                          <th className={styles.thSortable} onClick={() => handleSort('citaAt')}>
-                            Cita {sortBy === 'citaAt' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                          <th className={styles.thActions} scope="col">
+                            Acciones
                           </th>
-                          <th className={styles.thSortable} onClick={() => handleSort('notas')}>
-                            Notas {sortBy === 'notas' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                          </th>
-                          <th className={styles.thLlamado}>Llamé</th>
-                          <th className={styles.thVisitado}>Visitado</th>
-                          <th className={styles.thActions}>Acciones</th>
                         </tr>
                       </thead>
                       <tbody>

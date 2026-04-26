@@ -239,6 +239,82 @@
   box-sizing: border-box;
 }
 
+/* Orden: solo móvil (vista tabular con cabeceras clicable en ≥768px) */
+.mobileSortBlock {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .mobileSortBlock {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    padding-top: 14px;
+    border-top: 1px solid hsl(var(--border) / 0.45);
+  }
+}
+
+.mobileSortControls {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.mobileSortControls .select {
+  flex: 1;
+  min-width: 0;
+  max-width: none;
+}
+
+.sortDirButton {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 44px;
+  padding: 0 10px;
+  box-sizing: border-box;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  color: #2563eb;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.sortDirButton:hover:not(:disabled) {
+  background: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.sortDirButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  color: #94a3b8;
+  background: #f8fafc;
+}
+
+.sortDirButtonIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sortDirButtonIcon .thSortIconSvg {
+  display: block;
+}
+
+.sortDirButtonPlaceholder {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #94a3b8;
+}
+
 .select {
   padding: 8px 12px;
   border: 1px solid #ddd;
@@ -368,12 +444,65 @@
 }
 
 .thSortable {
-  cursor: pointer;
-  user-select: none;
+  padding: 0;
+  vertical-align: middle;
 }
 
 .thSortable:hover {
   background: #eef2f6;
+}
+
+.thSortButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: #1a1a1a;
+  cursor: pointer;
+  user-select: none;
+  text-align: left;
+  border-radius: 0;
+  min-height: 2.75rem;
+}
+
+.thSortButton:hover {
+  background: transparent;
+}
+
+.thSortable:hover .thSortButton,
+.thSortButton:hover {
+  color: #0f172a;
+}
+
+.thSortButtonLabel {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.thSortIconSlot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #94a3b8;
+}
+
+.thSortIconActive {
+  color: #2563eb;
+}
+
+.thSortIconSvg {
+  display: block;
+  flex-shrink: 0;
 }
 
 .thLinkIdealista {
@@ -1168,146 +1297,398 @@
   }
 }
 
-/* Tarjeta piso móvil */
+/* —— Tarjetas móvil: idealista-pro-makeover (PropertyCard + Index) —— */
 .listingCard {
+  --listing-card-pad: 0.9rem 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
   border-radius: 1rem;
   border: 1px solid hsl(var(--border) / 0.7);
   background: hsl(var(--card));
-  padding: 16px 14px;
-  box-shadow: var(--shadow-sm, 0 1px 2px rgb(0 0 0 / 0.04));
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s var(--ease-out, ease), border-color 0.2s ease, transform 0.2s ease;
 }
 
 .listingCard:hover {
-  box-shadow: var(--shadow-md, 0 4px 12px -2px rgb(0 0 0 / 0.08));
+  box-shadow: var(--shadow-md);
+  border-color: hsl(var(--border) / 0.85);
 }
 
-.listingCardTop {
+/* Cabecera: precio + pill “En venta” (statusConfig del makeover) */
+.listingCardTopBar {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 0.5rem 0.75rem;
+  padding: var(--listing-card-pad);
+  padding-bottom: 0.35rem;
 }
 
-.listingCardPrice {
-  flex-shrink: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
+.listingCardPriceBig {
+  font-family: var(--font-stack-heading, inherit);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
   color: hsl(var(--foreground));
-  white-space: nowrap;
   font-variant-numeric: tabular-nums;
+  margin: 0;
 }
 
-.listingCardMetaRow {
+.listingCardPill {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  box-shadow: var(--shadow-sm);
+  background: hsl(224 100% 59% / 0.12);
+  color: hsl(224 85% 38%);
+  border: 1px solid hsl(224 100% 59% / 0.22);
+}
+
+/* Provincia / ciudad bajo el precio */
+.listingCardLocLine {
   display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 1rem 0.35rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+}
+
+.listingCardLocIcon {
+  flex-shrink: 0;
+  color: hsl(var(--muted-foreground));
+  opacity: 0.85;
+}
+
+/* Título ficha (MapPin + dirección en mock) */
+.listingCardPropertyTitle {
+  margin: 0 1rem 0.6rem 1rem;
+  font-family: var(--font-stack-heading, inherit);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: hsl(var(--foreground));
+  word-break: break-word;
+  min-width: 0;
+}
+
+/* Chips 1 hab / m² */
+.listingCardChips {
+  display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
+  gap: 0.4rem 0.5rem;
+  margin: 0 1rem 0.75rem 1rem;
+}
+
+.listingCardChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.5rem 0.28rem 0.4rem;
+  border-radius: 0.5rem;
+  background: hsl(var(--muted) / 0.85);
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid hsl(var(--border) / 0.45);
+}
+
+.listingCardChipIcon {
+  flex-shrink: 0;
+  color: currentColor;
+  opacity: 0.85;
+}
+
+/* CTA: Ver (gradiente) + + cuadrado */
+.listingCardCtaRow {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0.4rem;
+  margin: 0.15rem 1rem 0.5rem 1rem;
+}
+
+.listingCardVerCta {
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: hsl(0 0% 100%) !important;
+  border-radius: 0.75rem;
+  background: var(
+    --gradient-accent,
+    linear-gradient(135deg, hsl(224 100% 59%) 0%, hsl(199 95% 60%) 100%)
+  );
+  box-shadow: 0 4px 16px -4px hsl(224 100% 50% / 0.4);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.listingCardVerCta:hover {
+  opacity: 0.96;
+  text-decoration: none;
+}
+
+.listingCardVerCtaInner {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.6rem;
+  width: 100%;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 0 0.75rem;
+  box-sizing: border-box;
+}
+
+.listingCardVerCtaIcon {
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.listingCardPlusCta {
+  flex-shrink: 0;
+  width: 2.65rem;
+  min-height: 2.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 1px solid hsl(224 100% 55% / 0.3);
+  border-radius: 0.75rem;
+  background: hsl(224 100% 99%);
+  color: hsl(224 80% 38%);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.listingCardPlusCta:hover {
+  background: hsl(224 100% 96% / 0.95);
+  border-color: hsl(224 100% 50% / 0.4);
+}
+
+.listingCardPlusCta:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Cita + Notas (fila plegable) */
+.listingCardMetaSection {
+  border-top: 1px solid hsl(var(--border) / 0.55);
+  background: hsl(var(--secondary) / 0.35);
+}
+
+.listingCardAccordionHead {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 12px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid hsl(var(--border) / 0.6);
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  margin: 0;
+  padding: 0.45rem 0.9rem 0.45rem 0.9rem;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  box-sizing: border-box;
 }
 
-.listingCardBarrioGroup {
+.listingCardAccordionHeadLeft {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem 0.9rem;
   min-width: 0;
-  flex: 1;
+}
+
+.listingCardMetaPillLabel {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+}
+
+.listingCardMetaPillIcon {
+  flex-shrink: 0;
+  color: currentColor;
+  opacity: 0.9;
+}
+
+.listingCardNotasDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 0.1rem;
+  border-radius: 50%;
+  background: hsl(224 100% 55%);
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.listingCardChevron {
+  flex-shrink: 0;
+  color: hsl(var(--muted-foreground));
+  transition: transform 0.2s var(--ease-out, ease);
+}
+
+.listingCardChevronOpen {
+  transform: rotate(180deg);
+  color: hsl(224 80% 45%);
+}
+
+.listingCardAccordionBody {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem 0.75rem;
+  padding: 0 0.9rem 0.75rem 0.9rem;
+}
+
+@media (max-width: 360px) {
+  .listingCardAccordionBody {
+    grid-template-columns: 1fr;
+  }
 }
 
 .listingCardFieldLabel {
   display: block;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: hsl(var(--muted-foreground));
-  margin-bottom: 2px;
-}
-
-.listingCardBarrioVal {
-  display: block;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: hsl(var(--foreground));
-}
-
-.listingCardIdealista {
-  flex-shrink: 0;
-}
-
-.listingCardGrid2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px 10px;
-  margin-top: 12px;
+  margin-bottom: 0.2rem;
 }
 
 .listingCardFieldValue {
-  font-size: 0.85rem;
-  color: hsl(var(--foreground));
-  word-break: break-word;
-}
-
-.listingCardNotas {
   font-size: 0.8rem;
-  line-height: 1.4;
   color: hsl(var(--foreground));
-  max-height: 5.6em;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
   word-break: break-word;
+  line-height: 1.4;
 }
 
-.listingCardActions {
+.listingCardNotasText {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: hsl(var(--foreground));
+  word-break: break-word;
+  max-height: 5rem;
+  overflow: auto;
+}
+
+/* Barra inferior: contacto + editar/eliminar circular */
+.listingCardBottomBar {
   display: flex;
   flex-direction: row;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 10px;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid hsl(var(--border) / 0.6);
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0;
+  padding: 0.5rem 0.65rem 0.65rem;
+  border-top: 1px solid hsl(var(--border) / 0.5);
+  background: hsl(var(--card));
 }
 
-.listingCardActionsGrow {
-  flex: 1;
-  min-width: 0;
+.listingCardBottomBarLeft,
+.listingCardBottomBarRight {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.45rem;
 }
 
-.cardAddress {
-  min-width: 0;
-  flex: 1;
+.listingCardBottomBarRight {
+  gap: 0.4rem;
 }
 
-.cardAddressRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 4px;
-  min-width: 0;
+/* Iconos acción: círculos suaves (mismo alto visual que mock) */
+.listingCardRoundIcon {
+  width: 2.4rem;
+  height: 2.4rem;
+  min-width: 2.4rem;
+  min-height: 2.4rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 !important;
+  border: none;
 }
 
-.cardAddressMain {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.38;
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: hsl(var(--foreground));
-  word-break: break-word;
-  min-width: 0;
-  flex: 1;
+.listingCardRoundIcon svg {
+  width: 18px;
+  height: 18px;
 }
 
-.cardAddressMeta {
-  margin: 4px 0 0 0;
-  font-size: 0.65rem;
-  line-height: 1.25;
-  color: hsl(var(--muted-foreground));
+.listingCardFabEdit,
+.listingCardFabTrash {
+  width: 2.4rem;
+  min-width: 2.4rem;
+  min-height: 2.4rem;
+  max-width: 2.4rem;
+  height: 2.4rem;
+  max-height: 2.4rem;
+  border-radius: 9999px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+.listingCardFabEdit {
+  background: var(
+    --gradient-accent,
+    linear-gradient(135deg, hsl(224 100% 55%) 0%, hsl(199 90% 52%) 100%)
+  ) !important;
+  color: white !important;
+  border: none;
+}
+
+.listingCardFabEdit:hover {
+  filter: brightness(0.95);
+  opacity: 0.95;
+  background: var(--gradient-accent) !important;
+}
+
+.listingCardFabTrash {
+  background: hsl(0 72% 50%) !important;
+  color: #fff !important;
+  border: none;
+}
+
+.listingCardFabTrash:hover {
+  filter: brightness(0.92);
 }
 
 /* Chips barrios: scroll horizontal en móvil */

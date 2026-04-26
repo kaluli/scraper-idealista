@@ -98,40 +98,58 @@
 .drawerBrandText {
   min-width: 0;
   line-height: 1.15;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
 }
 
+/* Misma lógica que .brandNameLine en AppTopHeader: una sola línea, sin partir Idea/lista/Manager */
 .drawerBrandName {
   margin: 0;
-  font-size: 0.95rem;
+  display: block;
+  font-family: var(--font-stack-heading);
+  font-size: 1.05rem;
   font-weight: 800;
-  font-family: var(--font-stack-heading, inherit);
   letter-spacing: -0.03em;
-  color: hsl(var(--foreground));
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.15em;
+  line-height: 1.2;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .brandIdea {
+  font-weight: 800;
   color: hsl(var(--foreground));
 }
+
 .brandLista {
-  color: hsl(var(--accent));
   font-weight: 800;
+  color: hsl(var(--accent, 224 100% 59%));
+  background: var(
+    --gradient-accent,
+    linear-gradient(135deg, hsl(224 100% 59%) 0%, hsl(199 95% 60%) 100%)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
+
 .brandManager {
-  margin-left: 0.1em;
-  color: hsl(var(--foreground) / 0.72);
-  font-weight: 800;
+  font-weight: 600;
+  margin-left: 0.25em;
+  color: hsl(var(--foreground) / 0.7);
+  -webkit-text-fill-color: hsl(var(--foreground) / 0.7);
+  background: none;
 }
 
 .drawerBrandSub {
-  margin: 0.2rem 0 0 0;
+  margin: 2px 0 0 0;
   font-size: 0.7rem;
   font-weight: 500;
   color: hsl(var(--muted-foreground));
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
 }
 
 /* Cerrar — círculo, borde accent (mock) */
@@ -247,42 +265,6 @@
 .dark .drawerLink:hover {
   background: hsl(222 30% 14% / 0.9);
 }
-
-.drawerDbWrap {
-  margin-top: 0.35rem;
-  padding-top: 0.65rem;
-  border-top: 1px solid hsl(var(--border) / 0.35);
-}
-
-/* Píldora ancho completo (HeaderDbPill: span = loading/ok, a = error) */
-.drawerDbWrap > span,
-.drawerDbWrap > a {
-  display: inline-flex;
-  align-items: center;
-  width: 100%;
-  max-width: none;
-  min-height: 2.4rem;
-  box-sizing: border-box;
-  justify-content: center;
-}
-
-/* Carga y OK: mismo aspecto que el mock */
-.drawerDbWrap > span {
-  font-weight: 500;
-  border-radius: 9999px;
-  padding: 0.4rem 0.85rem;
-  font-size: 0.75rem;
-  color: hsl(var(--muted-foreground));
-  background: hsl(0 0% 100% / 0.85);
-  border: 1px solid hsl(var(--border) / 0.5);
-  box-shadow: 0 1px 2px hsl(222 47% 11% / 0.04);
-}
-
-.dark .drawerDbWrap > span {
-  background: hsl(222 30% 14% / 0.95);
-  border-color: hsl(var(--border) / 0.45);
-}
-
 
 .srLabel {
   position: absolute;
