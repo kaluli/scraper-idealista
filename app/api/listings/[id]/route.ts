@@ -158,6 +158,17 @@ export async function PUT(
       Object.entries(data).filter(([, v]) => v !== undefined)
     ) as Prisma.ListingUpdateInput
 
+    if (Object.keys(cleanData).length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'No hay campos que actualizar. Si editaste solo un campo, recargá la página e inténtalo de nuevo.',
+        },
+        { status: 400 }
+      )
+    }
+
     const listing = await prisma.listing.update({
       where: { id },
       data: cleanData,
@@ -165,26 +176,24 @@ export async function PUT(
 
     return NextResponse.json({ success: true, data: listing })
   } catch (error) {
-    const raw = error instanceof Error ? error.message : String(error)
-    const errDetail = {
-      name: error instanceof Error ? error.name : 'Unknown',
-      message: raw,
-      code: typeof (error as { code?: string })?.code === 'string' ? (error as { code: string }).code : undefined,
-      stack: error instanceof Error ? error.stack : undefined,
+    const raw =
+      error instanceof Error
+        ? error.message
+        : error === undefined || error === null
+          ? 'Error desconocido'
+          : String(error)
+    try {
+      console.error('[PUT /api/listings/[id]]', raw)
+    } catch {
+      /* no bloquear respuesta JSON */
     }
-    console.error('[PUT /api/listings/[id]] Error completo:', JSON.stringify(errDetail, null, 2))
-    if (error instanceof Error && error.stack) console.error('[PUT /api/listings/[id]] Stack:', error.stack)
-
-    const hint =
-      /telefono|llamado|Unknown column|doesn't exist|Invalid.*invocation/i.test(raw)
-        ? ' → Si habla de columna: ejecutá en la BD que usás: npx prisma db push'
-        : ''
+    const hint = /notas|telefono|llamado|Unknown column|doesn'?t exist|Column .* (cannot|does not)|P2022|no column|no such column/i.test(
+      raw
+    )
+      ? ' → Sincronizá el esquema: npm run db:push (o npx prisma db push con la misma DATABASE_URL que la app).'
+      : ''
     return NextResponse.json(
-      {
-        success: false,
-        error: raw + hint,
-        errorDetail: errDetail,
-      },
+      { success: false, error: `${raw}${hint}` },
       { status: 500 }
     )
   }

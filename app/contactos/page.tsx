@@ -48,6 +48,30 @@ function sameBarrioYProvincia(a: Listing, b: Listing): boolean {
   return (a.province || '') === (b.province || '')
 }
 
+/**
+ * Lee el cuerpo de la respuesta como JSON. Si el servidor devolvió HTML (p. ej. error 500
+ * sin manejar), se muestra un mensaje legible en lugar de solo "Internal Server Error".
+ */
+async function readApiErrorJson(
+  res: Response
+): Promise<{ success?: boolean; error?: string; errorDetail?: unknown; [k: string]: unknown }> {
+  const text = await res.text()
+  if (!text) {
+    return { success: false, error: res.statusText || 'Respuesta vacía' }
+  }
+  try {
+    return JSON.parse(text) as { success?: boolean; error?: string; errorDetail?: unknown }
+  } catch {
+    return {
+      success: false,
+      error:
+        /^\s*<!/.test(text) || /<html/i.test(text)
+          ? `Error del servidor (HTTP ${res.status}). Revisá la terminal donde corre "npm run dev" para el detalle.`
+          : (text.length > 400 ? `${text.slice(0, 400)}…` : text) || res.statusText,
+    }
+  }
+}
+
 const MAX_SIMILAR_ALQUILER = 3
 const M2_MAX_SIMILAR_DIFF = 10
 const MIN_TOKEN_LEN = 3
@@ -723,7 +747,7 @@ export default function ContactosPage() {
     if (!confirm('¿Eliminar este piso de la lista?')) return
     try {
       const res = await fetch(`/api/listings/${id}`, { method: 'DELETE' })
-      const json = await res.json()
+      const json = await readApiErrorJson(res)
       if (json.success) {
         if (editingId === id) closeEdit()
         loadListings()
@@ -756,7 +780,7 @@ export default function ContactosPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ visitado: next }),
       })
-      const json = await res.json()
+      const json = await readApiErrorJson(res)
       if (json.success) loadListings()
       else alert(json.error || 'Error al guardar')
     } catch (e) {
@@ -778,7 +802,7 @@ export default function ContactosPage() {
           llamado: phoneDialogForm.llamado,
         }),
       })
-      const json = await res.json()
+      const json = await readApiErrorJson(res)
       if (json.success) {
         closePhoneDialog()
         loadListings()
@@ -844,12 +868,7 @@ export default function ContactosPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-      let json: { success?: boolean; error?: string }
-      try {
-        json = await res.json()
-      } catch {
-        json = { success: false, error: res.statusText || 'Error de conexión' }
-      }
+      const json = await readApiErrorJson(res)
       if (json.success) {
         closeEdit()
         loadListings()
@@ -862,9 +881,9 @@ export default function ContactosPage() {
             .catch(() => {})
         }
       } else {
-        const err = json.error || res.statusText || 'Error al guardar'
+        const err = json.error || 'Error al guardar'
         console.error('PUT /api/listings error:', res.status, err)
-        alert(`${err}\n\n(Si habla de "telefono" o "column", ejecutá en la terminal: npm run db:push)`)
+        alert(err)
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error al guardar'
@@ -924,7 +943,7 @@ export default function ContactosPage() {
           visitado: addForm.visitado,
         }),
       })
-      const json = await res.json()
+      const json = await readApiErrorJson(res)
       if (json.success) {
         closeAddListing()
         loadListings()
