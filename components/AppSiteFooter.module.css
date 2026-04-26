@@ -2,33 +2,79 @@
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 20px 16px 28px;
-  border-top: 1px solid hsl(var(--border));
+  padding: 1.5rem 1.25rem 1.75rem;
   text-align: center;
+  position: relative;
+  background: transparent;
+  /* Línea fina centrada, sin mancha de color (no es fondo) */
+  border-top: none;
+}
+
+.root::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(6.5rem, 42vw);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--border) / 0.75) 22%,
+    hsl(var(--border) / 0.75) 78%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 
 .line {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.45em 0.55em;
   margin: 0;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: hsl(var(--muted-foreground));
-  letter-spacing: 0.02em;
+  line-height: 1.4;
 }
 
+/* “by” — voz baja, espaciado editorial */
+.pre {
+  font-size: 0.68rem;
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: 0.2em;
+  text-transform: lowercase;
+  color: hsl(var(--muted-foreground) / 0.72);
+  user-select: none;
+}
+
+/* firma: peso suave, tracking, trazo bajo al hover (sin subrayado clásico) */
 .link {
-  color: hsl(var(--primary));
-  font-weight: 600;
+  display: inline-block;
+  position: relative;
+  font-family: var(--font-stack-heading, var(--font-stack-body));
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-style: normal;
+  letter-spacing: 0.1em;
+  text-transform: lowercase;
   text-decoration: none;
-  transition: color 0.15s ease, text-decoration 0.15s ease;
+  color: hsl(var(--foreground) / 0.78);
+  padding-bottom: 1px;
+  border-bottom: 1px solid hsl(var(--border) / 0.45);
+  transition: color 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .link:hover {
   color: hsl(var(--accent));
-  text-decoration: underline;
+  border-bottom-color: hsl(var(--accent) / 0.42);
 }
 
 .link:focus-visible {
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 2px;
-  border-radius: 4px;
+  outline: 1px solid hsl(var(--ring) / 0.6);
+  outline-offset: 4px;
+  border-radius: 2px;
+  border-bottom-color: transparent;
 }
