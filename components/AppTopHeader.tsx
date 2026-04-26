@@ -188,9 +188,6 @@ export function AppTopHeader() {
               <IconAjustes />
             </Link>
             <HeaderDbPill />
-            <span className={styles.avatar} title="Cuenta" aria-label="Cuenta">
-              IP
-            </span>
           </div>
         </div>
       </div>
