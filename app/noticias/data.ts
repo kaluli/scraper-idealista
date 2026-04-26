@@ -1,0 +1,73 @@
+/** Ranking informativo: zonas y perfiles (contenido editorial). */
+export const rankingZonasInversion = [
+  {
+    puesto: 1,
+    ciudadZona: 'Segovia (Centro / Universidad)',
+    rentabilidadBruta: '6.1% - 6.5%',
+    tasaOkupacion: 'Mínima (0.4%)',
+    perfilInversion: 'Estudiantes (IE University) y teletrabajadores.',
+  },
+  {
+    puesto: 2,
+    ciudadZona: 'Guadalajara (Aguas Vivas)',
+    rentabilidadBruta: '5.9% - 6.3%',
+    tasaOkupacion: 'Baja (0.4%)',
+    perfilInversion: 'Familias jóvenes y logística. Muy seguro.',
+  },
+  {
+    puesto: 3,
+    ciudadZona: 'Tetuán (Madrid - Berruguete)',
+    rentabilidadBruta: '5.5% - 6.0%',
+    tasaOkupacion: 'Baja',
+    perfilInversion: 'La mejor opción dentro de la capital por potencial.',
+  },
+  {
+    puesto: 4,
+    ciudadZona: 'Getafe (El Bercial)',
+    rentabilidadBruta: '5.2% - 5.6%',
+    tasaOkupacion: 'Muy Baja',
+    perfilInversion: 'Zona premium del sur, riesgo de impago casi nulo.',
+  },
+  {
+    puesto: 5,
+    ciudadZona: 'Ávila (Zona Universidad)',
+    rentabilidadBruta: '6.3% - 6.8%',
+    tasaOkupacion: 'Baja',
+    perfilInversion: 'Ticket de entrada muy bajo (puedes comprar desde 90k€).',
+  },
+  {
+    puesto: 6,
+    ciudadZona: 'Tres Cantos',
+    rentabilidadBruta: '3.8% - 4.2%',
+    tasaOkupacion: 'Cercana a 0%',
+    perfilInversion: 'Máxima seguridad. Perfil tecnológico/científico.',
+  },
+  {
+    puesto: 7,
+    ciudadZona: 'Alcalá de Henares (Ensanche)',
+    rentabilidadBruta: '5.4% - 5.8%',
+    tasaOkupacion: 'Baja',
+    perfilInversion: 'Muy estable, gran demanda de alquiler residencial.',
+  },
+  {
+    puesto: 8,
+    ciudadZona: 'Las Rozas (Európolis)',
+    rentabilidadBruta: '4.0% - 4.5%',
+    tasaOkupacion: 'Nula',
+    perfilInversion: 'Ideal para perfiles de rentas altas y locales-vivienda.',
+  },
+  {
+    puesto: 9,
+    ciudadZona: 'Toledo (Casco / Santa Teresa)',
+    rentabilidadBruta: '5.7% - 6.1%',
+    tasaOkupacion: 'Moderada-Baja',
+    perfilInversion: 'Atractivo turístico y administrativo (funcionarios).',
+  },
+  {
+    puesto: 10,
+    ciudadZona: 'Aranjuez',
+    rentabilidadBruta: '5.8% - 6.4%',
+    tasaOkupacion: 'Moderada',
+    perfilInversion: 'Entorno patrimonial y buena conexión con Madrid; demanda mixta residencial y turística.',
+  },
+] as const

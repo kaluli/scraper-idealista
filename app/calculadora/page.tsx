@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import Link from 'next/link'
 import styles from './page.module.css'
 
 function formatEuros(n: number): string {
@@ -129,7 +128,6 @@ export default function CalculadoraPage() {
     <div className={styles.container}>
       <div className={styles.content}>
         <header className={styles.header}>
-          <Link href="/" className={styles.backLink}>← Volver al Gestor</Link>
           <h1 className={styles.title}>
           <span className={styles.titleIcon} aria-hidden>
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

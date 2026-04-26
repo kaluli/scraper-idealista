@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "node scripts/check-env-dev.js && next dev",
-    "dev:clean": "rm -rf .next && node scripts/check-env-dev.js && next dev",
+    "dev": "node scripts/check-env-dev.js && next dev -p 3000",
+    "dev:restart": "lsof -ti :3000 2>/dev/null | xargs kill -9 2>/dev/null; sleep 1; node scripts/check-env-dev.js && next dev -p 3000",
+    "dev:clean": "rm -rf .next && node scripts/check-env-dev.js && next dev -p 3000",
     "build": "prisma generate && next build",
     "build:clean": "rm -rf .next && prisma generate && next build",
     "start": "next start",
@@ -33,15 +34,21 @@
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",
+    "clsx": "^2.1.1",
     "next": "^14.2.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.10",
     "prisma": "^5.7.1",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
     "typescript": "^5"
   }
 }

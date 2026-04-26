@@ -1,7 +1,9 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import { IdealistaLinkIcon } from '../components/IdealistaLinkIcon'
+import { IconBuilding2 } from '../components/icons/IconBuilding2'
 import styles from './page.module.css'
 
 interface Listing {
@@ -43,6 +45,8 @@ export default function Home() {
   const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('all')
   const [selectedMinSurface, setSelectedMinSurface] =
     useState<MinSurfaceOption>(DEFAULT_MIN_SURFACE)
+  const [searchQuery, setSearchQuery] = useState('')
+  const filtersDialogRef = useRef<HTMLDialogElement | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
@@ -57,6 +61,19 @@ export default function Home() {
     publishedAddress: '',
     rooms: '',
   })
+
+  const openFiltersDialog = useCallback(() => {
+    filtersDialogRef.current?.showModal()
+    window.setTimeout(() => {
+      const el = document.getElementById('filter-province') as HTMLSelectElement | null
+      if (!el) return
+      try {
+        el.focus({ preventScroll: true })
+      } catch {
+        el.focus()
+      }
+    }, 100)
+  }, [])
 
   // Cargar todos los datos en una sola petición (4 conexiones → 1)
   const loadHomeData = async () => {
@@ -169,6 +186,25 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedType, selectedNeighborhood, selectedProvince, selectedMaxPrice, selectedMinSurface])
 
+  /** Refinado en cliente (misma lista que devuelve la API con los filtros). */
+  const displayedListings = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return listings
+    return listings.filter((l) => {
+      const haystack = [l.title, l.city, l.neighborhood, l.publishedAddress, l.province, String(l.id)]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+      return (
+        haystack.includes(q) ||
+        q
+          .split(/\s+/)
+          .filter(Boolean)
+          .every((word) => haystack.includes(word))
+      )
+    })
+  }, [listings, searchQuery])
+
   // Crear nuevo piso
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -239,82 +275,67 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <div className={styles.content}>
-        {/* Header */}
-        <div className={styles.header}>
-          <h1 className={styles.title}>🏠 Gestor de Pisos Idealista</h1>
-          <div className={styles.headerRight}>
-            <span className={styles.dbStatus} title="Estado de la base de datos">
-              {loading ? (
-                <span className={styles.dbStatusLoading}>BD: Conectando...</span>
-              ) : error ? (
-                <a href="/api/health/db" target="_blank" rel="noopener noreferrer" className={styles.dbStatusError}>
-                  BD: Error →
-                </a>
-              ) : (
-                <span className={styles.dbStatusOk} title="total en tabla listings vs. resultados filtrados">
-                  BD: OK
-                  {totalInDb !== null &&
-                    ` — ${totalInDb} en base` +
-                      (totalInDb > 0 && listings.length !== totalInDb
-                        ? ` (${listings.length} visibles)`
-                        : totalInDb === 0
-                          ? ' (vacía)'
-                          : '')}
-                </span>
-              )}
-            </span>
-            <div className={styles.headerActions}>
-            <Link href="/calculadora" className={styles.reportLink}>
-              <span className={styles.linkIcon} aria-hidden>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="4" y="2" width="16" height="20" rx="2" />
-                  <rect x="6" y="6" width="12" height="4" rx="1" fill="currentColor" fillOpacity="0.2" />
-                  <line x1="8" y1="14" x2="10" y2="14" />
-                  <line x1="14" y1="14" x2="16" y2="14" />
-                  <line x1="8" y1="18" x2="10" y2="18" />
-                  <line x1="14" y1="18" x2="16" y2="18" />
-                </svg>
-              </span>
-              Calculadora
-            </Link>
-            <Link href="/recomendaciones" className={styles.reportLink}>📋 Ajustes</Link>
-            <Link href="/contactos" className={styles.reportLink}>📇 Contactos</Link>
+        <dialog
+          ref={filtersDialogRef}
+          id="panel-filtros-pisos"
+          className={styles.filtersDialog}
+          aria-labelledby="filters-dialog-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) filtersDialogRef.current?.close()
+          }}
+        >
+          <div
+            className={styles.filtersDialogPanel}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.filtersDialogHeader}>
+              <h2 id="filters-dialog-title" className={styles.filtersTitle}>
+                Filtros
+              </h2>
+              <button
+                type="button"
+                className={styles.filtersDialogClose}
+                onClick={() => filtersDialogRef.current?.close()}
+                aria-label="Cerrar filtros"
+              >
+                <span aria-hidden>×</span>
+              </button>
+            </div>
+
+            <div className={styles.filtersDialogBody}>
+          <div className={styles.filtersDialogTypeRow}>
+            <div className={styles.filterChips} role="group" aria-label="Tipo de anuncio">
+              <button
+                type="button"
+                className={`${styles.filterChip} ${selectedType === 'all' ? styles.filterChipActive : ''}`}
+                onClick={() => setSelectedType('all')}
+              >
+                Todos
+              </button>
+              <button
+                type="button"
+                className={`${styles.filterChip} ${selectedType === 'alquiler' ? styles.filterChipActive : ''}`}
+                onClick={() => setSelectedType('alquiler')}
+              >
+                Alquiler
+              </button>
+              <button
+                type="button"
+                className={`${styles.filterChip} ${selectedType === 'compra' ? styles.filterChipActive : ''}`}
+                onClick={() => setSelectedType('compra')}
+              >
+                Compra
+              </button>
             </div>
           </div>
-        </div>
 
-        {/* Filtros — siempre arriba, mismo orden en local y producción */}
-        <div className={styles.filtersCard}>
-          <h2 className={styles.sectionTitle}>Filtros</h2>
-          
-          <div className={styles.filters}>
+          <div className={styles.filtersGrid}>
             <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Tipo:</label>
-              <div className={styles.typeButtons}>
-                <button
-                  className={`${styles.btnType} ${selectedType === 'all' ? styles.btnTypeActive : ''}`}
-                  onClick={() => setSelectedType('all')}
-                >
-                  Todos
-                </button>
-                <button
-                  className={`${styles.btnType} ${selectedType === 'alquiler' ? styles.btnTypeActive : ''}`}
-                  onClick={() => setSelectedType('alquiler')}
-                >
-                  Alquiler
-                </button>
-                <button
-                  className={`${styles.btnType} ${selectedType === 'compra' ? styles.btnTypeActive : ''}`}
-                  onClick={() => setSelectedType('compra')}
-                >
-                  Compra
-                </button>
-              </div>
-            </div>
-
-            <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Provincia</label>
+              <label className={styles.filterLabel} htmlFor="filter-province">
+                Provincia
+              </label>
               <select
+                id="filter-province"
                 className={styles.select}
                 value={provinces.length === 0 ? 'all' : selectedProvince}
                 onChange={(e) => {
@@ -334,8 +355,11 @@ export default function Home() {
             </div>
 
             <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Barrio:</label>
+              <label className={styles.filterLabel} htmlFor="filter-barrio">
+                Barrio
+              </label>
               <select
+                id="filter-barrio"
                 className={styles.select}
                 value={selectedNeighborhood}
                 onChange={(e) => setSelectedNeighborhood(e.target.value)}
@@ -351,8 +375,11 @@ export default function Home() {
             </div>
 
             <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Precio máximo:</label>
+              <label className={styles.filterLabel} htmlFor="filter-precio">
+                Precio máximo
+              </label>
               <select
+                id="filter-precio"
                 className={styles.select}
                 value={selectedMaxPrice}
                 onChange={(e) => setSelectedMaxPrice(e.target.value)}
@@ -370,26 +397,111 @@ export default function Home() {
             </div>
 
             <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Superficie</label>
-              <div className={styles.typeButtons} role="group" aria-label="Superficie mínima">
+              <span className={styles.filterLabel} id="filter-surface-label">
+                Superficie mín.
+              </span>
+              <div
+                className={styles.surfaceChips}
+                role="group"
+                aria-labelledby="filter-surface-label"
+              >
                 <button
                   type="button"
-                  className={`${styles.btnType} ${selectedMinSurface === '40' ? styles.btnTypeActive : ''}`}
+                  className={`${styles.filterChip} ${selectedMinSurface === '40' ? styles.filterChipActive : ''}`}
                   onClick={() => setSelectedMinSurface('40')}
                 >
-                  {'>'} 40 m²
+                  &gt; 40 m²
                 </button>
                 <button
                   type="button"
-                  className={`${styles.btnType} ${selectedMinSurface === '80' ? styles.btnTypeActive : ''}`}
+                  className={`${styles.filterChip} ${selectedMinSurface === '80' ? styles.filterChipActive : ''}`}
                   onClick={() => setSelectedMinSurface('80')}
                 >
-                  {'>'} 80 m²
+                  &gt; 80 m²
                 </button>
               </div>
             </div>
           </div>
-        </div>
+            </div>
+            <div className={styles.filtersDialogFooter}>
+              <button
+                type="button"
+                className={styles.btnPrimary}
+                onClick={() => filtersDialogRef.current?.close()}
+              >
+                Listo
+              </button>
+            </div>
+          </div>
+        </dialog>
+
+        {!error && (
+          <section className={styles.homeHero} aria-labelledby="home-hero-title">
+            <div className={styles.homeHeroInner}>
+              <div className={styles.homeHeroText}>
+                <p className={styles.homeHeroKicker}>
+                  <span className={styles.homeHeroKickerDot} aria-hidden />
+                  Panel principal
+                </p>
+                <h1 id="home-hero-title" className={styles.homeHeroTitle}>
+                  Tus pisos, en un solo{' '}
+                  <span className={styles.homeHeroTitleAccent}>dashboard</span>
+                </h1>
+                <p className={styles.homeHeroLead}>
+                  Encuentra anuncios de Idealista con la mejor rentabilidad, gestiona tus citas,
+                  contactos, utiliza la calculadora de rentabilidad para evaluar si es una buena
+                  inversión.
+                </p>
+              </div>
+              <div className={styles.homeHeroActions}>
+                <button
+                  type="button"
+                  className={styles.homeHeroBtnFilters}
+                  onClick={openFiltersDialog}
+                  aria-controls="panel-filtros-pisos"
+                >
+                  <span className={styles.homeHeroBtnIcon} aria-hidden>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                    </svg>
+                  </span>
+                  Filtros
+                </button>
+                <button
+                  type="button"
+                  className={styles.homeHeroBtnCta}
+                  onClick={() => setShowModal(true)}
+                >
+                  <span className={styles.homeHeroBtnIcon} aria-hidden>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                  </span>
+                  Nuevo piso
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
 
         {!loading &&
           !error &&
@@ -412,6 +524,13 @@ export default function Home() {
                 }}
               >
                 Ver todos los pisos (quitar filtros)
+              </button>
+              <button
+                type="button"
+                className={styles.btnFiltersOpenDialog}
+                onClick={openFiltersDialog}
+              >
+                Abrir filtros…
               </button>
             </div>
           )}
@@ -466,14 +585,21 @@ export default function Home() {
           </div>
         )}
 
-        {/* Estadísticas */}
+        {/* Estadísticas (sin título visible: las tarjetas son autoexplicativas) */}
         {stats && stats.total > 0 && (
-          <div className={styles.statsCard}>
-            <h2 className={styles.sectionTitle}>📊 Estadísticas</h2>
-            
+          <div className={styles.statsCard} role="region" aria-label="Métricas de la cartera de pisos">
             <div className={styles.statsGrid}>
-              <div className={styles.statBox}>
-                <div className={styles.statLabel}>Total de pisos</div>
+              <div
+                className={`${styles.statBox} ${styles.statBoxAccent}`}
+                aria-label={`Pisos activos: ${stats.total}`}
+              >
+                <div className={styles.statBoxAccentOrb} aria-hidden />
+                <div className={styles.statBoxAccentTop}>
+                  <div className={styles.statLabel}>Pisos activos</div>
+                  <span className={styles.statBoxAccentIcon}>
+                    <IconBuilding2 size={18} />
+                  </span>
+                </div>
                 <div className={styles.statValue}>{stats.total}</div>
               </div>
 
@@ -535,10 +661,55 @@ export default function Home() {
               </div>
             </div>
 
+            <div className={styles.listingSearchSection}>
+              <div className={styles.listingSearchPanel}>
+                <div className={styles.listingSearchHead}>
+                  <label className={styles.listingSearchLabel} htmlFor="home-filtros-search">
+                    Buscar
+                  </label>
+                </div>
+                {/* Misma estructura que idealista-pro-makeover Index: columna (móvil) o fila (md) gap-3; chips en flex-wrap gap-2 */}
+                <div className={styles.listingSearchStack}>
+                  <div className={styles.searchWrap}>
+                    <span className={styles.searchIcon} aria-hidden>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      </svg>
+                    </span>
+                    <input
+                      id="home-filtros-search"
+                      type="search"
+                      className={styles.searchInput}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Buscar por dirección, ciudad o referencia…"
+                      aria-label="Buscar pisos en la lista actual"
+                      autoComplete="off"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Estadísticas por barrio */}
             {stats.byNeighborhood && Object.keys(stats.byNeighborhood).length > 0 && (
-              <div className={styles.neighborhoodStats}>
-                <h3 className={styles.subsectionTitle}>Por barrio:</h3>
+              <section
+                className={styles.neighborhoodStats}
+                aria-labelledby="por-barrio-heading"
+              >
+                <header className={styles.neighborhoodStatsHeader}>
+                  <span className={styles.neighborhoodStatsKicker}>
+                    <span className={styles.neighborhoodStatsKickerDot} aria-hidden />
+                    Análisis local
+                  </span>
+                  <h3 id="por-barrio-heading" className={styles.subsectionTitleNeighborhood}>
+                    Por <span className={styles.subsectionTitleNeighborhoodAccent}>barrio</span>
+                  </h3>
+                  <p className={styles.neighborhoodStatsLead}>
+                    Medias y rentabilidad por zona según los filtros activos.
+                  </p>
+                </header>
                 <div className={styles.neighborhoodStatsGrid}>
                   {Object.entries(stats.byNeighborhood)
                     .sort(([, a], [, b]) => {
@@ -553,71 +724,74 @@ export default function Home() {
                       if (bProfit === -1) return -1 // b sin rentabilidad, a va primero
                       return bProfit - aProfit // Ordenar descendente por rentabilidad
                     })
-                    .map(([neighborhood, data]: [string, any]) => (
-                      <div key={neighborhood} className={styles.neighborhoodStatBox}>
-                        <div className={styles.neighborhoodName}>{neighborhood}</div>
-                        <div className={styles.neighborhoodDetails}>
-                          <div className={styles.neighborhoodStat}>
-                            <span className={styles.neighborhoodStatLabel}>Precio:</span>
-                            <span className={styles.neighborhoodStatValue}>
-                              {formatPrice(data.avgPrice)}
-                            </span>
-                            {selectedType !== 'all' && (
-                              <span className={styles.neighborhoodStatRange}>
-                                ({formatPrice(data.minPrice)} - {formatPrice(data.maxPrice)})
-                              </span>
-                            )}
-                          </div>
-                          {data.avgSurface > 0 && (
-                            <div className={styles.neighborhoodStat}>
-                              <span className={styles.neighborhoodStatLabel}>Superficie:</span>
-                              <span className={styles.neighborhoodStatValue}>
-                                {data.avgSurface.toFixed(1)} m²
-                              </span>
-                            </div>
-                          )}
-                          {data.avgRooms > 0 && (
-                            <div className={styles.neighborhoodStat}>
-                              <span className={styles.neighborhoodStatLabel}>Habitaciones:</span>
-                              <span className={styles.neighborhoodStatValue}>
-                                {data.avgRooms.toFixed(1)}
-                              </span>
-                            </div>
-                          )}
-                          <div className={styles.neighborhoodStat}>
-                            <span className={styles.neighborhoodStatLabel}>Total:</span>
-                            <span className={styles.neighborhoodStatValue}>{data.total} pisos</span>
-                          </div>
-                        </div>
-                        {selectedType === 'all' && data.avgProfitability !== null && typeof data.avgProfitability === 'number' && !isNaN(data.avgProfitability) && (
-                          <>
-                            <div className={styles.neighborhoodProfitabilityDivider}></div>
-                            <div className={styles.neighborhoodProfitability}>
-                              <span className={styles.neighborhoodProfitabilityLabel}>💰 Rentabilidad</span>
-                              <span className={styles.neighborhoodProfitabilityValue}>
+                    .map(([neighborhood, data]: [string, any]) => {
+                      const hasYield =
+                        selectedType === 'all' &&
+                        data.avgProfitability !== null &&
+                        typeof data.avgProfitability === 'number' &&
+                        !isNaN(data.avgProfitability)
+                      return (
+                        <div key={neighborhood} className={styles.neighborhoodStatBox}>
+                          {hasYield && (
+                            <div className={styles.neighborhoodYieldHero}>
+                              <div className={styles.neighborhoodYieldHeroTop}>
+                                <span className={styles.neighborhoodYieldLabel}>Rentabilidad bruta</span>
+                              </div>
+                              <p className={styles.neighborhoodYieldValue} aria-label={`Rentabilidad ${data.avgProfitability.toFixed(2)} por ciento`}>
                                 {data.avgProfitability.toFixed(2)}%
-                              </span>
+                              </p>
                               {data.reliabilityPct != null && (
-                                <span className={styles.neighborhoodReliability}>
-                                  Fiabilidad: {data.reliabilityPct}%
+                                <span className={styles.neighborhoodYieldReliability}>
+                                  Fiabilidad {data.reliabilityPct}%
                                 </span>
                               )}
                             </div>
-                          </>
-                        )}
-                      </div>
-                    ))}
+                          )}
+                          <div className={styles.neighborhoodCardBody}>
+                            <div className={styles.neighborhoodHeaderRow}>
+                              <p className={styles.neighborhoodName}>{neighborhood}</p>
+                              <span className={styles.neighborhoodCountBadge}>{data.total} pisos</span>
+                            </div>
+                            <div className={styles.neighborhoodMetaGrid}>
+                              <div className={styles.neighborhoodMetaCell}>
+                                <span className={styles.neighborhoodMetaLabel}>Precio medio</span>
+                                <span className={styles.neighborhoodMetaValue}>{formatPrice(data.avgPrice)}</span>
+                                {selectedType !== 'all' && (
+                                  <span className={styles.neighborhoodMetaRange}>
+                                    {formatPrice(data.minPrice)} – {formatPrice(data.maxPrice)}
+                                  </span>
+                                )}
+                              </div>
+                              {data.avgSurface > 0 && (
+                                <div className={styles.neighborhoodMetaCell}>
+                                  <span className={styles.neighborhoodMetaLabel}>Superficie</span>
+                                  <span className={styles.neighborhoodMetaValue}>{data.avgSurface.toFixed(1)} m²</span>
+                                </div>
+                              )}
+                              {data.avgRooms > 0 && (
+                                <div className={styles.neighborhoodMetaCell}>
+                                  <span className={styles.neighborhoodMetaLabel}>Hab.</span>
+                                  <span className={styles.neighborhoodMetaValue}>{data.avgRooms.toFixed(1)}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
                 </div>
-                <div className={styles.rentabilidadCriterios}>
-                  <h4 className={styles.criteriosTitle}>Criterio de rentabilidad</h4>
-                  <p className={styles.criteriosText}>
-                    La rentabilidad se calcula por barrio comparando <strong>precios medios de alquiler y compra por número de habitaciones</strong> (no el mismo piso). Para cada tramo (1 hab, 2 hab, …) se usa: (alquiler medio mensual × 12 / precio compra medio) × 100. El % del barrio es el promedio de esos tramos. El <strong>índice de fiabilidad</strong> depende de la cantidad de anuncios y de tramos usados (más datos = más fiable).
-                  </p>
-                  <div className={styles.criteriosLinks}>
-                    <Link href="/reporte" className={styles.criteriosLink}>Ver reporte completo: fórmulas, circunstancias e índice de fiabilidad →</Link>
+                <div className={styles.neighborhoodStatsCriterios}>
+                  <div className={styles.rentabilidadCriterios}>
+                    <h4 className={styles.criteriosTitle}>Criterio de rentabilidad</h4>
+                    <p className={styles.criteriosText}>
+                      La rentabilidad se calcula por barrio comparando <strong>precios medios de alquiler y compra por número de habitaciones</strong> (no el mismo piso). Para cada tramo (1 hab, 2 hab, …) se usa: (alquiler medio mensual × 12 / precio compra medio) × 100. El % del barrio es el promedio de esos tramos. El <strong>índice de fiabilidad</strong> depende de la cantidad de anuncios y de tramos usados (más datos = más fiable).
+                    </p>
+                    <div className={styles.criteriosLinks}>
+                      <Link href="/reporte" className={styles.criteriosLink}>Ver reporte completo: fórmulas, circunstancias e índice de fiabilidad →</Link>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </section>
             )}
           </div>
         )}
@@ -652,9 +826,24 @@ export default function Home() {
               Ver todos los pisos
             </button>
           </div>
+        ) : displayedListings.length === 0 ? (
+          <div className={styles.emptyState}>
+            <h2 style={{ marginBottom: '16px' }}>Sin resultados con esta búsqueda</h2>
+            <p style={{ fontSize: '0.95rem' }}>
+              Ningún piso de los {listings.length} actuales coincide con «{searchQuery.trim() || '…'}».
+            </p>
+            <button
+              className={styles.btnPrimary}
+              type="button"
+              onClick={() => setSearchQuery('')}
+              style={{ marginTop: '16px' }}
+            >
+              Limpiar búsqueda
+            </button>
+          </div>
         ) : (
           <div className={styles.listingsGrid}>
-            {listings.map((listing) => (
+            {displayedListings.map((listing) => (
               <div key={listing.id} className={styles.listingCard}>
                 <div className={styles.listingHeader}>
                   <h3 className={styles.listingTitle}>{listing.title || 'Sin título'}</h3>
@@ -690,14 +879,11 @@ export default function Home() {
                 </div>
 
                 <div className={styles.listingActions}>
-                  <a
+                  <IdealistaLinkIcon
                     href={listing.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.btnLink}
-                  >
-                    Ver en Idealista
-                  </a>
+                    className={`${styles.btnLink} ${styles.btnLinkIdealistaIcon}`}
+                    imgClassName={styles.btnLinkIdealistaImg}
+                  />
                   <button
                     className={styles.btnDanger}
                     onClick={() => handleDelete(listing.id)}

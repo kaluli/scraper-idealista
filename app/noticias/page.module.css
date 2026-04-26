@@ -1,0 +1,139 @@
+.page {
+  min-height: 100vh;
+  /* Deja ver el fondo global (var(--bg) + gradiente) del design system */
+  background: transparent;
+  padding: 24px 16px 48px;
+  /* Mismo stack que el cuerpo del layout (globals + tailwind font-sans) */
+  font-family: var(--font-stack-body);
+}
+
+.inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Tamaño/peso: el h1 usa --font-stack-heading vía @layer base en globals.css */
+.title {
+  margin: 0 0 24px 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: hsl(var(--foreground));
+  line-height: 1.2;
+}
+
+.card {
+  background: hsl(var(--card));
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid hsl(var(--border) / 0.7);
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+
+.tableScroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-family: var(--font-stack-body);
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: left;
+  padding: 14px 16px;
+  background-image: var(--gradient-brand);
+  color: hsl(var(--primary-foreground));
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.table thead th:first-child {
+  width: 4.5rem;
+  text-align: center;
+  border-radius: 0;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  transition: background 0.15s ease;
+}
+
+.table tbody tr:nth-child(even) {
+  background: hsl(var(--muted) / 0.4);
+}
+
+.table tbody tr:hover {
+  background: hsl(var(--secondary) / 0.5);
+}
+
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.table td {
+  padding: 12px 16px;
+  vertical-align: top;
+  color: hsl(var(--foreground));
+  line-height: 1.45;
+}
+
+.colPuesto {
+  text-align: center;
+  font-weight: 700;
+  color: hsl(var(--accent));
+  font-size: 1.05rem;
+  width: 3.5rem;
+}
+
+.colZona {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  min-width: 200px;
+}
+
+.colRent {
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--accent));
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.colOkup {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.88rem;
+}
+
+.colPerfil {
+  min-width: 220px;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.88rem;
+}
+
+/* Móvil: filas en tarjeta bajo el scroll, opcional mejora sin duplicar: badges en puesto */
+@media (max-width: 640px) {
+  .title {
+    font-size: 1.35rem;
+  }
+
+  .table {
+    min-width: 600px;
+    font-size: 0.82rem;
+  }
+
+  .table td,
+  .table thead th {
+    padding: 10px 12px;
+  }
+}

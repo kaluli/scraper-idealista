@@ -1,23 +1,282 @@
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  idealista-pro-makeover — Modern & Tech Real Estate Design System
+  Colores en HSL (ver :root).
+*/
+
+@layer base {
+  :root {
+    /* App shell: header fijo (AppTopHeader) */
+    --app-header-height: 4rem;
+
+    /* Surfaces */
+    --background: 220 33% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Brand — deep navy */
+    --primary: 222 47% 14%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Accent — vibrant blue (CTA) */
+    --accent: 224 100% 59%;
+    --accent-foreground: 0 0% 100%;
+    --accent-glow: 224 100% 70%;
+
+    /* Secondary — soft surface */
+    --secondary: 220 30% 96%;
+    --secondary-foreground: 222 47% 14%;
+
+    --muted: 220 25% 95%;
+    --muted-foreground: 220 12% 45%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 152 65% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 95% 55%;
+    --warning-foreground: 222 47% 11%;
+
+    --border: 220 20% 90%;
+    --input: 220 20% 90%;
+    --ring: 224 100% 59%;
+
+    --radius: 0.875rem;
+
+    /* Gradients */
+    --gradient-brand: linear-gradient(135deg, hsl(222 47% 14%) 0%, hsl(224 70% 28%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(224 100% 59%) 0%, hsl(199 95% 60%) 100%);
+    --gradient-surface: radial-gradient(1200px 600px at 0% 0%, hsl(224 100% 96%) 0%, transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, hsl(199 95% 96%) 0%, transparent 60%);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px hsl(222 47% 11% / 0.04);
+    --shadow-md: 0 4px 16px -4px hsl(222 47% 11% / 0.08);
+    --shadow-lg: 0 16px 40px -12px hsl(222 47% 11% / 0.14);
+    --shadow-glow: 0 12px 32px -8px hsl(224 100% 59% / 0.35);
+
+    /* Motion */
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --transition-base: all 220ms var(--ease-out);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Tipografía (idealista-pro-makeover: `src/index.css` + Google Fonts en index.html) */
+    --font-stack-body: var(--font-sans), 'Inter', system-ui, -apple-system, sans-serif;
+    --font-stack-heading: var(--font-display), 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 10%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 10%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 47% 11%;
+
+    --accent: 224 100% 65%;
+    --accent-foreground: 222 47% 7%;
+    --accent-glow: 224 100% 75%;
+
+    --secondary: 222 30% 15%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 222 30% 15%;
+    --muted-foreground: 220 12% 65%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 152 60% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --border: 222 30% 18%;
+    --input: 222 30% 18%;
+    --ring: 224 100% 65%;
+
+    --gradient-brand: linear-gradient(135deg, hsl(222 47% 10%) 0%, hsl(224 70% 22%) 100%);
+    --gradient-surface: radial-gradient(1200px 600px at 0% 0%, hsl(224 70% 14%) 0%, transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, hsl(199 70% 14%) 0%, transparent 60%);
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
 }
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: var(--font-stack-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    background-image: var(--gradient-surface);
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-display {
+    font-family: var(--font-stack-heading);
+    letter-spacing: -0.02em;
+  }
+
+  /* Formularios y UI nativa: heredan el stack (index.css / makeover) */
+  button,
+  input,
+  select,
+  textarea,
+  optgroup {
+    font: inherit;
+  }
 }
 
-body {
-  background-color: #f5f5f5;
-  color: #333;
+@layer utilities {
+  .bg-gradient-brand {
+    background-image: var(--gradient-brand);
+  }
+  .bg-gradient-accent {
+    background-image: var(--gradient-accent);
+  }
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  .shadow-elegant {
+    box-shadow: var(--shadow-lg);
+  }
+  .transition-base {
+    transition: var(--transition-base);
+  }
+
+  .pulse-dot::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 9999px;
+    background: hsl(var(--success) / 0.4);
+    animation: pulse-ring 1.8s var(--ease-out) infinite;
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(0.6);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1.6);
+      opacity: 0;
+    }
+  }
 }
 
+/* Contenedor raíz (Next App Router) — mismo concepto que .app-root en Lovable */
+.app-root {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+}
 
+/* Contenido bajo el header fijo (layout) */
+.main-pad {
+  flex: 1 0 auto;
+  padding-top: var(--app-header-height, 4rem);
+}
+
+/*
+ * Alias para CSS Modules existentes (app/*.module.css), alineados con idealista-pro-makeover
+ */
+:root {
+  /* Superficies planas (hex / hsl) */
+  --bg: hsl(var(--background));
+  --text: hsl(var(--foreground));
+  --text-muted: hsl(var(--muted-foreground));
+  --text-subtle: hsl(220 12% 48%);
+  --border-strong: hsl(220 20% 82%);
+  --bg-elevated: hsl(var(--card));
+  --bg-muted: hsl(var(--secondary));
+  /* Radios coherentes con --radius */
+  --r-xs: 0.5rem;
+  --r-sm: 0.625rem;
+  --r-md: calc(0.875rem - 2px);
+  --r-lg: 0.875rem;
+  --r-xl: 1.25rem;
+  --r-pill: 9999px;
+  /* “Brand” ≈ acento CTA */
+  --brand-50: hsl(224 100% 97%);
+  --brand-100: hsl(224 100% 92%);
+  --brand-200: hsl(224 80% 86%);
+  --brand-500: hsl(var(--accent));
+  --brand-600: hsl(224 100% 50%);
+  --brand-700: hsl(222 47% 24%);
+  /* Estados (módulos legacy) */
+  --success-50: hsl(152 60% 95%);
+  --success-500: hsl(var(--success));
+  --warning-50: hsl(38 90% 95%);
+  --warning-500: hsl(var(--warning));
+  --danger-50: hsl(0 70% 96%);
+  --danger-500: hsl(var(--destructive));
+  --t-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --t-base: 220ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  /* --font-sans, --font-display, --font-stack-*: next/font (layout) + index */
+}
+
+/* Scrollbar (refinado) */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Focus accesible */
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 4px;
+}

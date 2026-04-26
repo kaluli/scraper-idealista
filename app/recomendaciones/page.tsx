@@ -80,19 +80,6 @@ export default function RecomendacionesPage() {
         <header className={styles.header}>
           <div className={styles.headerLinks}>
             <Link href="/" className={styles.backLink}>← Volver al Gestor</Link>
-            <Link href="/calculadora" className={styles.backLink}>
-              <span className={styles.linkIcon} aria-hidden>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="4" y="2" width="16" height="20" rx="2" />
-                  <rect x="6" y="6" width="12" height="4" rx="1" fill="currentColor" fillOpacity="0.2" />
-                  <line x1="8" y1="14" x2="10" y2="14" />
-                  <line x1="14" y1="14" x2="16" y2="14" />
-                  <line x1="8" y1="18" x2="10" y2="18" />
-                  <line x1="14" y1="18" x2="16" y2="18" />
-                </svg>
-              </span>
-              Calculadora
-            </Link>
           </div>
           <h1 className={styles.title}>🏘️ Ajustes</h1>
           <p className={styles.subtitle}>

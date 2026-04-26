@@ -1,24 +1,69 @@
 .container {
   min-height: 100vh;
-  background-color: #f5f5f5;
-  padding: 24px;
+  background: transparent;
+  padding: 16px 14px 32px;
+  font-family: var(--font-stack-body, inherit);
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 24px 20px 40px;
+  }
 }
 
 .content {
-  max-width: 1200px;
+  max-width: 1320px;
   margin: 0 auto;
 }
 
 .header {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 768px) {
+  .header {
+    margin-bottom: 32px;
+  }
+}
+
+.heroKicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px 0;
+  padding: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+.heroKickerDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: hsl(var(--accent));
+  flex-shrink: 0;
 }
 
 .headerTop {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 14px;
+}
+
+@media (min-width: 640px) {
+  .headerTop {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
 }
 
 .headerTopMain {
@@ -26,75 +71,113 @@
   min-width: 0;
 }
 
-.btnAddListing {
+.title {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.45rem;
+  line-height: 1.2;
+  font-weight: 800;
+  color: hsl(var(--foreground));
+  font-family: var(--font-stack-heading, inherit);
+  margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
+}
+
+.title::before {
+  content: "";
+  width: 36px;
+  height: 36px;
+  border-radius: 0.75rem;
   flex-shrink: 0;
-  padding: 10px 18px;
-  font-size: 0.95rem;
+  background: var(
+    --gradient-brand,
+    linear-gradient(135deg, hsl(222 47% 14%) 0%, hsl(224 70% 28%) 100%)
+  );
+  box-shadow: var(--shadow-glow, 0 12px 32px -8px hsl(224 100% 59% / 0.35));
+}
+
+.title::after {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  background: center / contain no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z'/%3E%3Cpath d='M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2'/%3E%3Cpath d='M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2'/%3E%3Cpath d='M10 6h4'/%3E%3Cpath d='M10 10h4'/%3E%3Cpath d='M10 14h4'/%3E%3Cpath d='M10 18h4'/%3E%3C/svg%3E");
+}
+
+@media (min-width: 768px) {
+  .title {
+    font-size: 1.75rem;
+  }
+}
+
+.btnAddListing {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 10px 20px;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #fff;
-  background: #0d47a1;
-  border: 1px solid #0a3d8a;
-  border-radius: 8px;
+  color: hsl(var(--accent-foreground));
+  background: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(199 90% 52%) 100%);
+  border: none;
+  border-radius: 9999px;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-glow, 0 4px 16px -4px hsl(224 100% 59% / 0.35));
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+@media (min-width: 640px) {
+  .btnAddListing {
+    width: auto;
+  }
 }
 
 .btnAddListing:hover {
-  background: #1565c0;
-  border-color: #0d47a1;
+  opacity: 0.92;
+  transform: translateY(-1px);
 }
 
 .btnAddListing:focus-visible {
-  outline: 2px solid #0d47a1;
+  outline: 2px solid hsl(var(--ring));
   outline-offset: 2px;
 }
 
-.headerLinks {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
-.backLink {
-  display: inline-block;
-  color: #0066cc;
-  text-decoration: none;
-  font-size: 0.95rem;
-}
-
-.backLink:hover {
-  text-decoration: underline;
-}
-
-.backLink .linkIcon {
-  display: inline-flex;
-  align-items: center;
-  margin-right: 6px;
-  vertical-align: middle;
-}
-
-.title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0 0 8px 0;
-}
-
 .section {
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border) / 0.7);
+  border-radius: var(--r-lg, 0.875rem);
+  padding: 18px 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgb(0 0 0 / 0.04));
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding: 24px;
+    margin-bottom: 24px;
+  }
 }
 
 .sectionTitle {
-  font-size: 1.15rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0 0 16px 0;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #e0e0e0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  font-family: var(--font-stack-heading, inherit);
+  margin: 0 0 14px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid hsl(var(--border));
+  letter-spacing: -0.01em;
 }
 
 .loading,
@@ -212,45 +295,54 @@
   color: #999;
 }
 
-/* Índice de barrios */
+/* Índice de barrios (cajitas cuadraditas, coherente con home / stats) */
 .barrioIndex {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .barrioChip {
-  padding: 8px 14px;
-  border: 1px solid #ddd;
-  border-radius: 20px;
-  background: #f8f9fa;
-  color: #333;
-  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid hsl(var(--border) / 0.85);
+  border-radius: 0.625rem;
+  background: hsl(var(--card) / 0.96);
+  color: hsl(var(--foreground));
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
 }
 
 .barrioChip:hover {
-  background: #e8f4fc;
-  border-color: #0066cc;
-  color: #0066cc;
+  background: hsl(var(--secondary));
+  border-color: hsl(224 100% 59% / 0.4);
+  color: hsl(var(--foreground));
+  box-shadow: 0 1px 2px hsl(222 47% 11% / 0.06);
 }
 
 .barrioChipActive {
-  background: #0066cc;
-  border-color: #0066cc;
-  color: white;
+  background: hsl(var(--primary));
+  border-color: transparent;
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 1px 2px hsl(222 47% 11% / 0.1);
 }
 
 .barrioChipActive:hover {
-  background: #0052a3;
-  border-color: #0052a3;
-  color: white;
+  background: hsl(222 47% 12%);
+  border-color: transparent;
+  color: hsl(var(--primary-foreground));
 }
 
 /* Tabla */
 .tableWrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   margin-top: 12px;
 }
 
@@ -284,14 +376,84 @@
   background: #eef2f6;
 }
 
+.thLinkIdealista {
+  width: 1%;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .table tbody tr:hover {
   background: #fafafa;
 }
 
 .cellAddress {
-  max-width: 220px;
+  min-width: 0;
+  width: 24%;
+  max-width: 18.5rem;
   word-break: break-word;
   vertical-align: top;
+}
+
+/* Dirección: 2–3 líneas, sin monopolizar toda la fila; título = texto completo */
+.addressCellTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cellAddressMain {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.38;
+  font-size: 0.875rem;
+  word-break: break-word;
+  min-width: 0;
+  flex: 1;
+}
+
+.cellAddressClickable {
+  cursor: pointer;
+  border-radius: 4px;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+}
+
+.cellAddressClickable:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.similarOpenBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 2px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1.2;
+  color: hsl(var(--muted-foreground));
+  border-radius: 4px;
+}
+
+.similarOpenBtn:hover {
+  color: hsl(var(--foreground));
+  background: hsl(var(--accent) / 0.12);
+}
+
+.similarOpenBtn:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
 }
 
 .cellAddressMeta {
@@ -318,10 +480,24 @@
 }
 
 .cellNotas {
-  max-width: 200px;
+  min-width: 12.5rem;
+  width: 24%;
+  max-width: 22rem;
   word-break: break-word;
   color: #333;
-  font-size: 0.85rem;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  vertical-align: top;
+}
+
+/* Hasta 5 líneas de notas, sin truncar a 60 chars en el código */
+.cellNotasText {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.45;
+  word-break: break-word;
 }
 
 .thLlamado {
@@ -331,10 +507,11 @@
 }
 
 .thActions {
-  width: 180px;
+  width: 150px;
+  min-width: 150px;
   white-space: nowrap;
   text-align: right;
-  padding-right: 14px;
+  padding-right: 10px;
 }
 
 .cellLlamado {
@@ -345,11 +522,12 @@
 }
 
 .cellActions {
-  width: 180px;
+  width: 150px;
+  min-width: 150px;
   white-space: nowrap;
   text-align: right;
   vertical-align: middle;
-  padding-right: 14px;
+  padding-right: 10px;
 }
 
 .cellActionsButtons {
@@ -647,7 +825,8 @@
 .modalHeader {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 12px;
   padding: 16px 20px;
   border-bottom: 1px solid #eee;
 }
@@ -657,20 +836,32 @@
   font-size: 1.1rem;
   font-weight: 600;
   color: #1a1a1a;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
 }
 
 .modalClose {
-  background: none;
-  border: none;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  margin: -4px -4px 0 0;
+  background: #f0f0f0;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
   font-size: 1.5rem;
   line-height: 1;
-  color: #666;
+  color: #444;
   cursor: pointer;
-  padding: 0 4px;
+  padding: 0;
 }
 
 .modalClose:hover {
-  color: #1a1a1a;
+  color: #111;
+  background: #e8e8e8;
 }
 
 .modalBody {
@@ -704,11 +895,6 @@
   margin-bottom: 0;
 }
 
-/* Panel hover: alquileres similares (mismo criterio visual que un diálogo, no window.open) */
-.tableRowSimilarHint {
-  cursor: help;
-}
-
 .similarDialog {
   position: fixed;
   z-index: 10050;
@@ -725,7 +911,11 @@
 }
 
 .similarDialogHeader {
-  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px 10px 16px;
   border-bottom: 1px solid #eee;
   background: #fafafa;
   flex-shrink: 0;
@@ -736,6 +926,30 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: #1a1a1a;
+  flex: 1;
+  min-width: 0;
+}
+
+.similarDialogClose {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: #555;
+  cursor: pointer;
+  padding: 0;
+}
+
+.similarDialogClose:hover {
+  background: #f0f0f0;
+  color: #111;
 }
 
 .similarDialogList {
@@ -784,15 +998,24 @@
 }
 
 .similarDialogLink {
-  display: inline-block;
-  margin-top: 4px;
-  color: #0066cc;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 6px;
+  line-height: 1.2;
   text-decoration: none;
-  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 .similarDialogLink:hover {
-  text-decoration: underline;
+  background: rgba(0, 102, 204, 0.08);
+}
+
+.similarDialogLinkImg {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .similarDialogEmpty {
@@ -876,26 +1099,231 @@
   cursor: not-allowed;
 }
 
+.cellLinkIdealista {
+  width: 1%;
+  white-space: nowrap;
+  text-align: center;
+  vertical-align: middle;
+}
+
 .linkIdealista {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
   color: #0066cc;
   text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 6px;
 }
 
 .linkIdealista:hover {
-  text-decoration: underline;
-}
-
-.backButton {
-  display: inline-block;
-  padding: 12px 24px;
-  background-color: #0066cc;
-  color: white;
   text-decoration: none;
-  border-radius: 6px;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  background: rgba(0, 102, 204, 0.1);
 }
 
-.backButton:hover {
-  background-color: #0052a3;
+.linkIdealistaImg {
+  display: inline;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
 }
+
+/* —— Vista tabular (desktop) vs tarjetas (móvil), estilo idealista-pro-makeover —— */
+.tableOnly {
+  display: block;
+}
+
+.cardsOnly {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .tableOnly {
+    display: none;
+  }
+
+  .cardsOnly {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 4px;
+  }
+}
+
+/* Toolbar buscar / precio: tarjeta con borde suave */
+.filterToolbar {
+  display: block;
+  margin-bottom: 16px;
+  padding: 16px 14px;
+  border-radius: 1rem;
+  border: 1px solid hsl(var(--border) / 0.7);
+  background: hsl(var(--background) / 0.5);
+  backdrop-filter: blur(8px);
+}
+
+@media (min-width: 768px) {
+  .filterToolbar {
+    padding: 16px 18px;
+  }
+}
+
+/* Tarjeta piso móvil */
+.listingCard {
+  border-radius: 1rem;
+  border: 1px solid hsl(var(--border) / 0.7);
+  background: hsl(var(--card));
+  padding: 16px 14px;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgb(0 0 0 / 0.04));
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.listingCard:hover {
+  box-shadow: var(--shadow-md, 0 4px 12px -2px rgb(0 0 0 / 0.08));
+}
+
+.listingCardTop {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.listingCardPrice {
+  flex-shrink: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.listingCardMetaRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid hsl(var(--border) / 0.6);
+}
+
+.listingCardBarrioGroup {
+  min-width: 0;
+  flex: 1;
+}
+
+.listingCardFieldLabel {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 2px;
+}
+
+.listingCardBarrioVal {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.listingCardIdealista {
+  flex-shrink: 0;
+}
+
+.listingCardGrid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 10px;
+  margin-top: 12px;
+}
+
+.listingCardFieldValue {
+  font-size: 0.85rem;
+  color: hsl(var(--foreground));
+  word-break: break-word;
+}
+
+.listingCardNotas {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: hsl(var(--foreground));
+  max-height: 5.6em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+.listingCardActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid hsl(var(--border) / 0.6);
+}
+
+.listingCardActionsGrow {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardAddress {
+  min-width: 0;
+  flex: 1;
+}
+
+.cardAddressRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cardAddressMain {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.38;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  word-break: break-word;
+  min-width: 0;
+  flex: 1;
+}
+
+.cardAddressMeta {
+  margin: 4px 0 0 0;
+  font-size: 0.65rem;
+  line-height: 1.25;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Chips barrios: scroll horizontal en móvil */
+@media (max-width: 639px) {
+  .barrioIndex {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+    margin-left: -4px;
+    margin-right: -4px;
+    padding-left: 4px;
+  }
+
+  .barrioIndex::-webkit-scrollbar {
+    height: 4px;
+  }
+}
+

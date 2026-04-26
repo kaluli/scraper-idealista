@@ -35,13 +35,9 @@ try {
   const { execSync } = require('child_process')
   execSync('lsof -iTCP:3000 -sTCP:LISTEN', { stdio: 'pipe' })
   console.warn('')
-  console.warn(
-    '⚠️  El puerto 3000 ya está en uso. Next.js usará otro (p. ej. 3001).'
-  )
-  console.warn(
-    '   Abrí la URL exacta que muestre la terminal, o liberá el puerto:'
-  )
-  console.warn('     kill $(lsof -ti:3000)')
+  console.warn('⚠️  El puerto 3000 ya está en uso (seguramente un `next dev` anterior).')
+  console.warn('   Usá en la raíz del proyecto:  npm run dev:restart')
+  console.warn('   o liberá el puerto:  kill $(lsof -ti:3000)')
   console.warn('')
 } catch (_) {
   // nadie escuchando en 3000

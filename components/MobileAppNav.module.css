@@ -1,0 +1,375 @@
+/* Menú móvil: panel tipo Idealista Manager / idealista-pro-makeover (Header mobile) */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(15, 23, 42, 0.45);
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: default;
+  animation: fadeIn 0.2s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Centra la tarjeta (márgenes, esquinas redondas) */
+.drawerPositioner {
+  position: fixed;
+  inset: 0;
+  z-index: 201;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0.75rem;
+  padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+  pointer-events: none;
+  animation: fadeIn 0.2s ease;
+}
+
+.drawer {
+  pointer-events: auto;
+  width: 100%;
+  max-width: 26rem;
+  max-height: min(92dvh, 720px);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.drawerCard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  border-radius: 1.25rem;
+  background: #f3f4f6;
+  border: 1px solid hsl(var(--border) / 0.6);
+  box-shadow: 0 12px 40px -8px rgba(15, 23, 42, 0.18);
+  padding: 1.05rem 1rem 0.95rem;
+  overflow: hidden;
+  box-sizing: border-box;
+  animation: menuIn 0.25s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+.dark .drawerCard {
+  background: hsl(222 35% 11% / 0.98);
+  border-color: hsl(var(--border) / 0.5);
+  box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.4);
+}
+
+.drawerTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.drawerBrand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+/* Icono “marca” — mismo criterio que Header makeover (grid + gradient + Building2) */
+.drawerBrandMark {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: var(
+    --gradient-brand,
+    linear-gradient(135deg, hsl(222 47% 14%) 0%, hsl(224 70% 28%) 100%)
+  );
+  box-shadow: 0 4px 12px -4px hsl(224 100% 50% / 0.4);
+  color: hsl(var(--primary-foreground));
+}
+
+.drawerBrandMarkSvg {
+  color: inherit;
+  display: block;
+}
+
+.drawerBrandText {
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.drawerBrandName {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  font-family: var(--font-stack-heading, inherit);
+  letter-spacing: -0.03em;
+  color: hsl(var(--foreground));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15em;
+}
+
+.brandIdea {
+  color: hsl(var(--foreground));
+}
+.brandLista {
+  color: hsl(var(--accent));
+  font-weight: 800;
+}
+.brandManager {
+  margin-left: 0.1em;
+  color: hsl(var(--foreground) / 0.72);
+  font-weight: 800;
+}
+
+.drawerBrandSub {
+  margin: 0.2rem 0 0 0;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  letter-spacing: 0.01em;
+}
+
+/* Cerrar — círculo, borde accent (mock) */
+.drawerClose {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 1px solid hsl(224 100% 55% / 0.5);
+  background: hsl(0 0% 100%);
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 1px 2px hsl(222 47% 11% / 0.05);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.drawerClose:hover {
+  background: hsl(var(--secondary) / 0.9);
+  border-color: hsl(224 100% 50% / 0.6);
+}
+.drawerClose:focus-visible {
+  outline: 2px solid hsl(224 100% 59% / 0.45);
+  outline-offset: 2px;
+}
+
+.dark .drawerClose {
+  background: hsl(222 30% 14%);
+  border-color: hsl(224 100% 50% / 0.4);
+  color: hsl(210 40% 98%);
+}
+
+.drawerDivider {
+  height: 1px;
+  margin: 0.9rem 0 0.35rem 0;
+  background: linear-gradient(90deg, transparent, hsl(var(--border) / 0.85) 8%, hsl(var(--border) / 0.85) 92%, transparent);
+  border: 0;
+}
+
+.drawerNav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.15rem 0 0.5rem 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Enlaces — activo: píldora rellena; inactivo: texto atenuado (makeover) */
+.drawerLink {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.25;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  border: 1px solid transparent;
+}
+
+.drawerLinkIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  flex-shrink: 0;
+}
+
+.drawerLinkIcon {
+  color: currentColor;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.drawerLinkLabel {
+  flex: 1;
+  min-width: 0;
+}
+
+.drawerLink:hover,
+.drawerLink:focus-visible {
+  color: hsl(var(--foreground));
+  background: hsl(0 0% 100% / 0.55);
+  border-color: hsl(var(--border) / 0.3);
+  outline: none;
+}
+
+.drawerLinkCurrent {
+  color: hsl(var(--foreground)) !important;
+  font-weight: 700;
+  background: hsl(0 0% 100% / 0.95);
+  border: 1px solid hsl(var(--border) / 0.4);
+  box-shadow: 0 1px 0 hsl(0 0% 100% / 0.4) inset;
+}
+
+.dark .drawerLinkCurrent {
+  background: hsl(222 30% 16%);
+  border-color: hsl(var(--border) / 0.45);
+  color: hsl(210 40% 98%) !important;
+  box-shadow: none;
+}
+
+.dark .drawerLink:hover {
+  background: hsl(222 30% 14% / 0.9);
+}
+
+.drawerDbWrap {
+  margin-top: 0.35rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid hsl(var(--border) / 0.35);
+}
+
+/* Píldora ancho completo (HeaderDbPill: span = loading/ok, a = error) */
+.drawerDbWrap > span,
+.drawerDbWrap > a {
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  max-width: none;
+  min-height: 2.4rem;
+  box-sizing: border-box;
+  justify-content: center;
+}
+
+/* Carga y OK: mismo aspecto que el mock */
+.drawerDbWrap > span {
+  font-weight: 500;
+  border-radius: 9999px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  background: hsl(0 0% 100% / 0.85);
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow: 0 1px 2px hsl(222 47% 11% / 0.04);
+}
+
+.dark .drawerDbWrap > span {
+  background: hsl(222 30% 14% / 0.95);
+  border-color: hsl(var(--border) / 0.45);
+}
+
+
+.srLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Disparador: rounded-xl, border, card (makeover) */
+.hamburger {
+  position: relative;
+  z-index: 1;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: hsl(var(--card, 0 0% 100%));
+  border: 1px solid hsl(var(--border) / 0.7);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px hsl(222 47% 11% / 0.06);
+  cursor: pointer;
+  color: hsl(var(--foreground));
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  margin: 0;
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.hamburger:hover {
+  background: hsl(var(--secondary) / 0.85);
+  border-color: hsl(var(--border) / 0.85);
+}
+.hamburger:focus-visible {
+  outline: 2px solid hsl(224 100% 59% / 0.35);
+  outline-offset: 2px;
+}
+.hamburger[aria-expanded='true'] {
+  z-index: 250;
+}
+.hamburgerIcon {
+  display: block;
+  flex-shrink: 0;
+}
+.hamburgerBars {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  pointer-events: none;
+}
+.hamburgerBar {
+  display: block;
+  width: 1.1rem;
+  height: 2px;
+  background: hsl(var(--foreground));
+  border-radius: 1px;
+  opacity: 0.9;
+}
+.dark .hamburger {
+  background: hsl(var(--card));
+  border-color: hsl(var(--border) / 0.7);
+  color: hsl(210 40% 98%);
+}
+.dark .hamburgerBar {
+  background: currentColor;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-0.4rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

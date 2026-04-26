@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import Link from 'next/link'
+import { IdealistaLinkIcon } from '../../components/IdealistaLinkIcon'
 import styles from './page.module.css'
 
 
@@ -174,9 +174,9 @@ function surfaceCloseEnoughForSimilar(compra: Listing, alq: Listing): boolean {
 }
 
 
-/** Posición fija del panel bajo o encima de la fila (misma lógica que al abrir con hover). */
-function getPanelPosFromTr(tr: HTMLTableRowElement): { top: number; left: number } {
-  const r = tr.getBoundingClientRect()
+/** Posición fija del panel bajo o encima de la fila o tarjeta (misma lógica). */
+function getPanelPosFromRow(el: HTMLElement): { top: number; left: number } {
+  const r = el.getBoundingClientRect()
   const wH = window.innerHeight
   const wW = window.innerWidth
   const maxLeft = Math.max(8, wW - 8 - PANEL_W)
@@ -353,14 +353,132 @@ function TrashIcon() {
   )
 }
 
-function AddressCell({ row }: { row: Listing }) {
+function AddressCell({
+  row,
+  onToggleSimilar,
+}: {
+  row: Listing
+  onToggleSimilar?: (row: Listing, anchor: HTMLElement) => void
+}) {
+  const addr = row.publishedAddress || row.title || '—'
+  const canSimilar = row.type === 'compra' && onToggleSimilar
+
+  const openSimilar = (e: React.MouseEvent<HTMLElement>) => {
+    e.stopPropagation()
+    if (!canSimilar || !onToggleSimilar) return
+    const tr = e.currentTarget.closest('tr')
+    if (tr) onToggleSimilar(row, tr)
+  }
+
   return (
     <td className={styles.cellAddress}>
-      <div>{row.publishedAddress || row.title || '—'}</div>
+      <div className={styles.addressCellTop}>
+        {canSimilar ? (
+          <>
+            <div
+              className={`${styles.cellAddressMain} ${styles.cellAddressClickable}`}
+              role="button"
+              tabIndex={0}
+              title={addr !== '—' ? (row.publishedAddress || row.title || undefined) : undefined}
+              onClick={openSimilar}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  const tr = (e.currentTarget as HTMLElement).closest('tr')
+                  if (tr && onToggleSimilar) onToggleSimilar(row, tr)
+                }
+              }}
+            >
+              {addr}
+            </div>
+            <button
+              type="button"
+              className={styles.similarOpenBtn}
+              onClick={openSimilar}
+              aria-label="Ver alquileres similares en la zona"
+              title="Alquileres similares"
+            >
+              <span aria-hidden>➕</span>
+            </button>
+          </>
+        ) : (
+          <div
+            className={styles.cellAddressMain}
+            title={addr !== '—' ? (row.publishedAddress || row.title || undefined) : undefined}
+          >
+            {addr}
+          </div>
+        )}
+      </div>
       <p className={styles.cellAddressMeta} aria-label="Habitaciones y metros cuadrados">
         {row.rooms != null ? `${row.rooms} hab.` : '— hab.'} · {row.surface != null ? `${row.surface} m²` : '— m²'}
       </p>
     </td>
+  )
+}
+
+/** Bloque de dirección para tarjetas móviles (misma info que AddressCell). */
+function AddressBlock({
+  row,
+  onToggleSimilar,
+}: {
+  row: Listing
+  onToggleSimilar?: (row: Listing, anchor: HTMLElement) => void
+}) {
+  const addr = row.publishedAddress || row.title || '—'
+  const canSimilar = row.type === 'compra' && onToggleSimilar
+
+  const openSimilar = (e: React.MouseEvent<HTMLElement>) => {
+    e.stopPropagation()
+    if (!canSimilar || !onToggleSimilar) return
+    const article = e.currentTarget.closest('article')
+    if (article) onToggleSimilar(row, article)
+  }
+
+  return (
+    <div className={styles.cardAddress}>
+      <div className={styles.cardAddressRow}>
+        {canSimilar ? (
+          <>
+            <div
+              className={`${styles.cardAddressMain} ${styles.cellAddressClickable}`}
+              role="button"
+              tabIndex={0}
+              title={addr !== '—' ? (row.publishedAddress || row.title || undefined) : undefined}
+              onClick={openSimilar}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  const a = (e.currentTarget as HTMLElement).closest('article')
+                  if (a && onToggleSimilar) onToggleSimilar(row, a)
+                }
+              }}
+            >
+              {addr}
+            </div>
+            <button
+              type="button"
+              className={styles.similarOpenBtn}
+              onClick={openSimilar}
+              aria-label="Ver alquileres similares en la zona"
+              title="Alquileres similares"
+            >
+              <span aria-hidden>➕</span>
+            </button>
+          </>
+        ) : (
+          <div
+            className={styles.cardAddressMain}
+            title={addr !== '—' ? (row.publishedAddress || row.title || undefined) : undefined}
+          >
+            {addr}
+          </div>
+        )}
+      </div>
+      <p className={styles.cardAddressMeta} aria-label="Habitaciones y metros cuadrados">
+        {row.rooms != null ? `${row.rooms} hab.` : '— hab.'} · {row.surface != null ? `${row.surface} m²` : '— m²'}
+      </p>
+    </div>
   )
 }
 
@@ -494,39 +612,27 @@ export default function ContactosPage() {
     top: number
     left: number
   } | null>(null)
-  const similarTrRef = useRef<HTMLTableRowElement | null>(null)
+  const similarRowRef = useRef<HTMLElement | null>(null)
   const similarPanelRef = useRef<HTMLDivElement | null>(null)
-  const similarCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const ROW_PANEL_GAP_CLOSE_MS = 600
-  const PANEL_POINTER_LEAVE_MS = 320
 
-  const clearSimilarTimer = () => {
-    if (similarCloseTimer.current) {
-      clearTimeout(similarCloseTimer.current)
-      similarCloseTimer.current = null
-    }
-  }
-
-  const closeSimilarPanel = () => {
-    clearSimilarTimer()
-    similarTrRef.current = null
+  const closeSimilarPanel = useCallback(() => {
+    similarRowRef.current = null
     similarPanelRef.current = null
     setSimilarHover(null)
-  }
+  }, [])
 
-  const bindRowSimilarHover = (row: Listing) => ({
-    onMouseEnter: (e: React.MouseEvent<HTMLTableRowElement>) => {
-      clearSimilarTimer()
-      if (row.type !== 'compra') return
-      const tr = e.currentTarget
-      similarTrRef.current = tr
-      const { top, left } = getPanelPosFromTr(tr)
-      setSimilarHover({ row, top, left })
-    },
-    onMouseLeave: () => {
-      similarCloseTimer.current = setTimeout(closeSimilarPanel, ROW_PANEL_GAP_CLOSE_MS)
-    },
-  })
+  const toggleSimilarPanel = useCallback((row: Listing, anchor: HTMLElement) => {
+    if (row.type !== 'compra') return
+    setSimilarHover((prev) => {
+      if (prev?.row.id === row.id) {
+        similarRowRef.current = null
+        return null
+      }
+      similarRowRef.current = anchor
+      const { top, left } = getPanelPosFromRow(anchor)
+      return { row, top, left }
+    })
+  }, [])
 
   const loadListings = () => {
     setLoading(true)
@@ -567,10 +673,10 @@ export default function ContactosPage() {
   useEffect(() => {
     if (similarRowId == null) return
     const sync = () => {
-      const tr = similarTrRef.current
-      if (!tr) return
-      if (!tr.isConnected) return
-      const { top, left } = getPanelPosFromTr(tr)
+      const el = similarRowRef.current
+      if (!el) return
+      if (!el.isConnected) return
+      const { top, left } = getPanelPosFromRow(el)
       setSimilarHover((h) => (h ? { ...h, top, left } : h))
     }
     const raf = requestAnimationFrame(() => sync())
@@ -583,35 +689,26 @@ export default function ContactosPage() {
     }
   }, [similarRowId])
 
-  /** Mientras el puntero siga sobre la fila o el panel, no cerrar aunque haya mínimo solape/gap. */
   useEffect(() => {
     if (similarRowId == null) return
-    const keepOpenIfOver = (e: Event) => {
-      const t = (e as PointerEvent).target
+    const onDown = (e: MouseEvent) => {
+      const t = e.target
       if (!(t instanceof Node)) return
-      if (similarTrRef.current?.contains(t) || similarPanelRef.current?.contains(t)) {
-        clearSimilarTimer()
-      }
+      if (similarRowRef.current?.contains(t) || similarPanelRef.current?.contains(t)) return
+      closeSimilarPanel()
     }
-    document.addEventListener('pointermove', keepOpenIfOver, true)
-    document.addEventListener('pointerdown', keepOpenIfOver, true)
-    return () => {
-      document.removeEventListener('pointermove', keepOpenIfOver, true)
-      document.removeEventListener('pointerdown', keepOpenIfOver, true)
-    }
-  }, [similarRowId])
+    document.addEventListener('mousedown', onDown, true)
+    return () => document.removeEventListener('mousedown', onDown, true)
+  }, [similarRowId, closeSimilarPanel])
 
   useEffect(() => {
     if (similarRowId == null) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
-      clearSimilarTimer()
-      similarTrRef.current = null
-      setSimilarHover(null)
+      if (e.key === 'Escape') closeSimilarPanel()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [similarRowId])
+  }, [similarRowId, closeSimilarPanel])
 
   const openEdit = (row: Listing) => {
     setEditingId(row.id)
@@ -982,40 +1079,99 @@ export default function ContactosPage() {
           Rentabilidad: {formatRentabilidad(rentabilidadBrutaSobreCompraRef(a, refCompra) ?? a.profitabilityRate)}
         </span>
       </div>
-      <a
+      <IdealistaLinkIcon
         href={a.link}
-        target="_blank"
-        rel="noopener noreferrer"
         className={styles.similarDialogLink}
-      >
-        Ver en Idealista
-      </a>
+        imgClassName={styles.similarDialogLinkImg}
+      />
     </li>
+  )
+
+  const renderListingCard = (row: Listing) => (
+    <article key={row.id} role="listitem" className={styles.listingCard}>
+      <div className={styles.listingCardTop}>
+        <AddressBlock row={row} onToggleSimilar={toggleSimilarPanel} />
+        <div className={styles.listingCardPrice}>{formatPrice(row.price)}</div>
+      </div>
+      <div className={styles.listingCardMetaRow}>
+        <div className={styles.listingCardBarrioGroup}>
+          <span className={styles.listingCardFieldLabel}>Barrio</span>
+          <span className={styles.listingCardBarrioVal}>{row.neighborhood || '—'}</span>
+        </div>
+        <div className={styles.listingCardIdealista}>
+          <IdealistaLinkIcon
+            href={row.link}
+            className={styles.linkIdealista}
+            imgClassName={styles.linkIdealistaImg}
+          />
+        </div>
+      </div>
+      <div className={styles.listingCardGrid2}>
+        <div>
+          <div className={styles.listingCardFieldLabel}>Cita</div>
+          <div className={styles.listingCardFieldValue}>{formatCita(row.citaAt)}</div>
+        </div>
+        <div>
+          <div className={styles.listingCardFieldLabel}>Notas</div>
+          <div className={styles.listingCardNotas}>
+            {row.notas ? <span title={row.notas}>{row.notas}</span> : '—'}
+          </div>
+        </div>
+      </div>
+      <div className={styles.listingCardActions}>
+        <button
+          type="button"
+          className={(row.llamado ?? false) ? styles.phoneIconCalled : styles.phoneIconNotCalled}
+          onClick={() => openPhoneDialog(row)}
+          title={(row.llamado ?? false) ? 'Ya llamé' : 'Teléfono / ¿Llamé?'}
+          aria-label="Abrir diálogo teléfono y llamada"
+        >
+          <PhoneIcon />
+        </button>
+        <button
+          type="button"
+          className={(row.visitado ?? false) ? styles.visitadoIconVisitado : styles.visitadoIconNotVisitado}
+          onClick={() => handleToggleVisitado(row)}
+          disabled={visitadoTogglingId === row.id}
+          title={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+          aria-label={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+        >
+          <VisitadoIcon />
+        </button>
+        <div className={styles.listingCardActionsGrow} />
+        <button
+          type="button"
+          className={styles.btnEdit}
+          onClick={() => openEdit(row)}
+          aria-label="Editar"
+          title="Editar"
+        >
+          <EditIcon />
+        </button>
+        <button
+          type="button"
+          className={styles.btnDanger}
+          onClick={() => handleDelete(row.id)}
+          aria-label="Eliminar"
+          title="Eliminar"
+        >
+          <TrashIcon />
+        </button>
+      </div>
+    </article>
   )
 
   return (
     <div className={styles.container}>
       <div className={styles.content}>
         <header className={styles.header}>
+          <p className={styles.heroKicker} aria-hidden>
+            <span className={styles.heroKickerDot} />
+            Visitas e inventario
+          </p>
           <div className={styles.headerTop}>
             <div className={styles.headerTopMain}>
-              <div className={styles.headerLinks}>
-                <Link href="/" className={styles.backLink}>← Volver al Gestor</Link>
-                <Link href="/calculadora" className={styles.backLink}>
-                  <span className={styles.linkIcon} aria-hidden>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="4" y="2" width="16" height="20" rx="2" />
-                      <rect x="6" y="6" width="12" height="4" rx="1" fill="currentColor" fillOpacity="0.2" />
-                      <line x1="8" y1="14" x2="10" y2="14" />
-                      <line x1="14" y1="14" x2="16" y2="14" />
-                      <line x1="8" y1="18" x2="10" y2="18" />
-                      <line x1="14" y1="18" x2="16" y2="18" />
-                    </svg>
-                  </span>
-                  Calculadora
-                </Link>
-              </div>
-              <h1 className={styles.title}>📇 Pisos en venta – Contactos</h1>
+              <h1 className={styles.title}>Pisos en venta – Contactos</h1>
             </div>
             <button
               type="button"
@@ -1040,91 +1196,101 @@ export default function ContactosPage() {
                 Próximas Visitas {upcomingCitasListings.length > 0 && `(${upcomingCitasListings.length})`}
               </h2>
               {upcomingCitasListings.length > 0 ? (
-                <div className={styles.tableWrap}>
-                  <table className={styles.table}>
-                    <thead>
-                      <tr>
-                        <th>Dirección</th>
-                        <th>Barrio</th>
-                        <th>Link Idealista</th>
-                        <th>Precio</th>
-                        <th>Cita</th>
-                        <th>Notas</th>
-                        <th className={styles.thLlamado}>Llamé</th>
-                        <th className={styles.thVisitado}>Visitado</th>
-                        <th className={styles.thActions}>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedUpcomingCitasListings.map((row) => (
-                        <tr key={row.id} className={styles.tableRowSimilarHint} {...bindRowSimilarHover(row)}>
-                          <AddressCell row={row} />
-                          <td>{row.neighborhood || '—'}</td>
-                          <td>
-                            <a
-                              href={row.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={styles.linkIdealista}
-                            >
-                              Ver en Idealista
-                            </a>
-                          </td>
-                          <td className={styles.cellPrice}>{formatPrice(row.price)}</td>
-                          <td className={styles.cellEditable}>{formatCita(row.citaAt)}</td>
-                          <td className={styles.cellNotas}>
-                            {row.notas ? (row.notas.length > 60 ? `${row.notas.slice(0, 60)}…` : row.notas) : '—'}
-                          </td>
-                          <td className={styles.cellLlamado}>
-                            <button
-                              type="button"
-                              className={(row.llamado ?? false) ? styles.phoneIconCalled : styles.phoneIconNotCalled}
-                              onClick={() => openPhoneDialog(row)}
-                              title={(row.llamado ?? false) ? 'Ya llamé' : 'Teléfono / ¿Llamé?'}
-                              aria-label="Abrir diálogo teléfono y llamada"
-                            >
-                              <PhoneIcon />
-                            </button>
-                          </td>
-                          <td className={styles.cellVisitado}>
-                            <button
-                              type="button"
-                              className={(row.visitado ?? false) ? styles.visitadoIconVisitado : styles.visitadoIconNotVisitado}
-                              onClick={() => handleToggleVisitado(row)}
-                              disabled={visitadoTogglingId === row.id}
-                              title={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
-                              aria-label={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
-                            >
-                              <VisitadoIcon />
-                            </button>
-                          </td>
-                          <td className={styles.cellActions}>
-                            <span className={styles.cellActionsButtons}>
-                              <button
-                                type="button"
-                                className={styles.btnEdit}
-                                onClick={() => openEdit(row)}
-                                aria-label="Editar"
-                                title="Editar"
-                              >
-                                <EditIcon />
-                              </button>
-                              <button
-                                type="button"
-                                className={styles.btnDanger}
-                                onClick={() => handleDelete(row.id)}
-                                aria-label="Eliminar"
-                                title="Eliminar"
-                              >
-                                <TrashIcon />
-                              </button>
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <>
+                  <div className={styles.tableOnly}>
+                    <div className={styles.tableWrap}>
+                      <table className={styles.table}>
+                        <thead>
+                          <tr>
+                            <th>Dirección</th>
+                            <th>Barrio</th>
+                            <th className={styles.thLinkIdealista}>Idealista</th>
+                            <th>Precio</th>
+                            <th>Cita</th>
+                            <th>Notas</th>
+                            <th className={styles.thLlamado}>Llamé</th>
+                            <th className={styles.thVisitado}>Visitado</th>
+                            <th className={styles.thActions}>Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sortedUpcomingCitasListings.map((row) => (
+                            <tr key={row.id}>
+                              <AddressCell row={row} onToggleSimilar={toggleSimilarPanel} />
+                              <td>{row.neighborhood || '—'}</td>
+                              <td className={styles.cellLinkIdealista}>
+                                <IdealistaLinkIcon
+                                  href={row.link}
+                                  className={styles.linkIdealista}
+                                  imgClassName={styles.linkIdealistaImg}
+                                />
+                              </td>
+                              <td className={styles.cellPrice}>{formatPrice(row.price)}</td>
+                              <td className={styles.cellEditable}>{formatCita(row.citaAt)}</td>
+                              <td className={styles.cellNotas}>
+                                {row.notas ? (
+                                  <span className={styles.cellNotasText} title={row.notas}>
+                                    {row.notas}
+                                  </span>
+                                ) : (
+                                  '—'
+                                )}
+                              </td>
+                              <td className={styles.cellLlamado}>
+                                <button
+                                  type="button"
+                                  className={(row.llamado ?? false) ? styles.phoneIconCalled : styles.phoneIconNotCalled}
+                                  onClick={() => openPhoneDialog(row)}
+                                  title={(row.llamado ?? false) ? 'Ya llamé' : 'Teléfono / ¿Llamé?'}
+                                  aria-label="Abrir diálogo teléfono y llamada"
+                                >
+                                  <PhoneIcon />
+                                </button>
+                              </td>
+                              <td className={styles.cellVisitado}>
+                                <button
+                                  type="button"
+                                  className={(row.visitado ?? false) ? styles.visitadoIconVisitado : styles.visitadoIconNotVisitado}
+                                  onClick={() => handleToggleVisitado(row)}
+                                  disabled={visitadoTogglingId === row.id}
+                                  title={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+                                  aria-label={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+                                >
+                                  <VisitadoIcon />
+                                </button>
+                              </td>
+                              <td className={styles.cellActions}>
+                                <span className={styles.cellActionsButtons}>
+                                  <button
+                                    type="button"
+                                    className={styles.btnEdit}
+                                    onClick={() => openEdit(row)}
+                                    aria-label="Editar"
+                                    title="Editar"
+                                  >
+                                    <EditIcon />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={styles.btnDanger}
+                                    onClick={() => handleDelete(row.id)}
+                                    aria-label="Eliminar"
+                                    title="Eliminar"
+                                  >
+                                    <TrashIcon />
+                                  </button>
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div className={styles.cardsOnly} role="list" aria-label="Próximas visitas (vista móvil)">
+                    {sortedUpcomingCitasListings.map((row) => renderListingCard(row))}
+                  </div>
+                </>
               ) : (
                 <p className={styles.noData}>No hay citas futuras con el filtro actual.</p>
               )}
@@ -1133,101 +1299,111 @@ export default function ContactosPage() {
             <section className={styles.section}>
               <h2 className={styles.sectionTitle}>Visitas Hechas ({visitedListings.length})</h2>
               {visitedListings.length > 0 ? (
-                <div className={styles.tableWrap}>
-                  <table className={styles.table}>
-                    <thead>
-                      <tr>
-                        <th className={styles.thSortable} onClick={() => handleSort('publishedAddress')}>
-                          Dirección {sortBy === 'publishedAddress' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                        </th>
-                        <th className={styles.thSortable} onClick={() => handleSort('neighborhood')}>
-                          Barrio {sortBy === 'neighborhood' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                        </th>
-                        <th>Link Idealista</th>
-                        <th className={styles.thSortable} onClick={() => handleSort('price')}>
-                          Precio {sortBy === 'price' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                        </th>
-                        <th className={styles.thSortable} onClick={() => handleSort('citaAt')}>
-                          Cita {sortBy === 'citaAt' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                        </th>
-                        <th className={styles.thSortable} onClick={() => handleSort('notas')}>
-                          Notas {sortBy === 'notas' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                        </th>
-                        <th className={styles.thLlamado}>Llamé</th>
-                        <th className={styles.thVisitado}>Visitado</th>
-                        <th className={styles.thActions}>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedVisitedListings.map((row) => (
-                        <tr key={row.id} className={styles.tableRowSimilarHint} {...bindRowSimilarHover(row)}>
-                          <AddressCell row={row} />
-                          <td>{row.neighborhood || '—'}</td>
-                          <td>
-                            <a
-                              href={row.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={styles.linkIdealista}
-                            >
-                              Ver en Idealista
-                            </a>
-                          </td>
-                          <td className={styles.cellPrice}>{formatPrice(row.price)}</td>
-                          <td className={styles.cellEditable}>{formatCita(row.citaAt)}</td>
-                          <td className={styles.cellNotas}>
-                            {row.notas ? (row.notas.length > 60 ? `${row.notas.slice(0, 60)}…` : row.notas) : '—'}
-                          </td>
-                          <td className={styles.cellLlamado}>
-                            <button
-                              type="button"
-                              className={(row.llamado ?? false) ? styles.phoneIconCalled : styles.phoneIconNotCalled}
-                              onClick={() => openPhoneDialog(row)}
-                              title={(row.llamado ?? false) ? 'Ya llamé' : 'Teléfono / ¿Llamé?'}
-                              aria-label="Abrir diálogo teléfono y llamada"
-                            >
-                              <PhoneIcon />
-                            </button>
-                          </td>
-                          <td className={styles.cellVisitado}>
-                            <button
-                              type="button"
-                              className={(row.visitado ?? false) ? styles.visitadoIconVisitado : styles.visitadoIconNotVisitado}
-                              onClick={() => handleToggleVisitado(row)}
-                              disabled={visitadoTogglingId === row.id}
-                              title={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
-                              aria-label={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
-                            >
-                              <VisitadoIcon />
-                            </button>
-                          </td>
-                          <td className={styles.cellActions}>
-                            <span className={styles.cellActionsButtons}>
-                              <button
-                                type="button"
-                                className={styles.btnEdit}
-                                onClick={() => openEdit(row)}
-                                aria-label="Editar"
-                                title="Editar"
-                              >
-                                <EditIcon />
-                              </button>
-                              <button
-                                type="button"
-                                className={styles.btnDanger}
-                                onClick={() => handleDelete(row.id)}
-                                aria-label="Eliminar"
-                                title="Eliminar"
-                              >
-                                <TrashIcon />
-                              </button>
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <>
+                  <div className={styles.tableOnly}>
+                    <div className={styles.tableWrap}>
+                      <table className={styles.table}>
+                        <thead>
+                          <tr>
+                            <th className={styles.thSortable} onClick={() => handleSort('publishedAddress')}>
+                              Dirección {sortBy === 'publishedAddress' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                            </th>
+                            <th className={styles.thSortable} onClick={() => handleSort('neighborhood')}>
+                              Barrio {sortBy === 'neighborhood' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                            </th>
+                            <th className={styles.thLinkIdealista}>Idealista</th>
+                            <th className={styles.thSortable} onClick={() => handleSort('price')}>
+                              Precio {sortBy === 'price' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                            </th>
+                            <th className={styles.thSortable} onClick={() => handleSort('citaAt')}>
+                              Cita {sortBy === 'citaAt' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                            </th>
+                            <th className={styles.thSortable} onClick={() => handleSort('notas')}>
+                              Notas {sortBy === 'notas' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                            </th>
+                            <th className={styles.thLlamado}>Llamé</th>
+                            <th className={styles.thVisitado}>Visitado</th>
+                            <th className={styles.thActions}>Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sortedVisitedListings.map((row) => (
+                            <tr key={row.id}>
+                              <AddressCell row={row} onToggleSimilar={toggleSimilarPanel} />
+                              <td>{row.neighborhood || '—'}</td>
+                              <td className={styles.cellLinkIdealista}>
+                                <IdealistaLinkIcon
+                                  href={row.link}
+                                  className={styles.linkIdealista}
+                                  imgClassName={styles.linkIdealistaImg}
+                                />
+                              </td>
+                              <td className={styles.cellPrice}>{formatPrice(row.price)}</td>
+                              <td className={styles.cellEditable}>{formatCita(row.citaAt)}</td>
+                              <td className={styles.cellNotas}>
+                                {row.notas ? (
+                                  <span className={styles.cellNotasText} title={row.notas}>
+                                    {row.notas}
+                                  </span>
+                                ) : (
+                                  '—'
+                                )}
+                              </td>
+                              <td className={styles.cellLlamado}>
+                                <button
+                                  type="button"
+                                  className={(row.llamado ?? false) ? styles.phoneIconCalled : styles.phoneIconNotCalled}
+                                  onClick={() => openPhoneDialog(row)}
+                                  title={(row.llamado ?? false) ? 'Ya llamé' : 'Teléfono / ¿Llamé?'}
+                                  aria-label="Abrir diálogo teléfono y llamada"
+                                >
+                                  <PhoneIcon />
+                                </button>
+                              </td>
+                              <td className={styles.cellVisitado}>
+                                <button
+                                  type="button"
+                                  className={(row.visitado ?? false) ? styles.visitadoIconVisitado : styles.visitadoIconNotVisitado}
+                                  onClick={() => handleToggleVisitado(row)}
+                                  disabled={visitadoTogglingId === row.id}
+                                  title={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+                                  aria-label={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+                                >
+                                  <VisitadoIcon />
+                                </button>
+                              </td>
+                              <td className={styles.cellActions}>
+                                <span className={styles.cellActionsButtons}>
+                                  <button
+                                    type="button"
+                                    className={styles.btnEdit}
+                                    onClick={() => openEdit(row)}
+                                    aria-label="Editar"
+                                    title="Editar"
+                                  >
+                                    <EditIcon />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={styles.btnDanger}
+                                    onClick={() => handleDelete(row.id)}
+                                    aria-label="Eliminar"
+                                    title="Eliminar"
+                                  >
+                                    <TrashIcon />
+                                  </button>
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div className={styles.cardsOnly} role="list" aria-label="Visitas hechas (vista móvil)">
+                    {sortedVisitedListings.map((row) => renderListingCard(row))}
+                  </div>
+                </>
               ) : (
                 <p className={styles.noData}>No hay visitas hechas con el filtro actual.</p>
               )}
@@ -1267,6 +1443,7 @@ export default function ContactosPage() {
                 <h2 className={styles.sectionTitle}>
                   {selectedBarrio ? `Pisos en venta – ${selectedBarrio}` : 'Todos los pisos en venta'}
                 </h2>
+                <div className={styles.filterToolbar}>
                 <div className={styles.searchRow}>
                   <div className={styles.searchGroup}>
                     <label className={styles.filterLabel} htmlFor="contactos-search">
@@ -1303,111 +1480,115 @@ export default function ContactosPage() {
                     </select>
                   </div>
                 </div>
-                <div className={styles.tableWrap}>
-                  <table className={styles.table}>
-                    <thead>
-                      <tr>
-                        <th className={styles.thSortable} onClick={() => handleSort('publishedAddress')}>
-                          Dirección {sortBy === 'publishedAddress' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                        </th>
-                        <th className={styles.thSortable} onClick={() => handleSort('neighborhood')}>
-                          Barrio {sortBy === 'neighborhood' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                        </th>
-                        <th>Link Idealista</th>
-                        <th className={styles.thSortable} onClick={() => handleSort('price')}>
-                          Precio {sortBy === 'price' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                        </th>
-                        <th className={styles.thSortable} onClick={() => handleSort('citaAt')}>
-                          Cita {sortBy === 'citaAt' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                        </th>
-                        <th className={styles.thSortable} onClick={() => handleSort('notas')}>
-                          Notas {sortBy === 'notas' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-                        </th>
-                        <th className={styles.thLlamado}>Llamé</th>
-                        <th className={styles.thVisitado}>Visitado</th>
-                        <th className={styles.thActions}>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedListings.map((row) => (
-                        <tr key={row.id} className={styles.tableRowSimilarHint} {...bindRowSimilarHover(row)}>
-                          <AddressCell row={row} />
-                          <td>{row.neighborhood || '—'}</td>
-                          <td>
-                            <a
-                              href={row.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={styles.linkIdealista}
-                            >
-                              Ver en Idealista
-                            </a>
-                          </td>
-                          <td className={styles.cellPrice}>{formatPrice(row.price)}</td>
-                          <td className={styles.cellEditable}>{formatCita(row.citaAt)}</td>
-                          <td className={styles.cellNotas}>
-                            {row.notas ? (row.notas.length > 60 ? `${row.notas.slice(0, 60)}…` : row.notas) : '—'}
-                          </td>
-                          <td className={styles.cellLlamado}>
-                            <button
-                              type="button"
-                              className={(row.llamado ?? false) ? styles.phoneIconCalled : styles.phoneIconNotCalled}
-                              onClick={() => openPhoneDialog(row)}
-                              title={(row.llamado ?? false) ? 'Ya llamé' : 'Teléfono / ¿Llamé?'}
-                              aria-label="Abrir diálogo teléfono y llamada"
-                            >
-                              <PhoneIcon />
-                            </button>
-                          </td>
-                          <td className={styles.cellVisitado}>
-                            <button
-                              type="button"
-                              className={(row.visitado ?? false) ? styles.visitadoIconVisitado : styles.visitadoIconNotVisitado}
-                              onClick={() => handleToggleVisitado(row)}
-                              disabled={visitadoTogglingId === row.id}
-                              title={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
-                              aria-label={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
-                            >
-                              <VisitadoIcon />
-                            </button>
-                          </td>
-                          <td className={styles.cellActions}>
-                            <span className={styles.cellActionsButtons}>
-                              <button
-                                type="button"
-                                className={styles.btnEdit}
-                                onClick={() => openEdit(row)}
-                                aria-label="Editar"
-                                title="Editar"
-                              >
-                                <EditIcon />
-                              </button>
-                              <button
-                                type="button"
-                                className={styles.btnDanger}
-                                onClick={() => handleDelete(row.id)}
-                                aria-label="Eliminar"
-                                title="Eliminar"
-                              >
-                                <TrashIcon />
-                              </button>
-                            </span>
-                          </td>
+                </div>
+                <div className={styles.tableOnly}>
+                  <div className={styles.tableWrap}>
+                    <table className={styles.table}>
+                      <thead>
+                        <tr>
+                          <th className={styles.thSortable} onClick={() => handleSort('publishedAddress')}>
+                            Dirección {sortBy === 'publishedAddress' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                          </th>
+                          <th className={styles.thSortable} onClick={() => handleSort('neighborhood')}>
+                            Barrio {sortBy === 'neighborhood' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                          </th>
+                          <th className={styles.thLinkIdealista}>Idealista</th>
+                          <th className={styles.thSortable} onClick={() => handleSort('price')}>
+                            Precio {sortBy === 'price' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                          </th>
+                          <th className={styles.thSortable} onClick={() => handleSort('citaAt')}>
+                            Cita {sortBy === 'citaAt' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                          </th>
+                          <th className={styles.thSortable} onClick={() => handleSort('notas')}>
+                            Notas {sortBy === 'notas' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                          </th>
+                          <th className={styles.thLlamado}>Llamé</th>
+                          <th className={styles.thVisitado}>Visitado</th>
+                          <th className={styles.thActions}>Acciones</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {sortedListings.map((row) => (
+                          <tr key={row.id}>
+                            <AddressCell row={row} onToggleSimilar={toggleSimilarPanel} />
+                            <td>{row.neighborhood || '—'}</td>
+                            <td className={styles.cellLinkIdealista}>
+                              <IdealistaLinkIcon
+                                href={row.link}
+                                className={styles.linkIdealista}
+                                imgClassName={styles.linkIdealistaImg}
+                              />
+                            </td>
+                            <td className={styles.cellPrice}>{formatPrice(row.price)}</td>
+                            <td className={styles.cellEditable}>{formatCita(row.citaAt)}</td>
+                            <td className={styles.cellNotas}>
+                              {row.notas ? (
+                                <span className={styles.cellNotasText} title={row.notas}>
+                                  {row.notas}
+                                </span>
+                              ) : (
+                                '—'
+                              )}
+                            </td>
+                            <td className={styles.cellLlamado}>
+                              <button
+                                type="button"
+                                className={(row.llamado ?? false) ? styles.phoneIconCalled : styles.phoneIconNotCalled}
+                                onClick={() => openPhoneDialog(row)}
+                                title={(row.llamado ?? false) ? 'Ya llamé' : 'Teléfono / ¿Llamé?'}
+                                aria-label="Abrir diálogo teléfono y llamada"
+                              >
+                                <PhoneIcon />
+                              </button>
+                            </td>
+                            <td className={styles.cellVisitado}>
+                              <button
+                                type="button"
+                                className={(row.visitado ?? false) ? styles.visitadoIconVisitado : styles.visitadoIconNotVisitado}
+                                onClick={() => handleToggleVisitado(row)}
+                                disabled={visitadoTogglingId === row.id}
+                                title={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+                                aria-label={(row.visitado ?? false) ? 'Ya visité' : 'Marcar como visitado'}
+                              >
+                                <VisitadoIcon />
+                              </button>
+                            </td>
+                            <td className={styles.cellActions}>
+                              <span className={styles.cellActionsButtons}>
+                                <button
+                                  type="button"
+                                  className={styles.btnEdit}
+                                  onClick={() => openEdit(row)}
+                                  aria-label="Editar"
+                                  title="Editar"
+                                >
+                                  <EditIcon />
+                                </button>
+                                <button
+                                  type="button"
+                                  className={styles.btnDanger}
+                                  onClick={() => handleDelete(row.id)}
+                                  aria-label="Eliminar"
+                                  title="Eliminar"
+                                >
+                                  <TrashIcon />
+                                </button>
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div className={styles.cardsOnly} role="list" aria-label="Pisos en venta (vista móvil)">
+                  {sortedListings.map((row) => renderListingCard(row))}
                 </div>
               </section>
             )}
           </>
         )}
 
-        <section className={styles.section}>
-          <Link href="/" className={styles.backButton}>
-            Volver al Gestor de Pisos
-          </Link>
-        </section>
       </div>
 
       {similarHover &&
@@ -1420,13 +1601,17 @@ export default function ContactosPage() {
             style={{ top: similarHover.top, left: similarHover.left }}
             role="dialog"
             aria-label="Pisos parecidos en alquiler"
-            onMouseEnter={clearSimilarTimer}
-            onMouseLeave={() => {
-              similarCloseTimer.current = setTimeout(closeSimilarPanel, PANEL_POINTER_LEAVE_MS)
-            }}
           >
             <div className={styles.similarDialogHeader}>
               <h2 className={styles.similarDialogTitle}>Pisos parecidos en alquiler</h2>
+              <button
+                type="button"
+                className={styles.similarDialogClose}
+                onClick={closeSimilarPanel}
+                aria-label="Cerrar"
+              >
+                ×
+              </button>
             </div>
             {similarHover.row.rooms == null ? (
               <p className={styles.similarDialogEmpty}>
