@@ -1,44 +1,190 @@
+/* Contenedor: sin desbordamiento horizontal (fundamentos makeover: ancho 100%, min-width 0) */
 .page {
   min-height: 100vh;
-  /* Deja ver el fondo global (var(--bg) + gradiente) del design system */
   background: transparent;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 24px 16px 48px;
-  /* Mismo stack que el cuerpo del layout (globals + tailwind font-sans) */
   font-family: var(--font-stack-body);
+  /* Evita “scroll” lateral por hijos; el contenido encaja o envuelve */
+  overflow-x: hidden;
 }
 
 .inner {
   max-width: 1100px;
+  width: 100%;
+  min-width: 0;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
-/* Tamaño/peso: el h1 usa --font-stack-heading vía @layer base en globals.css */
 .title {
-  margin: 0 0 24px 0;
+  margin: 0 0 1.5rem 0;
   font-size: 1.6rem;
   font-weight: 800;
   color: hsl(var(--foreground));
   line-height: 1.2;
 }
 
+/* Card al estilo Index: border/70, blur, shadow-sm */
 .card {
-  background: hsl(var(--card));
-  border-radius: var(--r-lg);
+  min-width: 0;
+  background: hsl(var(--card) / 0.8);
+  border-radius: 1rem;
   box-shadow: var(--shadow-sm);
   border: 1px solid hsl(var(--border) / 0.7);
   overflow: hidden;
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 
+/* Móvil: sin tabla ancha; solo tarjetas apiladas */
 .tableScroll {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  display: none;
+}
+
+.mobileStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 1rem;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Tarjeta por fila: superficie, borde, radio (makeover) */
+.mobileItem {
+  min-width: 0;
+  border-radius: 0.875rem;
+  border: 1px solid hsl(var(--border) / 0.6);
+  background: hsl(var(--card));
+  padding: 0.9rem 1rem 0.75rem;
+  box-shadow: var(--shadow-sm);
+  box-sizing: border-box;
+}
+
+.mobileItemTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.45);
+}
+
+.puestoPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 2.5rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: hsl(var(--accent));
+  background: hsl(224 100% 59% / 0.1);
+  border: 1px solid hsl(224 100% 59% / 0.2);
+}
+
+.zonaName {
+  margin: 0;
+  flex: 1 1 12rem;
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: hsl(var(--foreground));
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.mobileGrid {
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.mobileRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 0.25rem 0.75rem;
+  align-items: start;
+  font-size: 0.8125rem;
+}
+
+.mobileRow dt {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: hsl(var(--muted-foreground));
+  line-height: 1.35;
+}
+
+.mobileRow dd {
+  margin: 0;
+  color: hsl(var(--foreground));
+  line-height: 1.4;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.valAccent {
+  font-weight: 600;
+  color: hsl(var(--accent));
+  font-variant-numeric: tabular-nums;
+}
+
+.mobileRowFull {
+  display: block;
+  padding-top: 0.15rem;
+  margin-top: 0.15rem;
+  border-top: 1px solid hsl(var(--border) / 0.35);
+}
+
+.mobileRowFull dt {
+  margin-bottom: 0.2rem;
+}
+
+.perfilText {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ≥768px: tabla como en escritorio; min-width solo aquí (no empuja el viewport en móvil) */
+@media (min-width: 768px) {
+  .tableScroll {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    /* Scroll horizontal solo si la ventana es estrecha pero ya en rango “md” */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobileStack {
+    display: none;
+  }
+
+  .table {
+    min-width: 700px;
+  }
 }
 
 .table {
   width: 100%;
-  min-width: 720px;
+  min-width: 0;
   border-collapse: collapse;
   font-size: 0.9rem;
   font-family: var(--font-stack-body);
@@ -100,7 +246,8 @@
 .colZona {
   font-weight: 600;
   color: hsl(var(--foreground));
-  min-width: 200px;
+  min-width: 0;
+  max-width: 22rem;
 }
 
 .colRent {
@@ -116,24 +263,15 @@
 }
 
 .colPerfil {
-  min-width: 220px;
+  min-width: 0;
+  max-width: 24rem;
   color: hsl(var(--muted-foreground));
   font-size: 0.88rem;
 }
 
-/* Móvil: filas en tarjeta bajo el scroll, opcional mejora sin duplicar: badges en puesto */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .title {
     font-size: 1.35rem;
-  }
-
-  .table {
-    min-width: 600px;
-    font-size: 0.82rem;
-  }
-
-  .table td,
-  .table thead th {
-    padding: 10px 12px;
+    margin-bottom: 1.25rem;
   }
 }

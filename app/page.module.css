@@ -1259,11 +1259,85 @@
   background: #f8fafc;
 }
 
-/* Lista de pisos */
+/* Lista de pisos (con paginación) */
+.listingsListWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+/* Anclaje para scroll al cambiar de página bajo el header fijo */
+.listingsListAnchor {
+  scroll-margin-top: 5.5rem;
+  height: 0;
+  width: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 .listingsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 18px;
+}
+
+.listingsPagination {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+  padding: 0 0 0.5rem;
+}
+
+.listingsPaginationInfo {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-muted, #4b5b76);
+  text-align: center;
+  line-height: 1.45;
+}
+
+.listingsPaginationBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem 1.25rem;
+}
+
+.listingsPageBtn {
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border, #e4e9f2);
+  background: var(--bg-elevated, #fff);
+  color: var(--text, #0b1220);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, opacity 0.2s;
+}
+
+.listingsPageBtn:hover:not(:disabled) {
+  border-color: var(--brand-200, #b8cdff);
+  background: var(--brand-50, #eef4ff);
+  color: var(--brand-700, #1a3bbf);
+}
+
+.listingsPageBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.listingsPageNumbers {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #4b5b76);
+  min-width: 4rem;
+  text-align: center;
 }
 
 .listingCard {

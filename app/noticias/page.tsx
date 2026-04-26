@@ -14,7 +14,12 @@ export default function NoticiasPage() {
         <h1 className={styles.title}>Noticias</h1>
 
         <div className={styles.card}>
-          <div className={styles.tableScroll} role="region" aria-label="Tabla de zonas e inversión" tabIndex={0}>
+          <div
+            className={styles.tableScroll}
+            role="region"
+            aria-label="Tabla de zonas e inversión (escritorio)"
+            tabIndex={0}
+          >
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -38,6 +43,33 @@ export default function NoticiasPage() {
               </tbody>
             </table>
           </div>
+
+          <ol className={styles.mobileStack} aria-label="Ranking por zonas (móvil)">
+            {rankingZonasInversion.map((row) => (
+              <li key={row.puesto} className={styles.mobileItem}>
+                <div className={styles.mobileItemTop}>
+                  <span className={styles.puestoPill} aria-label={`Puesto ${row.puesto}`}>
+                    #{row.puesto}
+                  </span>
+                  <p className={styles.zonaName}>{row.ciudadZona}</p>
+                </div>
+                <dl className={styles.mobileGrid}>
+                  <div className={styles.mobileRow}>
+                    <dt>Rentabilidad bruta</dt>
+                    <dd className={styles.valAccent}>{row.rentabilidadBruta}</dd>
+                  </div>
+                  <div className={styles.mobileRow}>
+                    <dt>Tasa okupación</dt>
+                    <dd>{row.tasaOkupacion}</dd>
+                  </div>
+                  <div className={`${styles.mobileRow} ${styles.mobileRowFull}`}>
+                    <dt>Perfil de inversión</dt>
+                    <dd className={styles.perfilText}>{row.perfilInversion}</dd>
+                  </div>
+                </dl>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
     </div>

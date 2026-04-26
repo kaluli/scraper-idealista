@@ -27,6 +27,8 @@ const DEFAULT_PROVINCE = 'Madrid'
 /** Superficie mínima por defecto (≥ 40 m²); opción ≥ 80 m². */
 const DEFAULT_MIN_SURFACE = '40' as const
 
+const LISTINGS_PER_PAGE = 16
+
 type MinSurfaceOption = '40' | '80'
 
 export default function Home() {
@@ -46,6 +48,8 @@ export default function Home() {
   const [selectedMinSurface, setSelectedMinSurface] =
     useState<MinSurfaceOption>(DEFAULT_MIN_SURFACE)
   const [searchQuery, setSearchQuery] = useState('')
+  const [listingsPage, setListingsPage] = useState(1)
+  const listingsListAnchorRef = useRef<HTMLDivElement | null>(null)
   const filtersDialogRef = useRef<HTMLDialogElement | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [formData, setFormData] = useState({
@@ -204,6 +208,35 @@ export default function Home() {
       )
     })
   }, [listings, searchQuery])
+
+  const totalListingsPages = useMemo(
+    () => Math.max(1, Math.ceil(displayedListings.length / LISTINGS_PER_PAGE)),
+    [displayedListings.length]
+  )
+
+  const paginatedListings = useMemo(() => {
+    const start = (listingsPage - 1) * LISTINGS_PER_PAGE
+    return displayedListings.slice(start, start + LISTINGS_PER_PAGE)
+  }, [displayedListings, listingsPage])
+
+  useEffect(() => {
+    setListingsPage(1)
+  }, [searchQuery, selectedType, selectedNeighborhood, selectedProvince, selectedMaxPrice, selectedMinSurface])
+
+  useEffect(() => {
+    setListingsPage((p) => Math.min(p, totalListingsPages))
+  }, [totalListingsPages])
+
+  const goToListingsPage = useCallback(
+    (next: number) => {
+      const clamped = Math.max(1, Math.min(next, totalListingsPages))
+      setListingsPage(clamped)
+      requestAnimationFrame(() => {
+        listingsListAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    },
+    [totalListingsPages]
+  )
 
   // Crear nuevo piso
   const handleSubmit = async (e: React.FormEvent) => {
@@ -842,8 +875,14 @@ export default function Home() {
             </button>
           </div>
         ) : (
-          <div className={styles.listingsGrid}>
-            {displayedListings.map((listing) => (
+          <div className={styles.listingsListWrap}>
+            <div
+              ref={listingsListAnchorRef}
+              className={styles.listingsListAnchor}
+              aria-hidden
+            />
+            <div className={styles.listingsGrid}>
+            {paginatedListings.map((listing) => (
               <div key={listing.id} className={styles.listingCard}>
                 <div className={styles.listingHeader}>
                   <h3 className={styles.listingTitle}>{listing.title || 'Sin título'}</h3>
@@ -893,6 +932,51 @@ export default function Home() {
                 </div>
               </div>
             ))}
+            </div>
+            {displayedListings.length > 0 && (
+              <nav
+                className={styles.listingsPagination}
+                aria-label="Paginación de resultados de pisos"
+              >
+                <p className={styles.listingsPaginationInfo}>
+                  Mostrando{' '}
+                  <strong>
+                    {Math.min(
+                      (listingsPage - 1) * LISTINGS_PER_PAGE + 1,
+                      displayedListings.length
+                    )}
+                    –{Math.min(listingsPage * LISTINGS_PER_PAGE, displayedListings.length)}
+                  </strong>{' '}
+                  de <strong>{displayedListings.length}</strong> pisos
+                  {totalListingsPages > 1
+                    ? ` · Página ${listingsPage} de ${totalListingsPages}`
+                    : null}
+                </p>
+                {totalListingsPages > 1 && (
+                  <div className={styles.listingsPaginationBar}>
+                    <button
+                      type="button"
+                      className={styles.listingsPageBtn}
+                      onClick={() => goToListingsPage(listingsPage - 1)}
+                      disabled={listingsPage <= 1}
+                    >
+                      ← Anterior
+                    </button>
+                    <span className={styles.listingsPageNumbers} aria-hidden>
+                      {listingsPage} / {totalListingsPages}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.listingsPageBtn}
+                      onClick={() => goToListingsPage(listingsPage + 1)}
+                      disabled={listingsPage >= totalListingsPages}
+                    >
+                      Siguiente →
+                    </button>
+                  </div>
+                )}
+              </nav>
+            )}
           </div>
         )}
       </div>
