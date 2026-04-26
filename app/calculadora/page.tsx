@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import Link from 'next/link'
 import styles from './page.module.css'
 
 function formatEuros(n: number): string {
@@ -125,29 +126,43 @@ export default function CalculadoraPage() {
   else resumen = 'Operación ajustada'
 
   return (
-    <div className={styles.container}>
-      <div className={styles.content}>
-        <header className={styles.header}>
-          <h1 className={styles.title}>
-          <span className={styles.titleIcon} aria-hidden>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="4" y="2" width="16" height="20" rx="2" />
-              <rect x="6" y="6" width="12" height="4" rx="1" fill="currentColor" fillOpacity="0.2" />
-              <line x1="8" y1="14" x2="10" y2="14" />
-              <line x1="14" y1="14" x2="16" y2="14" />
-              <line x1="8" y1="18" x2="10" y2="18" />
-              <line x1="14" y1="18" x2="16" y2="18" />
-            </svg>
-          </span>
-          Calculadora de rentabilidad
-        </h1>
+    <div className={styles.page}>
+      <div className={styles.inner}>
+        <nav className={styles.breadcrumb} aria-label="Migas de navegación">
+          <Link href="/" className={styles.breadcrumbLink}>
+            ← Inicio / gestor
+          </Link>
+        </nav>
+
+        <header className={styles.pageHeader}>
+          <p className={styles.kicker}>
+            <span className={styles.kickerDot} aria-hidden />
+            <span>Inversión</span>
+          </p>
+          <h1 className={styles.h1Row}>
+            <span className={styles.h1IconBadge} aria-hidden>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="4" y="2" width="16" height="20" rx="2" />
+                <rect x="6" y="6" width="12" height="4" rx="1" fill="currentColor" fillOpacity="0.2" />
+                <line x1="8" y1="14" x2="10" y2="14" />
+                <line x1="14" y1="14" x2="16" y2="14" />
+                <line x1="8" y1="18" x2="10" y2="18" />
+                <line x1="14" y1="18" x2="16" y2="18" />
+              </svg>
+            </span>
+            <span className={styles.h1TextBlock}>
+              Calculadora de <span className={styles.h1Grad}>rentabilidad</span>
+            </span>
+          </h1>
           <p className={styles.subtitle}>
-            Analiza si un piso en alquiler tiene sentido como inversión. Rápido y visual.
+            Analizá si un piso en alquiler tiene sentido como inversión. Rápido y visual.
           </p>
         </header>
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Datos principales</h2>
+        <section className={styles.card} aria-labelledby="calc-datos-title">
+          <h2 id="calc-datos-title" className={styles.cardTitle}>
+            Datos principales
+          </h2>
           <div className={styles.formGrid}>
             <div className={styles.field}>
               <label>Precio de compra (€)</label>
@@ -233,8 +248,10 @@ export default function CalculadoraPage() {
           )}
         </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Supuestos usados</h2>
+        <section className={styles.card} aria-labelledby="calc-supuestos-title">
+          <h2 id="calc-supuestos-title" className={styles.cardTitle}>
+            Supuestos usados
+          </h2>
           <p className={styles.intro}>Puedes modificar estos valores. Se usan para calcular gastos anuales.</p>
           <div className={styles.formGrid}>
             <div className={styles.field}>
@@ -303,8 +320,10 @@ export default function CalculadoraPage() {
           </div>
         </section>
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Resultados</h2>
+        <section className={styles.card} aria-labelledby="calc-resultados-title">
+          <h2 id="calc-resultados-title" className={styles.cardTitle}>
+            Resultados
+          </h2>
           <div className={styles.resultsGrid}>
             <div className={styles.resultCard}>
               <span className={styles.resultLabel}>Ingreso anual bruto</span>
@@ -355,8 +374,10 @@ export default function CalculadoraPage() {
         </section>
 
         {alertas.length > 0 && (
-          <section className={styles.alertSection}>
-            <h2 className={styles.sectionTitle}>⚠️ Alertas</h2>
+          <section className={styles.alertCard} aria-labelledby="calc-alertas-title">
+            <h2 id="calc-alertas-title" className={styles.alertTitle}>
+              Alertas
+            </h2>
             <ul className={styles.alertList}>
               {alertas.map((a, i) => (
                 <li key={i}>{a}</li>
@@ -365,8 +386,10 @@ export default function CalculadoraPage() {
           </section>
         )}
 
-        <section className={styles.resumenSection}>
-          <h2 className={styles.sectionTitle}>Resumen</h2>
+        <section className={styles.resumenCard} aria-labelledby="calc-resumen-title">
+          <h2 id="calc-resumen-title" className={styles.cardTitle}>
+            Resumen
+          </h2>
           <p className={styles.resumenText}>{resumen}</p>
         </section>
       </div>
