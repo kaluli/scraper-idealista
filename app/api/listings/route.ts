@@ -104,10 +104,12 @@ export async function POST(request: NextRequest) {
     const finalRooms = habitaciones || rooms
     const finalProfitabilityRate = tasa_rentabilidad || profitabilityRate
 
-    // Validaciones
-    if (!finalPrice || !link) {
+    const linkRaw = typeof link === 'string' ? link.trim() : ''
+    const finalLink = linkRaw || 'https://www.idealista.com/'
+
+    if (!finalPrice) {
       return NextResponse.json(
-        { success: false, error: 'Faltan campos requeridos: precio y link' },
+        { success: false, error: 'Falta el precio' },
         { status: 400 }
       )
     }
@@ -125,19 +127,51 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const {
+      province,
+      contacto: rawContacto,
+      phone: rawPhone,
+      notas: rawNotas,
+      citaAt: rawCita,
+      llamado: rawLlamado,
+      visitado: rawVisitado,
+    } = body
+
+    const provinceVal =
+      typeof province === 'string' && province.trim() !== '' ? province.trim() : 'Madrid'
+    const contactoVal =
+      rawContacto === 'Juli' || rawContacto === 'Kalu' ? (rawContacto as string) : null
+    const phoneVal =
+      rawPhone != null && String(rawPhone).trim() !== '' ? String(rawPhone).trim() : null
+    const notasVal =
+      rawNotas != null && String(rawNotas).trim() !== '' ? String(rawNotas).trim() : null
+    let citaAtVal: Date | null = null
+    if (rawCita) {
+      const citaDate = new Date(String(rawCita))
+      citaAtVal = Number.isNaN(citaDate.getTime()) ? null : citaDate
+    }
+    const llamadoVal = Boolean(rawLlamado)
+    const visitadoVal = Boolean(rawVisitado)
+
     const listing = await prisma.listing.create({
       data: {
         title: title || null,
-        price: parseFloat(finalPrice),
-        surface: finalSurface ? parseFloat(finalSurface) : null,
-        link,
-        profitabilityRate: finalProfitabilityRate ? parseFloat(finalProfitabilityRate) : null,
+        price: parseFloat(String(finalPrice)),
+        surface: finalSurface ? parseFloat(String(finalSurface)) : null,
+        link: finalLink,
+        profitabilityRate: finalProfitabilityRate ? parseFloat(String(finalProfitabilityRate)) : null,
         type: finalType,
         neighborhood: finalNeighborhood || null,
-        city: city || null,
-        province: body.province || 'Madrid',
+        city: city != null && String(city).trim() !== '' ? String(city).trim() : null,
+        province: provinceVal,
         publishedAddress: finalPublishedAddress || null,
-        rooms: finalRooms ? parseInt(finalRooms) : null,
+        rooms: finalRooms != null && finalRooms !== '' ? parseInt(String(finalRooms), 10) : null,
+        contacto: contactoVal,
+        phone: phoneVal,
+        notas: notasVal,
+        citaAt: citaAtVal,
+        llamado: llamadoVal,
+        visitado: visitadoVal,
       },
     })
 

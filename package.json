@@ -22,6 +22,7 @@
     "db:seed-madrid:production": "node scripts/seed-madrid-neighborhoods.js production",
     "db:sync-from-prod": "node scripts/sync-local-from-prod.js",
     "db:prod-to-local": "node scripts/sync-local-from-prod.js",
+    "db:unify-segovia": "node scripts/unify-segovia-barrios.js",
     "db:sync-to-prod": "node scripts/sync-local-to-prod.js",
     "db:push-vercel": "node scripts/push-local-to-vercel.js",
     "db:pull-vercel": "node scripts/pull-prod-via-vercel.js",

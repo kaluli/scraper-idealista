@@ -112,6 +112,10 @@ export async function PUT(
       const v = strOrNull(body.city)
       data.city = v
     }
+    if (body.province !== undefined) {
+      const v = strOrNull(body.province)
+      data.province = v
+    }
     if (body.publishedAddress !== undefined) {
       const v = strOrNull(body.publishedAddress)
       data.publishedAddress = v
