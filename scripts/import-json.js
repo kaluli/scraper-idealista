@@ -35,11 +35,15 @@ const prisma = new PrismaClient()
 function formatDbTarget(url) {
   if (!url || typeof url !== 'string') return '(DATABASE_URL no definida)'
   try {
-    const normalized = url.replace(/^mysql:\/\//i, 'http://')
+    const normalized = url
+      .replace(/^mysql:\/\//i, 'http://')
+      .replace(/^postgres(ql)?:\/\//i, 'http://')
     const u = new URL(normalized)
     const db = u.pathname.replace(/^\//, '').split('?')[0] || '(sin nombre)'
-    const port = u.port || '3306'
-    return `${u.hostname}:${port}/${db}`
+    const port =
+      u.port ||
+      (url.startsWith('mysql') ? '3306' : url.startsWith('postgres') ? '5432' : '')
+    return `${u.hostname}:${port || '5432'}/${db}`
   } catch {
     return '(URL no válida)'
   }

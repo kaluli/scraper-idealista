@@ -1,19 +1,18 @@
 #!/usr/bin/env node
 /**
  * Se ejecuta SOLO antes de "npm run dev" (nunca en build ni en Vercel).
- * Comprueba que DATABASE_URL sea de desarrollo (localhost), no de producción (freedb.tech).
+ * Comprueba que DATABASE_URL sea de desarrollo (Postgres local o rama Neon),
+ * no la URL de producción remota antigua (FreeDB).
  */
 
 const path = require('path')
 const fs = require('fs')
 
-// En producción (build/deploy) no hacemos ningún check; solo en desarrollo
 if (process.env.NODE_ENV === 'production') {
   process.exit(0)
 }
 
 const root = path.resolve(__dirname, '..')
-// Mismo orden que Next.js en desarrollo: .env, .env.local, .env.development, .env.development.local
 for (const name of ['.env', '.env.local', '.env.development', '.env.development.local']) {
   const p = path.join(root, name)
   if (fs.existsSync(p)) {
@@ -39,31 +38,37 @@ try {
   console.warn('   Usá en la raíz del proyecto:  npm run dev:restart')
   console.warn('   o liberá el puerto:  kill $(lsof -ti:3000)')
   console.warn('')
-} catch (_) {
-  // nadie escuchando en 3000
-}
+} catch (_) {}
 
 const url = process.env.DATABASE_URL || ''
-if (!url.startsWith('mysql://')) {
-  console.error('❌ DATABASE_URL no está definida o no es mysql://')
-  console.error('   Creá .env.development.local a partir de .env.development.local.example')
-  console.error('   con la URL de tu MySQL local (localhost).')
+const isPostgres =
+  url.startsWith('postgres://') || url.startsWith('postgresql://')
+const isMysql = url.startsWith('mysql://')
+
+if (!isPostgres && !isMysql) {
+  console.error('❌ DATABASE_URL no está definida o no es postgresql:// / mysql://')
+  console.error('   En .env.development.local usá la URL de Neon (dev) o Postgres local.')
+  process.exit(1)
+}
+
+if (isMysql) {
+  console.error('❌ El proyecto usa PostgreSQL (Neon). Actualizá DATABASE_URL a postgresql://')
   process.exit(1)
 }
 
 if (url.includes('freedb.tech')) {
   console.error('❌ Estás en desarrollo pero DATABASE_URL apunta a FreeDB (producción).')
-  console.error('   En local tenés que usar SOLO tu MySQL local.')
-  console.error('')
-  console.error('   Editá .env.development.local (no .env.local) y poné:')
-  console.error('   DATABASE_URL="mysql://root@localhost:3306/idealista_db"')
-  console.error('')
-  console.error('   No uses la URL de FreeDB en ningún archivo cuando trabajás en local.')
+  console.error('   En local usá Neon (rama dev) o Postgres en localhost.')
   process.exit(1)
 }
 
-if (!url.includes('localhost') && !url.includes('127.0.0.1')) {
-  console.error('⚠️  DATABASE_URL no parece ser local (localhost/127.0.0.1).')
-  console.error('   Para desarrollo usá siempre tu MySQL local en .env.development.local')
+const looksDev =
+  url.includes('localhost') ||
+  url.includes('127.0.0.1') ||
+  url.includes('neon.tech')
+
+if (!looksDev) {
+  console.error('⚠️  DATABASE_URL no parece de desarrollo (localhost / 127.0.0.1 / neon.tech).')
+  console.error('   Para desarrollo usá una rama Neon o Postgres local en .env.development.local')
   process.exit(1)
 }

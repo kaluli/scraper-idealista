@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Copia PRODUCCIÓN → LOCAL sin conectar a MySQL remoto por puerto 3306.
+ * Copia PRODUCCIÓN → LOCAL sin abrir el puerto de la BD (HTTP /api/admin/export).
  * GET https://tu-app.vercel.app/api/admin/export (mismo secreto que full-sync).
  *
  * Requiere:
- *   .env.development.local    → DATABASE_URL local (localhost)
+ *   .env.development.local    → DATABASE_URL local (postgresql://…)
  *   .env.full-sync.local      → VERCEL_APP_URL, FULL_SYNC_SECRET (igual que Vercel)
  *
  * Uso: npm run db:pull-vercel
@@ -50,8 +50,16 @@ if (!secret) {
   console.error('❌ Definí FULL_SYNC_SECRET en .env.full-sync.local (mismo valor que en Vercel).')
   process.exit(1)
 }
-if (!localUrl.startsWith('mysql://') || (!localUrl.includes('localhost') && !localUrl.includes('127.0.0.1'))) {
-  console.error('❌ DATABASE_URL local (localhost) en .env.development.local')
+const localPg =
+  localUrl.startsWith('postgresql://') || localUrl.startsWith('postgres://')
+const localOk =
+  localUrl.includes('localhost') ||
+  localUrl.includes('127.0.0.1') ||
+  localUrl.includes('neon.tech')
+if (!localPg || !localOk) {
+  console.error(
+    '❌ DATABASE_URL local postgresql:// en .env.development.local (localhost o neon.tech)'
+  )
   process.exit(1)
 }
 
@@ -111,7 +119,7 @@ async function main() {
   }
 
   try {
-    console.log('\n   Escribiendo en MySQL local...')
+    console.log('\n   Escribiendo en Postgres local...')
     await prismaLocal.$transaction(async (tx) => {
       await tx.listing.deleteMany({})
       await tx.neighborhood.deleteMany({})
@@ -135,6 +143,12 @@ async function main() {
         })
       }
     })
+    await prismaLocal.$executeRawUnsafe(`
+      SELECT setval(pg_get_serial_sequence('listings', 'id'), COALESCE((SELECT MAX(id) FROM listings), 1))
+    `)
+    await prismaLocal.$executeRawUnsafe(`
+      SELECT setval(pg_get_serial_sequence('neighborhoods', 'id'), COALESCE((SELECT MAX(id) FROM neighborhoods), 1))
+    `)
     await prismaLocal.$disconnect()
     console.log('   ✅ Local actualizado.')
   } catch (e) {

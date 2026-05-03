@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 
-const DB_ERROR_MESSAGE = 'No se pudo conectar a la base de datos. En Vercel: Settings → Environment Variables → añadí DATABASE_URL (MySQL de producción).'
+const DB_ERROR_MESSAGE =
+  'No se pudo conectar a la base de datos. En Vercel: Settings → Environment Variables → DATABASE_URL (PostgreSQL / Neon).'
 
 /** Convierte unknown a string | null para asignar a UpdateData sin errores de tipo. */
 function strOrNull(v: unknown): string | null {

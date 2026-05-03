@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Copia datos de MySQL LOCAL → base de PRODUCCIÓN vía HTTPS (sin abrir puerto 3306 desde esta red).
+ * Copia datos de Postgres LOCAL (Neon dev) → producción vía HTTPS (POST /api/admin/full-sync).
  *
  * Requiere el deploy en Vercel con POST /api/admin/full-sync y FULL_SYNC_SECRET en env.
  *
@@ -61,8 +61,15 @@ if (!secret) {
 
 const { PrismaClient } = require('@prisma/client')
 const url = process.env.DATABASE_URL || ''
-if (!url.startsWith('mysql://') || (!url.includes('localhost') && !url.includes('127.0.0.1'))) {
-  console.error('❌ DATABASE_URL local (localhost) no encontrada en .env.development.local')
+const isPg = url.startsWith('postgresql://') || url.startsWith('postgres://')
+const localOk =
+  url.includes('localhost') ||
+  url.includes('127.0.0.1') ||
+  url.includes('neon.tech')
+if (!isPg || !localOk) {
+  console.error(
+    '❌ DATABASE_URL local (postgresql:// … localhost, 127.0.0.1 o neon.tech) en .env.development.local'
+  )
   process.exit(1)
 }
 

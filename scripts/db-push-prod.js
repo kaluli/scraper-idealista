@@ -30,11 +30,15 @@ content.split('\n').forEach((line) => {
   }
 })
 
-if (!process.env.DATABASE_URL?.startsWith('mysql://')) {
-  console.error('❌ DATABASE_URL en .env.production no es mysql://')
+const u = process.env.DATABASE_URL || ''
+if (
+  !u.startsWith('postgresql://') &&
+  !u.startsWith('postgres://')
+) {
+  console.error('❌ DATABASE_URL en .env.production no es postgresql://')
   process.exit(1)
 }
 
-console.log('🔗 Usando BD de producción (FreeDB/remota)...\n')
+console.log('🔗 Aplicando schema en producción (Postgres)...\n')
 execSync('npx prisma db push', { stdio: 'inherit', env: process.env, cwd: root })
 console.log('\n✅ Schema aplicado en producción.')

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Vacía todas las tablas (listings, neighborhoods) para empezar de cero.
- * Usa TRUNCATE (reinicia contadores autoincrement).
+ * PostgreSQL: TRUNCATE ... RESTART IDENTITY.
  *
  * Uso:
  *   node scripts/wipe-database.js local
@@ -41,19 +41,25 @@ function loadEnvProduction() {
   parseEnvFile(path.join(root, '.env.production'))
 }
 
-function mysqlUrlLooksLocal(url) {
+function isPostgresUrl(url) {
+  return (
+    url.startsWith('postgres://') || url.startsWith('postgresql://')
+  )
+}
+
+/** Local dev: Postgres en localhost o rama Neon de desarrollo */
+function postgresUrlLooksLocal(url) {
   return (
     url.includes('localhost') ||
     url.includes('127.0.0.1') ||
-    url.includes('0.0.0.0')
+    url.includes('neon.tech')
   )
 }
 
 async function truncateAll(prisma) {
-  await prisma.$executeRawUnsafe('SET FOREIGN_KEY_CHECKS = 0')
-  await prisma.$executeRawUnsafe('TRUNCATE TABLE `listings`')
-  await prisma.$executeRawUnsafe('TRUNCATE TABLE `neighborhoods`')
-  await prisma.$executeRawUnsafe('SET FOREIGN_KEY_CHECKS = 1')
+  await prisma.$executeRawUnsafe(
+    'TRUNCATE TABLE listings, neighborhoods RESTART IDENTITY CASCADE'
+  )
 }
 
 async function main() {
@@ -65,12 +71,16 @@ async function main() {
   if (mode === 'local') {
     loadEnvLocal()
     const url = process.env.DATABASE_URL || ''
-    if (!url.startsWith('mysql://')) {
-      console.error('❌ DATABASE_URL no definida o no es mysql:// (revisá .env.development.local)')
+    if (!isPostgresUrl(url)) {
+      console.error(
+        '❌ DATABASE_URL no es postgresql:// (revisá .env.development.local)'
+      )
       process.exit(1)
     }
-    if (!mysqlUrlLooksLocal(url)) {
-      console.error('❌ Modo local: DATABASE_URL debe apuntar a MySQL en localhost (no uses la URL de producción).')
+    if (!postgresUrlLooksLocal(url)) {
+      console.error(
+        '❌ Modo local: usá Postgres en localhost/127.0.0.1 o una rama dev (*.neon.tech).'
+      )
       process.exit(1)
     }
   } else {
@@ -86,19 +96,25 @@ async function main() {
       process.exit(1)
     }
     const url = process.env.DATABASE_URL || ''
-    if (!url.startsWith('mysql://')) {
-      console.error('❌ DATABASE_URL en .env.production no es válida')
+    if (!isPostgresUrl(url)) {
+      console.error('❌ DATABASE_URL en .env.production no es postgresql://')
       process.exit(1)
     }
-    if (mysqlUrlLooksLocal(url)) {
-      console.error('❌ La URL en .env.production parece local. Revisá el archivo antes de vaciar.')
+    if (url.includes('localhost') || url.includes('127.0.0.1')) {
+      console.error(
+        '❌ La URL en .env.production parece local (localhost). Revisá antes de vaciar.'
+      )
       process.exit(1)
     }
   }
 
   const prisma = new PrismaClient()
   try {
-    console.log(mode === 'local' ? '🗑️  Vaciando base LOCAL...' : '🗑️  Vaciando base de PRODUCCIÓN...')
+    console.log(
+      mode === 'local'
+        ? '🗑️  Vaciando base LOCAL (Postgres)...'
+        : '🗑️  Vaciando base de PRODUCCIÓN (Postgres)...'
+    )
     await truncateAll(prisma)
     console.log('✅ Tablas `listings` y `neighborhoods` vacías.')
   } catch (e) {

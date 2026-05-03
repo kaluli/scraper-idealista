@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 export const dynamic = 'force-dynamic'
 
 const DB_ERROR_MESSAGE =
-  'No se pudo conectar a la base de datos. En Vercel: Settings → Environment Variables → añadí DATABASE_URL (MySQL de producción).'
+  'No se pudo conectar a la base de datos. En Vercel: Settings → Environment Variables → DATABASE_URL (PostgreSQL / Neon).'
 
 /**
  * Endpoint unificado: devuelve listings, stats, neighborhoods y provinces

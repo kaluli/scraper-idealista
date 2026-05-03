@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
           .map((r) => (r.province ?? r.Province ?? '') as string)
           .filter(Boolean)
       } catch {
-        // En algunos entornos (p. ej. MySQL remoto) la query raw puede fallar; mantener []
+        // En algunos entornos la query raw puede fallar; mantener []
       }
     }
 

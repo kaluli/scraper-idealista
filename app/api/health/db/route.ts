@@ -50,12 +50,21 @@ export async function GET() {
     const msg = err.message || String(error)
 
     let diagnostico = 'Error al conectar'
-    if (msg.includes('max_connections') || msg.includes('exceeded')) {
-      diagnostico = 'Límite de conexiones de FreeDB alcanzado (100/hora). Esperá unos minutos.'
+    if (
+      msg.includes('must start with the protocol') ||
+      msg.includes('Validation Error')
+    ) {
+      diagnostico =
+        'DATABASE_URL no coincide con el provider de Prisma en el código desplegado.'
+    } else if (msg.includes('max_connections') || msg.includes('exceeded')) {
+      diagnostico =
+        'Límite de conexiones alcanzado en la base. Esperá unos minutos o revisá el plan.'
     } else if (msg.includes('ECONNREFUSED') || msg.includes('ENOTFOUND')) {
-      diagnostico = 'No se puede alcanzar el servidor de la base de datos. Verificá host y puerto.'
+      diagnostico =
+        'No se puede alcanzar el servidor de la base de datos. Verificá host y puerto.'
     } else if (msg.includes('Access denied') || msg.includes('ER_ACCESS_DENIED')) {
-      diagnostico = 'Usuario o contraseña incorrectos. Verificá las credenciales en FreeDB.'
+      diagnostico =
+        'Usuario o contraseña incorrectos en DATABASE_URL.'
     } else if (msg.includes('Unknown database')) {
       diagnostico = 'La base de datos no existe. Verificá el nombre en la URL.'
     }
@@ -70,7 +79,8 @@ export async function GET() {
           connected: false,
           errorMessage: msg,
         },
-        solucion: 'Revisá DATABASE_URL en Vercel. Si usás FreeDB, verificá que la base esté activa en freedb.tech.',
+        solucion:
+          'Con Neon (postgresql://): el deploy debe incluir prisma/schema.prisma con provider = "postgresql". Hacé push del repo y Redeploy en Vercel. Luego: DATABASE_URL de Neon y `npx prisma db push` contra esa URL.',
       },
       { status: 200, headers: { 'Cache-Control': 'no-store' } }
     )

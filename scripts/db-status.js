@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Misma carga de .env que import-json y la app en dev.
- * Muestra a qué MySQL te conectás y cuántos listings hay.
+ * Muestra a qué Postgres (Neon) te conectás y cuántos listings hay.
  *
  * Uso: node scripts/db-status.js   o   npm run db:status
  */
@@ -29,10 +29,12 @@ for (const name of ['.env', '.env.local', '.env.development', '.env.development.
 function formatDbTarget(url) {
   if (!url || typeof url !== 'string') return '(DATABASE_URL no definida)'
   try {
-    const normalized = url.replace(/^mysql:\/\//i, 'http://')
+    const normalized = url
+      .replace(/^mysql:\/\//i, 'http://')
+      .replace(/^postgres(ql)?:\/\//i, 'http://')
     const u = new URL(normalized)
     const db = u.pathname.replace(/^\//, '').split('?')[0] || '(sin nombre)'
-    const port = u.port || '3306'
+    const port = u.port || (url.startsWith('mysql') ? '3306' : '5432')
     return `${u.hostname}:${port}/${db}`
   } catch {
     return '(URL no válida)'
@@ -47,8 +49,10 @@ async function main() {
   console.log('   ', formatDbTarget(url))
   console.log('   ', url.replace(/:[^:@]+@/, ':****@'))
   console.log('')
-  if (!url.startsWith('mysql://')) {
-    console.error('❌ DATABASE_URL no es mysql://')
+  const isPg =
+    url.startsWith('postgres://') || url.startsWith('postgresql://')
+  if (!isPg) {
+    console.error('❌ DATABASE_URL no es postgresql://')
     process.exit(1)
   }
   const prisma = new PrismaClient()
