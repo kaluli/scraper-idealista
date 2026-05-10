@@ -12,6 +12,26 @@ const path = require('path')
 
 const root = path.resolve(__dirname, '..')
 
+function readEnvLine(filePath, key) {
+  if (!fs.existsSync(filePath)) return ''
+  const content = fs.readFileSync(filePath, 'utf8')
+  const prefix = `${key}=`
+  for (const line of content.split('\n')) {
+    const t = line.trim()
+    if (!t || t.startsWith('#')) continue
+    if (!t.startsWith(prefix)) continue
+    let val = t.slice(prefix.length).trim()
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
+      val = val.slice(1, -1)
+    }
+    return val
+  }
+  return ''
+}
+
 function discoverProductionUrl() {
   try {
     const pjPath = path.join(root, '.vercel', 'project.json')
@@ -23,8 +43,10 @@ function discoverProductionUrl() {
       encoding: 'utf8',
       maxBuffer: 10 * 1024 * 1024,
       shell: true,
+      timeout: 25000,
+      killSignal: 'SIGKILL',
     })
-    if (r.status !== 0 || !r.stdout) return ''
+    if (r.error || r.signal || r.status !== 0 || !r.stdout) return ''
     for (const line of r.stdout.split('\n')) {
       if (!/\bProduction\b/.test(line)) continue
       const m = line.match(/https:\/\/[^\s]+\.vercel\.app/)
@@ -68,9 +90,11 @@ if (sync.status === 0) process.exit(0)
 
 console.log('\n⚠️  Sync directo falló; intentando HTTPS /api/admin/export …')
 
+const pulledEnv = path.join(root, '.env.sync.vercel.prod')
 const baseArg =
   process.argv[2] ||
   process.env.VERCEL_APP_URL ||
+  readEnvLine(pulledEnv, 'VERCEL_APP_URL') ||
   discoverProductionUrl() ||
   ''
 
