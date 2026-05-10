@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import type { UserRole } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { getAuthSecret } from '@/lib/auth-secret'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -74,5 +75,5 @@ export const authOptions: NextAuthOptions = {
     /** Evita quedar en /api/auth/error genérico; redirige al login con ?error=… */
     error: '/login',
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: getAuthSecret(),
 }

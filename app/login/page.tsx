@@ -57,7 +57,7 @@ function LoginForm() {
         {oauthError ? (
           <div className={styles.error} role="alert">
             {oauthError === 'Configuration'
-              ? 'Error de configuración del servidor (sesiones). Si sos la administradora, revisá NEXTAUTH_SECRET y NEXTAUTH_URL en Vercel.'
+              ? 'Error de configuración del servidor (sesiones). En Vercel → Settings → Environment Variables: NEXTAUTH_SECRET (texto largo aleatorio) y NEXTAUTH_URL (https://tu-sitio.vercel.app). Guardá y Redeploy. Diagnóstico: /api/auth/config-check (hasSecret debe ser true).'
               : oauthError === 'AccessDenied'
                 ? 'Acceso denegado.'
                 : 'No se pudo completar el inicio de sesión. Probá de nuevo.'}
