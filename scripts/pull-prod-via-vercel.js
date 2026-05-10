@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 /**
  * Copia PRODUCCIÓN → LOCAL sin abrir el puerto de la BD (HTTP /api/admin/export).
- * GET https://tu-app.vercel.app/api/admin/export (mismo secreto que full-sync).
+ * GET …/api/admin/export (mismo secreto que full-sync).
+ *
+ * Tabla users local no se toca. Listings + neighborhoods se sustituyen por los de prod.
+ * user_listing_states se vacía (misma regla que db:sync-from-prod).
  *
  * Requiere:
  *   .env.development.local    → DATABASE_URL local (postgresql://…)
@@ -32,6 +35,7 @@ function parseEnvFile(p) {
   })
 }
 
+parseEnvFile(path.join(root, '.env.sync.vercel.prod'))
 parseEnvFile(path.join(root, '.env.full-sync.local'))
 for (const name of ['.env', '.env.local', '.env.development', '.env.development.local']) {
   parseEnvFile(path.join(root, name))
@@ -94,6 +98,11 @@ function getJson(urlStr) {
   })
 }
 
+const {
+  listingRowForLocal,
+  neighborhoodRowForLocal,
+} = require('./lib/listing-row-for-local')
+
 const { PrismaClient } = require('@prisma/client')
 const prismaLocal = new PrismaClient({ datasources: { db: { url: localUrl } } })
 
@@ -121,25 +130,17 @@ async function main() {
   try {
     console.log('\n   Escribiendo en Postgres local...')
     await prismaLocal.$transaction(async (tx) => {
+      await tx.userListingState.deleteMany({})
       await tx.listing.deleteMany({})
       await tx.neighborhood.deleteMany({})
       if (neighborhoods.length) {
         await tx.neighborhood.createMany({
-          data: neighborhoods.map((n) => ({
-            ...n,
-            createdAt: new Date(String(n.createdAt)),
-            updatedAt: new Date(String(n.updatedAt)),
-          })),
+          data: neighborhoods.map((n) => neighborhoodRowForLocal(n)),
         })
       }
       if (listings.length) {
         await tx.listing.createMany({
-          data: listings.map((l) => ({
-            ...l,
-            citaAt: l.citaAt ? new Date(String(l.citaAt)) : null,
-            createdAt: new Date(String(l.createdAt)),
-            updatedAt: new Date(String(l.updatedAt)),
-          })),
+          data: listings.map((l) => listingRowForLocal(l)),
         })
       }
     })

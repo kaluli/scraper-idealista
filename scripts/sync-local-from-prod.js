@@ -1,24 +1,30 @@
 #!/usr/bin/env node
 /**
- * Backup / copia PRODUCCIÓN → LOCAL (no al revés).
+ * Copia PRODUCCIÓN → LOCAL únicamente (nunca al revés).
  * Equivalencias npm: db:sync-from-prod | db:prod-to-local
  *
- * - LEE solo de la base de producción (.env.production): MySQL o PostgreSQL.
- * - ESCRIBE solo en la base local (.env.development.local): PostgreSQL (Neon u otro).
- * - NO modifica la base de producción.
+ * - LEE solo producción (.env.production): MySQL o PostgreSQL.
+ * - ESCRIBE solo local (.env.development.local): PostgreSQL.
+ * - NO modifica producción.
  *
- * Requiere:
- *   .env.production           → DATABASE_URL de producción
- *   .env.development.local    → DATABASE_URL local (postgresql://…)
+ * Esquema local “vale” para usuarios (tabla users): NO se borra ni modifica.
+ * Sí se reemplazan listings + neighborhoods con los de prod.
+ * Los estados por usuario (user_listing_states: citas, notas, ocultar…) se vacían
+ * porque los IDs de listings cambian al sincronizar — hay que volver a cargarlos en la app.
  *
- * Uso: node scripts/sync-local-from-prod.js
- *  o:  npm run db:sync-from-prod
+ * DATABASE_URL producción (primer valor encontrado):
+ *   SYNC_PROD_DATABASE_URL → .env.sync.vercel.prod → .env.production(.local) → …
+ * DATABASE_URL local: SYNC_LOCAL_DATABASE_URL → .env.development.local → .env.local
  *
- * Si prod sigue en MySQL y el puerto está bloqueado: npm run db:pull-vercel
+ * Flujo automático: npm run db:sync (pull Vercel + este script).
  */
 
 const path = require('path')
 const fs = require('fs')
+const {
+  listingRowForLocal,
+  neighborhoodRowForLocal,
+} = require('./lib/listing-row-for-local')
 
 function readEnvFile(envPath) {
   if (!fs.existsSync(envPath)) return {}
@@ -38,40 +44,32 @@ function readEnvFile(envPath) {
 }
 
 function mapMysqlListing(row) {
-  return {
+  return listingRowForLocal({
     id: row.id,
     title: row.title,
-    price: Number(row.price),
-    surface:
-      row.metros_cuadrados != null ? Number(row.metros_cuadrados) : null,
+    price: row.price,
+    surface: row.metros_cuadrados,
     link: row.link,
-    profitabilityRate:
-      row.tasa_rentabilidad != null ? Number(row.tasa_rentabilidad) : null,
+    profitabilityRate: row.tasa_rentabilidad,
     type: row.type,
     neighborhood: row.barrio,
     city: row.city,
     province: row.province,
     publishedAddress: row.direccion_publicada,
     rooms: row.habitaciones,
-    citaAt: row.cita_at ? new Date(row.cita_at) : null,
-    contacto: row.contacto,
-    phone: row.telefono,
-    notas: row.notas,
-    llamado: Boolean(row.llamado),
-    visitado: Boolean(row.visitado),
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
-  }
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  })
 }
 
 function mapMysqlNeighborhood(row) {
-  return {
+  return neighborhoodRowForLocal({
     id: row.id,
     name: row.name,
     province: row.province,
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
-  }
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  })
 }
 
 async function readFromMysql(mysqlUrl) {
@@ -94,17 +92,44 @@ async function readFromMysql(mysqlUrl) {
 }
 
 const root = path.resolve(__dirname, '..')
-const prodEnv = readEnvFile(path.join(root, '.env.production'))
-const devEnv = readEnvFile(path.join(root, '.env.development.local'))
 
-const prodUrl = (prodEnv.DATABASE_URL || '').trim()
-const localUrl = (devEnv.DATABASE_URL || '').trim()
+function resolveProdDatabaseUrl() {
+  const fromEnv = (process.env.SYNC_PROD_DATABASE_URL || '').trim()
+  if (fromEnv) return fromEnv
+  const chain = [
+    '.env.sync.vercel.prod',
+    '.env.production.local',
+    '.env.production',
+    '.env.vercel.pulled',
+  ]
+  for (const name of chain) {
+    const env = readEnvFile(path.join(root, name))
+    const u = (env.DATABASE_URL || '').trim()
+    if (u) return u
+  }
+  return ''
+}
+
+function resolveLocalDatabaseUrl() {
+  const fromEnv = (process.env.SYNC_LOCAL_DATABASE_URL || '').trim()
+  if (fromEnv) return fromEnv
+  const dev = readEnvFile(path.join(root, '.env.development.local'))
+  const loc = readEnvFile(path.join(root, '.env.local'))
+  return (dev.DATABASE_URL || loc.DATABASE_URL || '').trim()
+}
+
+const prodUrl = resolveProdDatabaseUrl()
+const localUrl = resolveLocalDatabaseUrl()
 
 const localIsPg =
   localUrl.startsWith('postgresql://') || localUrl.startsWith('postgres://')
 
 if (!prodUrl) {
-  console.error('❌ Falta DATABASE_URL de producción en .env.production')
+  console.error(
+    '❌ Falta DATABASE_URL de producción. Opciones:\n' +
+      '   • Ejecutá npm run db:sync (descarga vars desde Vercel)\n' +
+      '   • O SYNC_PROD_DATABASE_URL, .env.production, .env.sync.vercel.prod'
+  )
   process.exit(1)
 }
 
@@ -176,6 +201,8 @@ async function main() {
           prismaProd.listing.findMany({ orderBy: { id: 'asc' } }),
           prismaProd.neighborhood.findMany({ orderBy: { id: 'asc' } }),
         ])
+        listings = listings.map((r) => listingRowForLocal(r))
+        neighborhoods = neighborhoods.map((r) => neighborhoodRowForLocal(r))
       } finally {
         await prismaProd.$disconnect()
       }
@@ -192,8 +219,11 @@ async function main() {
   })
 
   try {
-    console.log('\n   Escribiendo en local (Postgres)...')
+    console.log(
+      '\n   Escribiendo en local (Postgres): usuarios intactos; vaciando estados por listing…'
+    )
     await prismaLocal.$transaction(async (tx) => {
+      await tx.userListingState.deleteMany({})
       await tx.listing.deleteMany({})
       await tx.neighborhood.deleteMany({})
       if (neighborhoods.length) {
@@ -218,7 +248,7 @@ async function main() {
   }
 
   console.log(
-    '\n✅ Sync listo. La base local tiene la misma información que producción.\n'
+    '\n✅ Sync listo: listings y barrios como en prod; users sin tocar; citas/notas por usuario reseteadas.\n'
   )
 }
 

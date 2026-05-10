@@ -21,6 +21,7 @@
     "db:import-all": "node scripts/import-all.js",
     "db:seed-madrid": "node scripts/seed-madrid-neighborhoods.js",
     "db:seed-madrid:production": "node scripts/seed-madrid-neighborhoods.js production",
+    "db:sync": "node scripts/sync-local-auto.js",
     "db:sync-from-prod": "node scripts/sync-local-from-prod.js",
     "db:prod-to-local": "node scripts/sync-local-from-prod.js",
     "db:migrate-mysql-to-neon": "node scripts/migrate-mysql-to-neon.js",
