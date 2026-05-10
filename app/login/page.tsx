@@ -11,6 +11,8 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || '/contactos'
   const registered = searchParams.get('registered')
+  /** NextAuth redirige aquí con ?error= desde pages.error */
+  const oauthError = searchParams.get('error')
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -51,6 +53,15 @@ function LoginForm() {
           <p className={styles.lead} style={{ color: 'hsl(var(--muted-foreground))' }}>
             Cuenta creada. Iniciá sesión con tu email y contraseña.
           </p>
+        ) : null}
+        {oauthError ? (
+          <div className={styles.error} role="alert">
+            {oauthError === 'Configuration'
+              ? 'Error de configuración del servidor (sesiones). Si sos la administradora, revisá NEXTAUTH_SECRET y NEXTAUTH_URL en Vercel.'
+              : oauthError === 'AccessDenied'
+                ? 'Acceso denegado.'
+                : 'No se pudo completar el inicio de sesión. Probá de nuevo.'}
+          </div>
         ) : null}
         <form onSubmit={handleSubmit}>
           {error ? <div className={styles.error}>{error}</div> : null}

@@ -17,28 +17,34 @@ export const authOptions: NextAuthOptions = {
         const password = credentials?.password
         if (!email || !password) return null
 
-        const user = await prisma.user.findUnique({
-          where: { email },
-        })
-        if (!user) return null
-
-        const ok = await bcrypt.compare(password, user.passwordHash)
-        if (!ok) return null
-
         try {
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { lastLoginAt: new Date() },
+          const user = await prisma.user.findUnique({
+            where: { email },
           })
-        } catch {
-          // No bloquear el login si falla el registro de último acceso
-        }
+          if (!user) return null
 
-        return {
-          id: String(user.id),
-          email: user.email,
-          name: user.name ?? undefined,
-          role: user.role,
+          const ok = await bcrypt.compare(password, user.passwordHash)
+          if (!ok) return null
+
+          try {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { lastLoginAt: new Date() },
+            })
+          } catch {
+            // No bloquear el login si falla el registro de último acceso
+          }
+
+          return {
+            id: String(user.id),
+            email: user.email,
+            name: user.name ?? undefined,
+            role: user.role,
+          }
+        } catch (err) {
+          console.error('[next-auth][credentials]', err)
+          // Evita 500 en /api/auth si la BD no responde o falta la tabla users en prod
+          return null
         }
       },
     }),
@@ -65,6 +71,8 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/login',
+    /** Evita quedar en /api/auth/error genérico; redirige al login con ?error=… */
+    error: '/login',
   },
   secret: process.env.NEXTAUTH_SECRET,
 }
