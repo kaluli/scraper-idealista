@@ -1,14 +1,18 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAdminSession } from '@/lib/require-admin'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * Diagnóstico de conexión a la base de datos.
+ * Diagnóstico de conexión a la base de datos (solo administradores).
  * Útil para verificar DATABASE_URL en Vercel.
  * GET /api/health/db
  */
 export async function GET() {
+  const auth = await requireAdminSession()
+  if (!auth.ok) return auth.response
+
   const dbUrl = process.env.DATABASE_URL
   const hasUrl = !!dbUrl?.trim()
   const urlLength = dbUrl?.length ?? 0

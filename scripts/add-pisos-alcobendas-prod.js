@@ -68,8 +68,6 @@ async function main() {
         province: 'Madrid',
         neighborhood: 'Alcobendas',
         city: 'Alcobendas',
-        notas: p.notas,
-        visitado: true,
       },
     })
     console.log('   ✅ Añadido:', p.price, '€ -', p.publishedAddress)

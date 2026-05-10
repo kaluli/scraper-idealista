@@ -51,12 +51,23 @@ export async function POST(request: NextRequest) {
       }
       if (listings.length > 0) {
         await tx.listing.createMany({
-          data: listings.map((l: Record<string, unknown>) => ({
-            ...l,
-            citaAt: l.citaAt ? new Date(String(l.citaAt)) : null,
-            createdAt: new Date(String(l.createdAt)),
-            updatedAt: new Date(String(l.updatedAt)),
-          })),
+          data: listings.map((l: Record<string, unknown>) => {
+            const {
+              citaAt: _c,
+              contacto: _co,
+              phone: _p,
+              telefono: _t,
+              notas: _n,
+              llamado: _ll,
+              visitado: _v,
+              ...rest
+            } = l
+            return {
+              ...rest,
+              createdAt: new Date(String(l.createdAt)),
+              updatedAt: new Date(String(l.updatedAt)),
+            }
+          }),
         })
       }
     })

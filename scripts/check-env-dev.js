@@ -72,3 +72,12 @@ if (!looksDev) {
   console.error('   Para desarrollo usá una rama Neon o Postgres local en .env.development.local')
   process.exit(1)
 }
+
+if (!process.env.NEXTAUTH_SECRET?.trim()) {
+  console.warn('')
+  console.warn(
+    'ℹ️  NEXTAUTH_SECRET no está en .env: el siguiente paso (run-next-dev) usará un secreto solo para desarrollo local.'
+  )
+  console.warn('   Para fijar uno: en .env.local → openssl rand -base64 32')
+  console.warn('')
+}

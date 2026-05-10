@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { requireAdminSession } from '@/lib/require-admin'
 
 const DB_ERROR_MESSAGE =
   'No se pudo conectar a la base de datos. En Vercel: Settings → Environment Variables → DATABASE_URL (PostgreSQL / Neon).'
@@ -11,11 +12,14 @@ function strOrNull(v: unknown): string | null {
   return String(v)
 }
 
-// DELETE - Eliminar un piso
+// DELETE - Eliminar un piso (solo administradores)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const auth = await requireAdminSession()
+  if (!auth.ok) return auth.response
+
   if (!process.env.DATABASE_URL?.trim()) {
     return NextResponse.json(
       { success: false, error: DB_ERROR_MESSAGE },
@@ -124,34 +128,6 @@ export async function PUT(
     if (body.rooms !== undefined) {
       const v = body.rooms != null && body.rooms !== '' ? parseInt(String(body.rooms)) : null
       data.rooms = v
-    }
-    if (body.citaAt !== undefined) {
-      if (body.citaAt) {
-        const citaDate = new Date(body.citaAt as string)
-        data.citaAt = Number.isNaN(citaDate.getTime()) ? null : citaDate
-      } else {
-        data.citaAt = null
-      }
-    }
-    if (body.contacto !== undefined) {
-      const v = body.contacto === 'Juli' || body.contacto === 'Kalu' ? (body.contacto as string) : null
-      data.contacto = v
-    }
-    // phone: siempre string; puede tener números, espacios, etc. Solo null si viene vacío.
-    if (body.phone !== undefined) {
-      const raw =
-        body.phone === null || body.phone === '' ? null : String(body.phone)
-      data.phone = { set: raw }
-    }
-    if (body.notas !== undefined) {
-      const v = body.notas === '' ? null : String(body.notas)
-      data.notas = v
-    }
-    if (body.llamado !== undefined) {
-      data.llamado = { set: Boolean(body.llamado) }
-    }
-    if (body.visitado !== undefined) {
-      data.visitado = { set: Boolean(body.visitado) }
     }
 
     // Quitar claves undefined para que Prisma no rechace el update

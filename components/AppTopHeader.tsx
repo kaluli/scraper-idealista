@@ -1,7 +1,14 @@
 'use client'
 
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { signOut, useSession } from 'next-auth/react'
 import { MobileNavTrigger } from '@/components/MobileAppNav'
 import { IconBuilding2 } from '@/components/icons/IconBuilding2'
 import { cn } from '@/lib/utils'
@@ -98,28 +105,148 @@ function IconAjustes({ className }: { className?: string }) {
   )
 }
 
+/** Silueta usuario (login / cuenta). */
+function IconUser({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" />
+    </svg>
+  )
+}
+
+/** Varias cuentas — gestión de usuarios (solo admin). */
+function IconUsers({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  )
+}
+
+function UserAccountMenu({ isPerfil }: { isPerfil: boolean }) {
+  const [open, setOpen] = useState(false)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const menuId = useId()
+
+  useEffect(() => {
+    if (!open) return
+    const onDocDown = (e: MouseEvent) => {
+      const el = wrapRef.current
+      if (el && !el.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onDocDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDocDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <div className={styles.userMenu} ref={wrapRef}>
+      <button
+        type="button"
+        className={cn(
+          styles.headerIconLink,
+          styles.userMenuTrigger,
+          open && styles.userMenuTriggerOpen,
+          isPerfil && styles.headerIconLinkActive
+        )}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-controls={menuId}
+        aria-label="Menú de cuenta"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <IconUser />
+      </button>
+      {open ? (
+        <div
+          id={menuId}
+          className={styles.userMenuPanel}
+          role="menu"
+          aria-orientation="vertical"
+        >
+          <Link
+            href="/perfil"
+            role="menuitem"
+            className={styles.userMenuItem}
+            aria-current={isPerfil ? 'page' : undefined}
+            onClick={() => setOpen(false)}
+          >
+            Perfil
+          </Link>
+          <button
+            type="button"
+            role="menuitem"
+            className={cn(styles.userMenuItem, styles.userMenuItemDanger)}
+            onClick={() => {
+              setOpen(false)
+              void signOut({ callbackUrl: '/' })
+            }}
+          >
+            Salir
+          </button>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export function AppTopHeader() {
   const pathname = usePathname()
+  const { data: session, status: authStatus } = useSession()
   const isGestor = pathname === '/'
   const isContactos = pathname === '/contactos' || pathname.startsWith('/contactos/')
   const isCalculadora = pathname === '/calculadora' || pathname.startsWith('/calculadora/')
   const isNoticias = pathname === '/noticias' || pathname.startsWith('/noticias/')
+  const isAdminUsuarios =
+    pathname === '/admin/usuarios' || pathname.startsWith('/admin/usuarios/')
   const isAjustes = pathname === '/recomendaciones' || pathname.startsWith('/recomendaciones/')
+  const isPerfil = pathname === '/perfil' || pathname.startsWith('/perfil/')
 
   return (
     <header className={styles.root} role="banner">
       <div className={styles.inner}>
-        <Link href="/" className={styles.brand} aria-label="Inicio — Idealista Manager">
+        <Link href="/" className={styles.brand} aria-label="Inicio — FlashProp">
           <span className={styles.brandMark} aria-hidden>
             <IconBuilding2 size={18} className={styles.brandMarkSvg} />
           </span>
           <span className={styles.brandText}>
             <span className={styles.brandNameLine}>
-              <span className={styles.brandNameIdea}>Idea</span>
-              <span className={styles.brandNameLista}>lista</span>
-              <span className={styles.brandNameManager}>Manager</span>
+              <span className={styles.brandNameFlash}>Flash</span>
+              <span className={styles.brandNameProp}>Prop</span>
             </span>
-            <span className={styles.brandSub}>Real Estate Suite</span>
+            <span className={styles.brandSub}>Real Estate Manager</span>
           </span>
         </Link>
 
@@ -164,23 +291,55 @@ export function AppTopHeader() {
             </span>
             Noticias
           </Link>
+          {session?.user?.role === 'admin' ? (
+            <Link
+              href="/admin/usuarios"
+              className={cn(styles.navPill, isAdminUsuarios && styles.navPillActive)}
+              aria-current={isAdminUsuarios ? 'page' : undefined}
+            >
+              <span className={styles.navPillIcon}>
+                <IconUsers />
+              </span>
+              Usuarios
+            </Link>
+          ) : null}
         </nav>
 
         <div className={styles.right}>
+          <div className={styles.authMobile}>
+            {authStatus === 'loading' ? null : session ? (
+              <UserAccountMenu isPerfil={isPerfil} />
+            ) : (
+              <Link href="/login" className={cn(styles.authLink, styles.authLinkLogin)}>
+                <IconUser className={styles.authLinkIcon} />
+                Entrar
+              </Link>
+            )}
+          </div>
           <div className={styles.burgerOnly} aria-label="Más secciones">
             <MobileNavTrigger />
           </div>
           <div className={styles.rightExtras}>
-            <Link
-              href="/recomendaciones"
-              className={cn(styles.headerIconLink, isAjustes && styles.headerIconLinkActive)}
-              aria-label="Ajustes"
-              title="Ajustes"
-              aria-current={isAjustes ? 'page' : undefined}
-            >
-              <IconAjustes />
-            </Link>
-            <HeaderDbPill />
+            {authStatus === 'loading' ? null : session ? (
+              <UserAccountMenu isPerfil={isPerfil} />
+            ) : (
+              <Link href="/login" className={cn(styles.authLink, styles.authLinkLogin)}>
+                <IconUser className={styles.authLinkIcon} />
+                Entrar
+              </Link>
+            )}
+            {session?.user?.role === 'admin' ? (
+              <Link
+                href="/recomendaciones"
+                className={cn(styles.headerIconLink, isAjustes && styles.headerIconLinkActive)}
+                aria-label="Ajustes"
+                title="Ajustes"
+                aria-current={isAjustes ? 'page' : undefined}
+              >
+                <IconAjustes />
+              </Link>
+            ) : null}
+            {session?.user?.role === 'admin' ? <HeaderDbPill /> : null}
           </div>
         </div>
       </div>

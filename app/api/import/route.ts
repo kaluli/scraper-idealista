@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAdminSession } from '@/lib/require-admin'
 
 /**
- * Endpoint para importación masiva de pisos desde JSON
+ * Endpoint para importación masiva de pisos desde JSON (solo administradores).
  * POST /api/import
  * Body: { listings: [...] } o directamente [...]
  */
 export async function POST(request: NextRequest) {
+  const auth = await requireAdminSession()
+  if (!auth.ok) return auth.response
+
   try {
     await prisma.$connect()
     const body = await request.json()

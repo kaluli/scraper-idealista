@@ -4,6 +4,7 @@ import './globals.css'
 import { MobileNavProvider } from '@/components/MobileAppNav'
 import { AppTopHeader } from '@/components/AppTopHeader'
 import { AppSiteFooter } from '@/components/AppSiteFooter'
+import { Providers } from '@/components/Providers'
 import { cn } from '@/lib/utils'
 
 // Evitar que el build pre-renderice páginas que usan la API/DB (falla en Vercel si la DB no está disponible en build)
@@ -24,8 +25,8 @@ const plusJakarta = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Idealista Manager',
-  description: 'Gestiona tus pisos de alquiler y compra',
+  title: 'FlashProp',
+  description: 'Real Estate Manager',
 }
 
 export default function RootLayout({
@@ -37,11 +38,13 @@ export default function RootLayout({
     <html lang="es" className={cn(inter.variable, plusJakarta.variable)}>
       <body className="min-h-screen font-sans antialiased">
         <div className="app-root">
-          <MobileNavProvider>
-            <AppTopHeader />
-            <div className="main-pad">{children}</div>
-            <AppSiteFooter />
-          </MobileNavProvider>
+          <Providers>
+            <MobileNavProvider>
+              <AppTopHeader />
+              <div className="main-pad">{children}</div>
+              <AppSiteFooter />
+            </MobileNavProvider>
+          </Providers>
         </div>
       </body>
     </html>

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import Link from 'next/link'
 import styles from './page.module.css'
 
 function formatEuros(n: number): string {
@@ -128,12 +127,6 @@ export default function CalculadoraPage() {
   return (
     <div className={styles.page}>
       <div className={styles.inner}>
-        <nav className={styles.breadcrumb} aria-label="Migas de navegación">
-          <Link href="/" className={styles.breadcrumbLink}>
-            ← Inicio / gestor
-          </Link>
-        </nav>
-
         <header className={styles.pageHeader}>
           <p className={styles.kicker}>
             <span className={styles.kickerDot} aria-hidden />

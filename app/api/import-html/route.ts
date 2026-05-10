@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAdminSession } from '@/lib/require-admin'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { extractListingsFromHtml } = require('../../../lib/parse-idealista-html')
 
 const DB_ERROR_MESSAGE = 'No se pudo conectar a la base de datos. Verifica DATABASE_URL.'
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAdminSession()
+  if (!auth.ok) return auth.response
+
   if (!process.env.DATABASE_URL?.trim()) {
     return NextResponse.json(
       { success: false, error: DB_ERROR_MESSAGE, imported: 0, skipped: 0, total: 0 },

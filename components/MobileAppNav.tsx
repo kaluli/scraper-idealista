@@ -6,11 +6,13 @@ import {
   useContext,
   useEffect,
   useId,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { IconBuilding2 } from '@/components/icons/IconBuilding2'
 import styles from './MobileAppNav.module.css'
 
@@ -124,16 +126,40 @@ function IconAjustes({ className }: { className?: string }) {
   )
 }
 
-/** Móvil: Gestor primero, luego Contactos, Calculadora, Noticias; Ajustes al final */
-const items = [
+function IconUsersNav({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  )
+}
+
+/** Móvil: Gestor → Contactos → Calculadora → Noticias; Usuarios y Ajustes solo admin */
+const coreNavItems = [
   { href: '/', label: 'Gestor', type: 'gestor' as const },
   { href: '/contactos', label: 'Contactos', type: 'contactos' as const },
   { href: '/calculadora', label: 'Calculadora', type: 'calculadora' as const },
   { href: '/noticias', label: 'Noticias', type: 'noticias' as const },
-  { href: '/recomendaciones', label: 'Ajustes', type: 'ajustes' as const },
 ] as const
 
-type NavItem = (typeof items)[number]
+type NavItem =
+  | (typeof coreNavItems)[number]
+  | { href: '/recomendaciones'; label: 'Ajustes'; type: 'ajustes' }
+  | { href: '/admin/usuarios'; label: 'Usuarios'; type: 'admin' }
 
 function MobileNavItemIcon({ item }: { item: NavItem }) {
   const ic = styles.drawerLinkIcon
@@ -162,6 +188,13 @@ function MobileNavItemIcon({ item }: { item: NavItem }) {
     return (
       <span className={styles.drawerLinkIconWrap} aria-hidden>
         <IconAjustes className={ic} />
+      </span>
+    )
+  }
+  if (item.type === 'admin') {
+    return (
+      <span className={styles.drawerLinkIconWrap} aria-hidden>
+        <IconUsersNav className={ic} />
       </span>
     )
   }
@@ -220,7 +253,26 @@ function MobileNavChrome() {
 
 function MobileNavOverlay() {
   const pathname = usePathname()
+  const { data: session } = useSession()
   const { open, close, titleId } = useMobileNav()
+
+  const drawerItems: NavItem[] = useMemo(() => {
+    const list: NavItem[] = [...coreNavItems]
+    if (session?.user?.role === 'admin') {
+      list.push({
+        href: '/admin/usuarios',
+        label: 'Usuarios',
+        type: 'admin',
+      })
+      list.push({
+        href: '/recomendaciones',
+        label: 'Ajustes',
+        type: 'ajustes',
+      })
+    }
+    return list
+  }, [session?.user?.role])
+
   if (!open) return null
   return (
     <>
@@ -241,11 +293,10 @@ function MobileNavOverlay() {
                 </div>
                 <div className={styles.drawerBrandText}>
                   <p className={styles.drawerBrandName}>
-                    <span className={styles.brandIdea}>Idea</span>
-                    <span className={styles.brandLista}>lista</span>
-                    <span className={styles.brandManager}>Manager</span>
+                    <span className={styles.brandFlash}>Flash</span>
+                    <span className={styles.brandProp}>Prop</span>
                   </p>
-                  <p className={styles.drawerBrandSub}>Real Estate Suite</p>
+                  <p className={styles.drawerBrandSub}>Real Estate Manager</p>
                 </div>
               </div>
               <button type="button" className={styles.drawerClose} onClick={close} aria-label="Cerrar menú">
@@ -254,7 +305,7 @@ function MobileNavOverlay() {
             </div>
             <div className={styles.drawerDivider} aria-hidden />
             <div className={styles.drawerNav}>
-              {items.map((item) => {
+              {drawerItems.map((item) => {
                 const current =
                   item.href === '/'
                     ? pathname === '/'

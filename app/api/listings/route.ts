@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { listingNeighborhoodClause } from '@/lib/neighborhood-filter'
+import { buildListingWhereFromSearchParams } from '@/lib/build-listing-where'
 import { prisma } from '@/lib/prisma'
+import { requireAdminSession } from '@/lib/require-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,34 +19,7 @@ export async function GET(request: NextRequest) {
   try {
     await prisma.$connect()
     const searchParams = request.nextUrl.searchParams
-    const type = searchParams.get('type') // 'alquiler' o 'compra'
-    const neighborhood = searchParams.get('neighborhood') // barrio específico
-    const province = searchParams.get('province') // provincia específica
-    const maxPrice = searchParams.get('maxPrice') // precio máximo
-
-    const where: any = {}
-    
-    if (type && (type === 'alquiler' || type === 'compra')) {
-      where.type = type
-    }
-    
-    const nbClause = listingNeighborhoodClause(neighborhood)
-    if (nbClause) Object.assign(where, nbClause)
-    
-    if (province && province !== 'all') {
-      // Madrid incluye Alcalá de Henares y otras ciudades de la comunidad
-      if (province === 'Madrid') {
-        where.province = { in: ['Madrid', 'Alcalá de Henares'] }
-      } else {
-        where.province = province
-      }
-    }
-
-    if (maxPrice) {
-      where.price = {
-        lte: parseFloat(maxPrice),
-      }
-    }
+    const where = buildListingWhereFromSearchParams(searchParams)
 
     const listings = await prisma.listing.findMany({
       where,
@@ -71,8 +45,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Crear un nuevo piso
+// POST - Crear un nuevo piso (solo administradores)
 export async function POST(request: NextRequest) {
+  const auth = await requireAdminSession()
+  if (!auth.ok) return auth.response
+
   try {
     await prisma.$connect()
     const body = await request.json()
@@ -128,31 +105,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const {
-      province,
-      contacto: rawContacto,
-      phone: rawPhone,
-      notas: rawNotas,
-      citaAt: rawCita,
-      llamado: rawLlamado,
-      visitado: rawVisitado,
-    } = body
+    const { province } = body
 
     const provinceVal =
       typeof province === 'string' && province.trim() !== '' ? province.trim() : 'Madrid'
-    const contactoVal =
-      rawContacto === 'Juli' || rawContacto === 'Kalu' ? (rawContacto as string) : null
-    const phoneVal =
-      rawPhone != null && String(rawPhone).trim() !== '' ? String(rawPhone).trim() : null
-    const notasVal =
-      rawNotas != null && String(rawNotas).trim() !== '' ? String(rawNotas).trim() : null
-    let citaAtVal: Date | null = null
-    if (rawCita) {
-      const citaDate = new Date(String(rawCita))
-      citaAtVal = Number.isNaN(citaDate.getTime()) ? null : citaDate
-    }
-    const llamadoVal = Boolean(rawLlamado)
-    const visitadoVal = Boolean(rawVisitado)
 
     const listing = await prisma.listing.create({
       data: {
@@ -167,12 +123,6 @@ export async function POST(request: NextRequest) {
         province: provinceVal,
         publishedAddress: finalPublishedAddress || null,
         rooms: finalRooms != null && finalRooms !== '' ? parseInt(String(finalRooms), 10) : null,
-        contacto: contactoVal,
-        phone: phoneVal,
-        notas: notasVal,
-        citaAt: citaAtVal,
-        llamado: llamadoVal,
-        visitado: visitadoVal,
       },
     })
 

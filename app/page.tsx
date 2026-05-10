@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 import { IdealistaLinkIcon } from '../components/IdealistaLinkIcon'
 import { IconBuilding2 } from '../components/icons/IconBuilding2'
 import styles from './page.module.css'
@@ -32,6 +33,9 @@ const LISTINGS_PER_PAGE = 16
 type MinSurfaceOption = '40' | '80'
 
 export default function Home() {
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === 'admin'
+
   const [listings, setListings] = useState<Listing[]>([])
   const [barrioOptions, setBarrioOptions] = useState<string[]>([])
   const [provinces, setProvinces] = useState<string[]>([])
@@ -52,6 +56,11 @@ export default function Home() {
   const listingsListAnchorRef = useRef<HTMLDivElement | null>(null)
   const filtersDialogRef = useRef<HTMLDialogElement | null>(null)
   const [showModal, setShowModal] = useState(false)
+
+  useEffect(() => {
+    if (!isAdmin && showModal) setShowModal(false)
+  }, [isAdmin, showModal])
+
   const [formData, setFormData] = useState({
     title: '',
     price: '',
@@ -481,9 +490,8 @@ export default function Home() {
                   <span className={styles.homeHeroTitleAccent}>dashboard</span>
                 </h1>
                 <p className={styles.homeHeroLead}>
-                  Encuentra anuncios de Idealista con la mejor rentabilidad, gestiona tus citas,
-                  contactos, utiliza la calculadora de rentabilidad para evaluar si es una buena
-                  inversión.
+                  Encuentra anuncios con la mejor rentabilidad, gestiona tus citas y contactos,
+                  utiliza la calculadora de rentabilidad para evaluar si es una buena inversión.
                 </p>
               </div>
               <div className={styles.homeHeroActions}>
@@ -509,28 +517,30 @@ export default function Home() {
                   </span>
                   Filtros
                 </button>
-                <button
-                  type="button"
-                  className={styles.homeHeroBtnCta}
-                  onClick={() => setShowModal(true)}
-                >
-                  <span className={styles.homeHeroBtnIcon} aria-hidden>
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                  </span>
-                  Nuevo piso
-                </button>
+                {isAdmin ? (
+                  <button
+                    type="button"
+                    className={styles.homeHeroBtnCta}
+                    onClick={() => setShowModal(true)}
+                  >
+                    <span className={styles.homeHeroBtnIcon} aria-hidden>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                    </span>
+                    Nuevo piso
+                  </button>
+                ) : null}
               </div>
             </div>
           </section>
@@ -576,11 +586,13 @@ export default function Home() {
             <p className={styles.errorMessage} style={{ fontSize: '0.9rem', marginTop: '8px' }}>
               Verifica que la base de datos esté configurada correctamente y que las variables de entorno estén establecidas.
             </p>
-            <p className={styles.errorMessage} style={{ fontSize: '0.85rem', marginTop: '8px' }}>
-              <a href="/api/health/db" target="_blank" rel="noopener noreferrer" style={{ color: '#0066cc' }}>
-                Ver diagnóstico de conexión →
-              </a>
-            </p>
+            {isAdmin ? (
+              <p className={styles.errorMessage} style={{ fontSize: '0.85rem', marginTop: '8px' }}>
+                <a href="/api/health/db" target="_blank" rel="noopener noreferrer" style={{ color: '#0066cc' }}>
+                  Ver diagnóstico de conexión →
+                </a>
+              </p>
+            ) : null}
             <button className={styles.btnPrimary} onClick={() => {
               setError(null)
               loadHomeData()
@@ -593,7 +605,7 @@ export default function Home() {
         {/* Welcome message when no data (primera carga sin nada en la base) */}
         {!loading && !error && totalInDb === 0 && (
           <div className={styles.welcomeCard}>
-            <h2 className={styles.welcomeTitle}>¡Bienvenido al Gestor de Pisos Idealista!</h2>
+            <h2 className={styles.welcomeTitle}>¡Bienvenido a FlashProp!</h2>
             <p className={styles.welcomeMessage}>
               Esta aplicación te permite gestionar y analizar pisos de alquiler y compra.
             </p>
@@ -609,12 +621,22 @@ export default function Home() {
                 <li>📊 Estadísticas detalladas por barrio</li>
                 <li>🔍 Filtros avanzados (tipo, provincia, barrio, precio)</li>
                 <li>💰 Cálculo de rentabilidad</li>
-                <li>📥 Importar pisos desde HTML (Idealista) — en Ajustes</li>
+                {isAdmin ? (
+                  <li>📥 Importar pisos desde HTML (Idealista) — en Ajustes</li>
+                ) : (
+                  <li>📥 La importación de la cartera la gestionan los administradores.</li>
+                )}
               </ul>
             </div>
-            <Link href="/recomendaciones" className={styles.btnPrimary} style={{ display: 'inline-block', padding: '10px 20px', textDecoration: 'none', color: 'white' }}>
-              Ir a Ajustes para importar pisos
-            </Link>
+            {isAdmin ? (
+              <Link href="/recomendaciones" className={styles.btnPrimary} style={{ display: 'inline-block', padding: '10px 20px', textDecoration: 'none', color: 'white' }}>
+                Ir a Ajustes para importar pisos
+              </Link>
+            ) : (
+              <p className={styles.welcomeMessage} style={{ fontSize: '0.9rem', marginTop: '16px' }}>
+                Si la base está vacía, pedí a un <strong>administrador</strong> que importe o sincronice datos desde Ajustes.
+              </p>
+            )}
           </div>
         )}
 
@@ -941,12 +963,15 @@ export default function Home() {
                     className={`${styles.btnLink} ${styles.btnLinkIdealistaIcon}`}
                     imgClassName={styles.btnLinkIdealistaImg}
                   />
-                  <button
-                    className={styles.btnDanger}
-                    onClick={() => handleDelete(listing.id)}
-                  >
-                    Eliminar
-                  </button>
+                  {isAdmin ? (
+                    <button
+                      type="button"
+                      className={styles.btnDanger}
+                      onClick={() => handleDelete(listing.id)}
+                    >
+                      Eliminar
+                    </button>
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -999,8 +1024,8 @@ export default function Home() {
         )}
       </div>
 
-      {/* Modal para añadir piso */}
-      {showModal && (
+      {/* Modal para añadir piso (solo admins en UI; API también valida) */}
+      {isAdmin && showModal && (
         <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>

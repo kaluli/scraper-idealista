@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import Link from 'next/link'
 import styles from './page.module.css'
 
 export default function RecomendacionesPage() {
@@ -77,12 +76,6 @@ export default function RecomendacionesPage() {
   return (
     <div className={styles.page}>
       <div className={styles.inner}>
-        <nav className={styles.breadcrumb} aria-label="Migas de navegación">
-          <Link href="/" className={styles.breadcrumbLink}>
-            ← Inicio / gestor
-          </Link>
-        </nav>
-
         <header className={styles.pageHeader}>
           <p className={styles.kicker}>
             <span className={styles.kickerDot} aria-hidden />

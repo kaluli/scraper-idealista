@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
+import { useSession } from 'next-auth/react'
 import { IdealistaLinkIcon } from '../../components/IdealistaLinkIcon'
 import styles from './page.module.css'
 
@@ -33,6 +34,14 @@ interface Listing {
   profitabilityRate?: number | null
   llamado?: boolean
   visitado?: boolean
+}
+
+/** Precio numérico para filtros (por si el JSON llega como string). */
+function listingPriceEUR(l: Listing): number {
+  const p = l.price as unknown
+  if (typeof p === 'number' && !Number.isNaN(p)) return p
+  const n = parseFloat(String(p ?? ''))
+  return Number.isNaN(n) ? NaN : n
 }
 
 /** Misma “zona” que en la página: Comunidad de Madrid agrupada; resto por provincia. */
@@ -1008,6 +1017,9 @@ function SortableTh({
 }
 
 export default function ContactosPage() {
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === 'admin'
+
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedBarrio, setSelectedBarrio] = useState<string | null>(null)
@@ -1022,6 +1034,10 @@ export default function ContactosPage() {
   const [savingPhone, setSavingPhone] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
   const [addForm, setAddForm] = useState<AddListingForm>(() => getDefaultAddForm())
+
+  useEffect(() => {
+    if (!isAdmin && addOpen) setAddOpen(false)
+  }, [isAdmin, addOpen])
   const [savingAdd, setSavingAdd] = useState(false)
   const [visitadoTogglingId, setVisitadoTogglingId] = useState<number | null>(null)
   const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('200000') // Por defecto ocultar pisos > 200.000 €
@@ -1053,24 +1069,33 @@ export default function ContactosPage() {
     })
   }, [])
 
-  const loadListings = () => {
+  /** Catálogo compras (API). El precio máximo se aplica en cliente para que el filtro sea fiable y reactivo. */
+  const loadListings = useCallback(() => {
     setLoading(true)
     const params = new URLSearchParams({ type: 'compra' })
-    if (selectedMaxPrice !== 'all') {
-      params.append('maxPrice', selectedMaxPrice)
-    }
-    fetch(`/api/listings?${params.toString()}`)
+    fetch(`/api/contactos/listings?${params.toString()}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((json) => {
-        if (json.success && json.data) setListings(json.data)
+        if (json.success && Array.isArray(json.data)) {
+          setListings(json.data)
+        }
       })
       .finally(() => setLoading(false))
-  }
+  }, [])
 
   useEffect(() => {
     loadListings()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMaxPrice])
+  }, [loadListings])
+
+  const listingsInPriceRange = useMemo(() => {
+    if (selectedMaxPrice === 'all') return listings
+    const max = parseFloat(selectedMaxPrice)
+    if (Number.isNaN(max)) return listings
+    return listings.filter((l) => {
+      const p = listingPriceEUR(l)
+      return !Number.isNaN(p) && p <= max
+    })
+  }, [listings, selectedMaxPrice])
 
   useEffect(() => {
     let cancelled = false
@@ -1139,9 +1164,14 @@ export default function ContactosPage() {
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('¿Eliminar este piso de la lista?')) return
+    if (
+      !confirm(
+        '¿Ocultar este piso de tu lista de contactos? Solo deja de mostrarse para vos; el anuncio sigue visible para el resto en el panel principal.'
+      )
+    )
+      return
     try {
-      const res = await fetch(`/api/listings/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/contactos/listings/${id}`, { method: 'DELETE' })
       const json = await readApiErrorJson(res)
       if (json.success) {
         if (editingId === id) closeEdit()
@@ -1170,7 +1200,7 @@ export default function ContactosPage() {
     const next = !(row.visitado ?? false)
     setVisitadoTogglingId(row.id)
     try {
-      const res = await fetch(`/api/listings/${row.id}`, {
+      const res = await fetch(`/api/contactos/listings/${row.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ visitado: next }),
@@ -1189,7 +1219,7 @@ export default function ContactosPage() {
     if (phoneDialogId == null) return
     setSavingPhone(true)
     try {
-      const res = await fetch(`/api/listings/${phoneDialogId}`, {
+      const res = await fetch(`/api/contactos/listings/${phoneDialogId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1258,7 +1288,7 @@ export default function ContactosPage() {
         llamado: editForm.llamado,
         visitado: editForm.visitado,
       }
-      const res = await fetch(`/api/listings/${editingId}`, {
+      const res = await fetch(`/api/contactos/listings/${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -1318,7 +1348,7 @@ export default function ContactosPage() {
     const surfNum = surfTrim ? parseFloat(surfTrim.replace(',', '.')) : NaN
     setSavingAdd(true)
     try {
-      const res = await fetch('/api/listings', {
+      const res = await fetch('/api/contactos/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1360,12 +1390,9 @@ export default function ContactosPage() {
     }
   }
 
-  // Incluir Madrid y ciudades de la Comunidad de Madrid (Alcalá de Henares, etc.)
-  const isMadridArea = (l: Listing) =>
-    l.province === 'Madrid' || l.province === 'Alcalá de Henares' || l.city === 'Alcalá de Henares'
-  const filteredByProvince = listings.filter(isMadridArea)
+  // Todas las provincias del catálogo; precio máximo = listingsInPriceRange (cliente).
   const nowForFilter = Date.now()
-  const filteredForTodos = filteredByProvince.filter(
+  const filteredForTodos = listingsInPriceRange.filter(
     (l) =>
       !(l.visitado === true) &&
       (!l.citaAt || new Date(l.citaAt).getTime() <= nowForFilter)
@@ -1500,13 +1527,15 @@ export default function ContactosPage() {
             <div className={styles.headerTopMain}>
               <h1 className={styles.title}>Pisos en venta – Contactos</h1>
             </div>
-            <button
-              type="button"
-              className={styles.btnAddListing}
-              onClick={openAddListing}
-            >
-              Añadir piso
-            </button>
+            {isAdmin ? (
+              <button
+                type="button"
+                className={styles.btnAddListing}
+                onClick={openAddListing}
+              >
+                Añadir piso
+              </button>
+            ) : null}
           </div>
         </header>
 
@@ -1806,7 +1835,11 @@ export default function ContactosPage() {
               <h2 className={styles.sectionTitle}>Barrios</h2>
               {barrios.length === 0 ? (
                 <p className={styles.noData}>
-                  No hay pisos de compra en la base de datos para esta provincia. Cambia de provincia o añade pisos desde el gestor principal.
+                  {listings.length === 0
+                    ? 'No hay pisos de compra en la base. Añadilos desde el gestor principal.'
+                    : listingsInPriceRange.length === 0
+                      ? 'Ningún piso cumple el precio máximo elegido. Probá «Todos los precios» o un tope más alto.'
+                      : 'No hay pisos pendientes en este listado (revisá Próximas visitas o Visitas hechas).'}
                 </p>
               ) : (
                 <div className={styles.barrioIndex}>
@@ -2469,7 +2502,7 @@ export default function ContactosPage() {
         </div>
       )}
 
-      {addOpen && (
+      {addOpen && isAdmin && (
         <div className={styles.modalOverlay} onClick={closeAddListing}>
           <div
             className={`${styles.modalContent} ${styles.modalContentWide}`}

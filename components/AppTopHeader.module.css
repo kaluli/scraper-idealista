@@ -70,7 +70,7 @@
   line-height: 1.15;
 }
 
-/* idealista-pro-makeover: Idea + lista (acento) + Manager */
+/* Flash + Prop (acento en Prop) */
 .brandNameLine {
   display: block;
   font-family: var(--font-stack-heading);
@@ -80,16 +80,13 @@
   line-height: 1.2;
 }
 
-.brandNameIdea {
+.brandNameFlash {
   font-weight: 800;
   color: hsl(var(--foreground));
 }
 
-.brandNameLista {
+.brandNameProp {
   font-weight: 800;
-}
-
-.brandNameLista {
   color: hsl(var(--accent, 224 100% 59%));
   background: var(
     --gradient-accent,
@@ -98,13 +95,6 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-}
-
-.brandNameManager {
-  font-weight: 600;
-  margin-left: 0.25em;
-  color: hsl(var(--foreground) / 0.7);
-  -webkit-text-fill-color: hsl(var(--foreground) / 0.7);
 }
 
 .brandSub {
@@ -188,6 +178,135 @@
   margin-left: auto;
   min-width: 0;
   flex: 0 0 auto;
+}
+
+.authMobile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Menú desplegable: icono usuario → Perfil / Salir */
+.userMenu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.userMenuTrigger {
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.userMenuTriggerOpen {
+  color: hsl(var(--foreground));
+  background: hsl(var(--secondary));
+  border-color: hsl(var(--border));
+}
+
+.userMenuPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 200;
+  min-width: 11.5rem;
+  padding: 6px;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  box-shadow:
+    0 4px 6px -1px hsl(222 47% 11% / 0.08),
+    0 10px 24px -4px hsl(222 47% 11% / 0.12);
+}
+
+.userMenuItem {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.userMenuItem:hover,
+.userMenuItem:focus-visible {
+  outline: none;
+  background: hsl(var(--secondary));
+}
+
+.userMenuItem:focus-visible {
+  box-shadow: 0 0 0 2px hsl(var(--ring, 222 47% 50%));
+}
+
+.userMenuItemDanger {
+  color: hsl(var(--destructive));
+  margin-top: 4px;
+  border-top: 1px solid hsl(var(--border));
+  padding-top: 10px;
+}
+
+.userMenuItemDanger:hover,
+.userMenuItemDanger:focus-visible {
+  background: hsl(0 85% 97%);
+  color: hsl(var(--destructive));
+}
+
+@media (min-width: 768px) {
+  .authMobile {
+    display: none;
+  }
+}
+
+.authLink {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.authLinkLogin {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.authLinkIcon {
+  flex-shrink: 0;
+  color: currentColor;
+  opacity: 0.92;
+}
+
+.authLink:hover {
+  color: hsl(var(--foreground));
+}
+
+.authLinkBtn {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.authLinkBtn:hover {
+  color: hsl(var(--foreground));
 }
 
 .burgerOnly {
