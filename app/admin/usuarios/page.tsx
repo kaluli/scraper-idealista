@@ -29,6 +29,15 @@ export default function AdminUsuariosPage() {
   const [error, setError] = useState('')
   const [savingId, setSavingId] = useState<number | null>(null)
 
+  const [showForm, setShowForm] = useState(false)
+  const [formEmail, setFormEmail] = useState('')
+  const [formName, setFormName] = useState('')
+  const [formPassword, setFormPassword] = useState('')
+  const [formRole, setFormRole] = useState<'user' | 'admin'>('user')
+  const [formLoading, setFormLoading] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [formSuccess, setFormSuccess] = useState('')
+
   const load = useCallback(async () => {
     setError('')
     setLoading(true)
@@ -75,14 +84,128 @@ export default function AdminUsuariosPage() {
     }
   }
 
+  const resetForm = () => {
+    setFormEmail('')
+    setFormName('')
+    setFormPassword('')
+    setFormRole('user')
+    setFormError('')
+    setFormSuccess('')
+  }
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setFormError('')
+    setFormSuccess('')
+    setFormLoading(true)
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formEmail.trim().toLowerCase(),
+          name: formName.trim(),
+          password: formPassword,
+          role: formRole,
+        }),
+      })
+      const json = await res.json()
+      if (!json.success) {
+        setFormError(json.error || 'No se pudo crear')
+        return
+      }
+      setRows((prev) => [...prev, json.data])
+      setFormSuccess(`Usuario ${json.data.email} creado correctamente`)
+      setFormEmail('')
+      setFormName('')
+      setFormPassword('')
+      setFormRole('user')
+    } catch {
+      setFormError('Error de red')
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>Gestión de usuarios</h1>
-        <p className={styles.lead}>
-          Solo visible para administradores. Cambiá el rol entre usuario y administrador.
-        </p>
+        <div className={styles.headerRow}>
+          <div>
+            <h1 className={styles.title}>Gestión de usuarios</h1>
+            <p className={styles.lead}>
+              Solo visible para administradores. Cambiá el rol entre usuario y administrador.
+            </p>
+          </div>
+          <button
+            className={styles.addBtn}
+            onClick={() => { setShowForm(!showForm); resetForm() }}
+          >
+            {showForm ? 'Cancelar' : '+ Añadir usuario'}
+          </button>
+        </div>
       </header>
+
+      {showForm && (
+        <form className={styles.form} onSubmit={handleCreateUser}>
+          <h2 className={styles.formTitle}>Nuevo usuario</h2>
+          {formError && <p className={styles.error}>{formError}</p>}
+          {formSuccess && <p className={styles.success}>{formSuccess}</p>}
+          <div className={styles.formGrid}>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="new-email">Email *</label>
+              <input
+                id="new-email"
+                type="email"
+                required
+                className={styles.input}
+                value={formEmail}
+                onChange={(e) => setFormEmail(e.target.value)}
+                placeholder="usuario@email.com"
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="new-name">Nombre</label>
+              <input
+                id="new-name"
+                type="text"
+                className={styles.input}
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="Nombre (opcional)"
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="new-password">Contraseña *</label>
+              <input
+                id="new-password"
+                type="password"
+                required
+                minLength={8}
+                className={styles.input}
+                value={formPassword}
+                onChange={(e) => setFormPassword(e.target.value)}
+                placeholder="Mínimo 8 caracteres"
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="new-role">Rol</label>
+              <select
+                id="new-role"
+                className={styles.select}
+                value={formRole}
+                onChange={(e) => setFormRole(e.target.value as 'user' | 'admin')}
+              >
+                <option value="user">Usuario</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" className={styles.submitBtn} disabled={formLoading}>
+            {formLoading ? 'Creando…' : 'Crear usuario'}
+          </button>
+        </form>
+      )}
 
       {error ? <p className={styles.error}>{error}</p> : null}
 
