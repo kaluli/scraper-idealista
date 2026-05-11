@@ -351,37 +351,37 @@ export default function CalculadoraPage() {
               </span>
               <span className={styles.resultHint}>Lo que te queda cada mes</span>
             </div>
-            <div className={styles.rentabilidadGroup}>
-              <div className={styles.resultCardRentabilidad}>
+            <div className={styles.metricsGrid}>
+              <div className={styles.metricCard}>
                 <span className={styles.resultLabel}>Rentabilidad bruta</span>
-                <span className={styles.resultValueRentabilidad}>{formatPercent(resultado.rentabilidadBruta)}</span>
+                <span className={styles.metricValue}>{formatPercent(resultado.rentabilidadBruta)}</span>
                 <span className={styles.resultHint}>Ingreso bruto / precio compra</span>
               </div>
-              <div className={styles.resultCardRentabilidad}>
+              <div className={styles.metricCard}>
                 <span className={styles.resultLabel}>Rentabilidad neta</span>
-                <span className={styles.resultValueRentabilidad}>{formatPercent(resultado.rentabilidadNeta)}</span>
-                <span className={styles.resultHint}>Beneficio anual / coste total del inmueble (sin hipoteca)</span>
+                <span className={styles.metricValue}>{formatPercent(resultado.rentabilidadNeta)}</span>
+                <span className={styles.resultHint}>Beneficio anual / coste total</span>
               </div>
-            </div>
-            <div className={styles.resultCard}>
-              <span className={styles.resultLabel}>ROI sobre dinero aportado</span>
-              <span className={styles.resultValue}>{formatPercent(resultado.roi)}</span>
-              <span className={styles.resultHint}>Rendimiento sobre tu capital inicial</span>
-            </div>
-            <div className={styles.resultCardPayback}>
-              <span className={styles.resultLabel}>Payback period</span>
-              <span className={`${styles.resultValue} ${resultado.paybackAnos !== null && resultado.paybackAnos > 25 ? styles.negative : ''}`}>
-                {resultado.paybackAnos !== null
-                  ? resultado.paybackAnos < 100
-                    ? `${resultado.paybackAnos.toFixed(1)} años`
-                    : '> 100 años'
-                  : 'No recuperable'}
-              </span>
-              <span className={styles.resultHint}>
-                {resultado.paybackAnos !== null && resultado.paybackAnos <= 100
-                  ? `Recuperás los ${formatEuros(resultado.inversionTotalInicial)} invertidos en ${Math.ceil(resultado.paybackAnos)} años`
-                  : 'El cashflow es negativo o nulo — no se recupera la inversión'}
-              </span>
+              <div className={styles.metricCard}>
+                <span className={styles.resultLabel}>ROI</span>
+                <span className={styles.metricValue}>{formatPercent(resultado.roi)}</span>
+                <span className={styles.resultHint}>Sobre tu capital inicial</span>
+              </div>
+              <div className={styles.metricCard}>
+                <span className={styles.resultLabel}>Payback</span>
+                <span className={`${styles.metricValue} ${resultado.paybackAnos !== null && resultado.paybackAnos > 25 ? styles.negative : ''}`}>
+                  {resultado.paybackAnos !== null
+                    ? resultado.paybackAnos < 100
+                      ? `${resultado.paybackAnos.toFixed(1)} años`
+                      : '> 100 años'
+                    : 'N/A'}
+                </span>
+                <span className={styles.resultHint}>
+                  {resultado.paybackAnos !== null && resultado.paybackAnos <= 100
+                    ? `Recuperás inversión en ~${Math.ceil(resultado.paybackAnos)} años`
+                    : 'No se recupera la inversión'}
+                </span>
+              </div>
             </div>
           </div>
         </section>
