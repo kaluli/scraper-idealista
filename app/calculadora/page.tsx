@@ -86,6 +86,9 @@ export default function CalculadoraPage() {
     const costeTotalInmueble = precio + gastosCompra + reforma
     let rentabilidadNeta = costeTotalInmueble > 0 ? (ingresoAnualNetoAntesHipoteca / costeTotalInmueble) * 100 : 0
 
+    const beneficioAnual = conHipoteca ? cashflowMensual * 12 : ingresoAnualNetoAntesHipoteca
+    const paybackAnos = beneficioAnual > 0 ? inversionTotalInicial / beneficioAnual : null
+
     return {
       ingresoAnualBruto,
       gastosAnualesTotales,
@@ -96,6 +99,7 @@ export default function CalculadoraPage() {
       rentabilidadNeta,
       roi,
       inversionTotalInicial,
+      paybackAnos,
     }
   }, [
     precio,
@@ -123,6 +127,7 @@ export default function CalculadoraPage() {
   else if (resultado.rentabilidadNeta >= 6 && resultado.cashflowMensual > 0) resumen = 'Buena rentabilidad'
   else if (resultado.rentabilidadNeta >= 4) resumen = 'Operación razonable'
   else resumen = 'Operación ajustada'
+
 
   return (
     <div className={styles.page}>
@@ -362,6 +367,21 @@ export default function CalculadoraPage() {
               <span className={styles.resultLabel}>ROI sobre dinero aportado</span>
               <span className={styles.resultValue}>{formatPercent(resultado.roi)}</span>
               <span className={styles.resultHint}>Rendimiento sobre tu capital inicial</span>
+            </div>
+            <div className={styles.resultCardPayback}>
+              <span className={styles.resultLabel}>Payback period</span>
+              <span className={`${styles.resultValue} ${resultado.paybackAnos !== null && resultado.paybackAnos > 25 ? styles.negative : ''}`}>
+                {resultado.paybackAnos !== null
+                  ? resultado.paybackAnos < 100
+                    ? `${resultado.paybackAnos.toFixed(1)} años`
+                    : '> 100 años'
+                  : 'No recuperable'}
+              </span>
+              <span className={styles.resultHint}>
+                {resultado.paybackAnos !== null && resultado.paybackAnos <= 100
+                  ? `Recuperás los ${formatEuros(resultado.inversionTotalInicial)} invertidos en ${Math.ceil(resultado.paybackAnos)} años`
+                  : 'El cashflow es negativo o nulo — no se recupera la inversión'}
+              </span>
             </div>
           </div>
         </section>

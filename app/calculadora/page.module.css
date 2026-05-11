@@ -328,6 +328,21 @@
   color: hsl(var(--muted-foreground));
 }
 
+.resultCardPayback {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--ring) / 0.1) 0%,
+    hsl(var(--ring) / 0.04) 100%
+  );
+  border: 1px solid hsl(var(--ring) / 0.35);
+  border-radius: 0.75rem;
+  padding: 0.9rem 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  box-shadow: var(--shadow-sm);
+}
+
 .alertCard {
   padding: 1.1rem 1.15rem 1.15rem;
   background: hsl(var(--warning) / 0.1);
