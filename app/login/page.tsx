@@ -34,8 +34,7 @@ function LoginForm() {
         setLoading(false)
         return
       }
-      router.push(callbackUrl)
-      router.refresh()
+      window.location.href = callbackUrl
     } catch {
       setError('No se pudo iniciar sesión.')
       setLoading(false)
