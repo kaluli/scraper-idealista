@@ -658,30 +658,15 @@ export default function Home() {
                 <div className={styles.statValue}>{stats.total}</div>
               </div>
 
-              {selectedType === 'all' && (stats.avgPriceAlquiler !== null || stats.avgPriceCompra !== null) ? (
-                <>
-                  {stats.avgPriceAlquiler !== null && (
-                    <div className={styles.statBox}>
-                      <div className={styles.statLabel}>Precio promedio (Alquiler)</div>
-                      <div className={styles.statValue}>{formatPrice(stats.avgPriceAlquiler)}</div>
-                    </div>
-                  )}
-                  {stats.avgPriceCompra !== null && (
-                    <div className={styles.statBox}>
-                      <div className={styles.statLabel}>Precio promedio (Compra)</div>
-                      <div className={styles.statValue}>{formatPrice(stats.avgPriceCompra)}</div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className={styles.statBox}>
-                  <div className={styles.statLabel}>Precio promedio</div>
-                  <div className={styles.statValue}>{formatPrice(stats.avgPrice)}</div>
+              <div className={styles.statBox}>
+                <div className={styles.statLabel}>Precio promedio</div>
+                <div className={styles.statValue}>{formatPrice(stats.avgPrice)}</div>
+                {stats.minPrice > 0 && stats.maxPrice > 0 && (
                   <div className={styles.statRange}>
                     {formatPrice(stats.minPrice)} - {formatPrice(stats.maxPrice)}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               <div className={styles.statBox}>
                 <div className={styles.statLabel}>Superficie promedio</div>

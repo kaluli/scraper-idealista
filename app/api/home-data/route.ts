@@ -169,7 +169,12 @@ function computeStats(
     }
   }
 
-  const prices = listings.map((l) => l.price).filter((p) => p > 0)
+  // Precio promedio de la home: siempre sobre compra (nunca alquiler ni mezcla).
+  const priceSourceListings =
+    !typeFilter || typeFilter === 'all' || typeFilter === 'compra'
+      ? listings.filter((l) => l.type === 'compra')
+      : listings
+  const prices = priceSourceListings.map((l) => l.price).filter((p) => p > 0)
   const surfaces = listings
     .map((l) => l.surface)
     .filter((s): s is number => s !== null && s > 0)
@@ -189,10 +194,7 @@ function computeStats(
       .filter((l) => l.type === 'alquiler')
       .map((l) => l.price)
       .filter((p) => p > 0)
-    const compraPrices = listings
-      .filter((l) => l.type === 'compra')
-      .map((l) => l.price)
-      .filter((p) => p > 0)
+    const compraPrices = prices
     if (alquilerPrices.length > 0) {
       avgPriceAlquiler =
         alquilerPrices.reduce((a, b) => a + b, 0) / alquilerPrices.length
@@ -231,7 +233,12 @@ function computeStats(
     const neighborhoodListings = listings.filter(
       (l) => l.neighborhood === neighborhood
     )
-    const neighborhoodPrices = neighborhoodListings
+    // Precio medio por barrio: compra cuando no hay filtro de tipo.
+    const neighborhoodPriceListings =
+      !typeFilter || typeFilter === 'all' || typeFilter === 'compra'
+        ? neighborhoodListings.filter((l) => l.type === 'compra')
+        : neighborhoodListings
+    const neighborhoodPrices = neighborhoodPriceListings
       .map((l) => l.price)
       .filter((p) => p > 0)
     const neighborhoodSurfaces = neighborhoodListings

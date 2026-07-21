@@ -76,8 +76,12 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Estadísticas generales
-    const prices = listings.map((l) => l.price).filter((p) => p > 0)
+    // Precio promedio: siempre sobre compra (nunca alquiler ni mezcla), salvo filtro explícito de alquiler.
+    const priceSourceListings =
+      !type || type === 'all' || type === 'compra'
+        ? listings.filter((l) => l.type === 'compra')
+        : listings
+    const prices = priceSourceListings.map((l) => l.price).filter((p) => p > 0)
     const surfaces = listings.map((l) => l.surface).filter((s): s is number => s !== null && s > 0)
     const rooms = listings.map((l) => l.rooms).filter((r): r is number => r !== null && r >= 0)
 
@@ -85,13 +89,12 @@ export async function GET(request: NextRequest) {
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0
     const maxPrice = prices.length > 0 ? Math.max(...prices) : 0
 
-    // Calcular precios promedio separados por tipo (solo si no hay filtro de tipo)
     let avgPriceAlquiler: number | null = null
     let avgPriceCompra: number | null = null
     
     if (!type || type === 'all') {
       const alquilerPrices = listings.filter((l) => l.type === 'alquiler').map((l) => l.price).filter((p) => p > 0)
-      const compraPrices = listings.filter((l) => l.type === 'compra').map((l) => l.price).filter((p) => p > 0)
+      const compraPrices = prices
       
       if (alquilerPrices.length > 0) {
         avgPriceAlquiler = alquilerPrices.reduce((a, b) => a + b, 0) / alquilerPrices.length
@@ -126,7 +129,11 @@ export async function GET(request: NextRequest) {
 
     neighborhoods.forEach((neighborhood) => {
       const neighborhoodListings = listings.filter((l) => l.neighborhood === neighborhood)
-      const neighborhoodPrices = neighborhoodListings.map((l) => l.price).filter((p) => p > 0)
+      const neighborhoodPriceListings =
+        !type || type === 'all' || type === 'compra'
+          ? neighborhoodListings.filter((l) => l.type === 'compra')
+          : neighborhoodListings
+      const neighborhoodPrices = neighborhoodPriceListings.map((l) => l.price).filter((p) => p > 0)
       const neighborhoodSurfaces = neighborhoodListings.map((l) => l.surface).filter((s): s is number => s !== null && s > 0)
       const neighborhoodRooms = neighborhoodListings.map((l) => l.rooms).filter((r): r is number => r !== null && r >= 0)
 
