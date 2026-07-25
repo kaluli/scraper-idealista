@@ -64,7 +64,7 @@ function ProvinceSelectorInline({
       >
         <span className={styles.provinceBadgeDot} aria-hidden />
         Provincia elegida:{' '}
-        <strong className={styles.provinceBadgeAccent}>{selectedProvince}</strong>
+        <strong className={styles.provinceBadgeAccent}>{selectedProvince === 'all' ? 'Todas las provincias' : selectedProvince}</strong>
       </button>
       {open && (
         <div className={styles.provinceBadgeDropdown} role="listbox" aria-label="Cambiar provincia">
@@ -715,16 +715,14 @@ export default function Home() {
         )}
 
         {/* Provincia elegida */}
-        {selectedProvince !== 'all' && stats && stats.total > 0 && (
-          <ProvinceSelectorInline
-            selectedProvince={selectedProvince}
-            provinces={provinces}
-            onChange={(v) => {
-              setSelectedProvince(v)
-              setSelectedNeighborhood('all')
-            }}
-          />
-        )}
+        <ProvinceSelectorInline
+          selectedProvince={selectedProvince}
+          provinces={provinces}
+          onChange={(v) => {
+            setSelectedProvince(v)
+            setSelectedNeighborhood('all')
+          }}
+        />
 
         {/* Estadísticas (sin título visible: las tarjetas son autoexplicativas) */}
         {stats && stats.total > 0 && (
