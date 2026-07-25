@@ -9,7 +9,7 @@ import styles from '../auth.module.css'
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/contactos'
+  const callbackUrl = searchParams.get('callbackUrl') || '/'
   const registered = searchParams.get('registered')
   /** NextAuth redirige aquí con ?error= desde pages.error */
   const oauthError = searchParams.get('error')
