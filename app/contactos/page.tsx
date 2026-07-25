@@ -1041,9 +1041,11 @@ export default function ContactosPage() {
   const [savingAdd, setSavingAdd] = useState(false)
   const [visitadoTogglingId, setVisitadoTogglingId] = useState<number | null>(null)
   const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('200000') // Por defecto ocultar pisos > 200.000 €
+  const [selectedProvince, setSelectedProvince] = useState<string>('all')
+  const [serverProvinces, setServerProvinces] = useState<string[]>([])
   const [alquilerPool, setAlquilerPool] = useState<Listing[]>([])
   const [filteredCount, setFilteredCount] = useState(0)
-  const [serverBarrios, setServerBarrios] = useState<string[]>([])
+  const [serverBarrios, setServerBarrios] = useState<{ name: string; count: number }[]>([])
   const [contactosPage, setContactosPage] = useState(1)
   const CONTACTOS_PER_PAGE = 20
   const [similarHover, setSimilarHover] = useState<{
@@ -1080,6 +1082,9 @@ export default function ContactosPage() {
     if (selectedMaxPrice !== 'all') {
       params.set('maxPrice', selectedMaxPrice)
     }
+    if (selectedProvince !== 'all') {
+      params.set('province', selectedProvince)
+    }
     fetch(`/api/contactos/listings?${params.toString()}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((json) => {
@@ -1087,10 +1092,11 @@ export default function ContactosPage() {
           setListings(json.data)
           setFilteredCount(typeof json.filteredCount === 'number' ? json.filteredCount : 0)
           if (Array.isArray(json.barrios)) setServerBarrios(json.barrios)
+          if (Array.isArray(json.provinces)) setServerProvinces(json.provinces)
         }
       })
       .finally(() => setLoading(false))
-  }, [selectedMaxPrice])
+  }, [selectedMaxPrice, selectedProvince])
 
   useEffect(() => {
     loadListings(contactosPage)
@@ -1098,7 +1104,7 @@ export default function ContactosPage() {
 
   useEffect(() => {
     setContactosPage(1)
-  }, [selectedMaxPrice])
+  }, [selectedMaxPrice, selectedProvince])
 
   const listingsInPriceRange = listings
 
@@ -1832,6 +1838,29 @@ export default function ContactosPage() {
             </section>
 
             <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Provincia</h2>
+              <div className={styles.barrioIndex}>
+                <button
+                  type="button"
+                  className={`${styles.barrioChip} ${selectedProvince === 'all' ? styles.barrioChipActive : ''}`}
+                  onClick={() => { setSelectedProvince('all'); setSelectedBarrio(null) }}
+                >
+                  Todas
+                </button>
+                {serverProvinces.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    className={`${styles.barrioChip} ${selectedProvince === p ? styles.barrioChipActive : ''}`}
+                    onClick={() => { setSelectedProvince(p); setSelectedBarrio(null) }}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className={styles.section}>
               <h2 className={styles.sectionTitle}>Barrios</h2>
               {barrios.length === 0 ? (
                 <p className={styles.noData}>
@@ -1848,16 +1877,16 @@ export default function ContactosPage() {
                     className={`${styles.barrioChip} ${selectedBarrio === null ? styles.barrioChipActive : ''}`}
                     onClick={() => setSelectedBarrio(null)}
                   >
-                    Todos ({filteredForTodos.length})
+                    Todos ({filteredCount})
                   </button>
                   {barrios.map((b) => (
                     <button
-                      key={b}
+                      key={b.name}
                       type="button"
-                      className={`${styles.barrioChip} ${selectedBarrio === b ? styles.barrioChipActive : ''}`}
-                      onClick={() => setSelectedBarrio(b)}
+                      className={`${styles.barrioChip} ${selectedBarrio === b.name ? styles.barrioChipActive : ''}`}
+                      onClick={() => setSelectedBarrio(b.name)}
                     >
-                      {b} ({filteredForTodos.filter((l) => l.neighborhood === b).length})
+                      {b.name} ({b.count})
                     </button>
                   ))}
                 </div>

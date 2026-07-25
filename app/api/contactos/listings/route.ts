@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     const allListings = await prisma.listing.findMany({
       where,
       orderBy: [{ profitabilityRate: 'desc' }, { createdAt: 'desc' }],
-      select: { id: true, neighborhood: true },
+      select: { id: true, neighborhood: true, province: true },
     })
 
     if (allListings.length === 0) {
@@ -81,19 +81,28 @@ export async function GET(request: NextRequest) {
 
     const visibleItems = allListings.filter((l) => !stateByListing.get(l.id)?.hiddenAt)
 
-    const barriosSet = new Set<string>()
+    const barriosMap = new Map<string, number>()
     for (const l of visibleItems) {
       const b = l.neighborhood?.trim()
-      if (b) barriosSet.add(b)
+      if (b) barriosMap.set(b, (barriosMap.get(b) || 0) + 1)
     }
-    const barrios = Array.from(barriosSet).sort((a, b) => a.localeCompare(b, 'es'))
+    const barrios = Array.from(barriosMap.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], 'es'))
+      .map(([name, count]) => ({ name, count }))
+
+    const provincesSet = new Set<string>()
+    for (const l of visibleItems) {
+      const pr = l.province?.trim()
+      if (pr) provincesSet.add(pr)
+    }
+    const provinces = Array.from(provincesSet).sort((a, b) => a.localeCompare(b, 'es'))
 
     const filteredCount = visibleItems.length
     const offset = (page - 1) * limit
     const pageIds = visibleItems.slice(offset, offset + limit).map((l) => l.id)
 
     if (pageIds.length === 0) {
-      const res = NextResponse.json({ success: true, data: [], filteredCount, barrios, page, limit })
+      const res = NextResponse.json({ success: true, data: [], filteredCount, barrios, provinces, page, limit })
       res.headers.set('Cache-Control', 'no-store')
       return res
     }
@@ -110,7 +119,7 @@ export async function GET(request: NextRequest) {
       return mergeRow(plain, stateByListing.get(id))
     }).filter(Boolean)
 
-    const res = NextResponse.json({ success: true, data: merged, filteredCount, barrios, page, limit })
+    const res = NextResponse.json({ success: true, data: merged, filteredCount, barrios, provinces, page, limit })
     res.headers.set('Cache-Control', 'no-store')
     return res
   } catch (error) {
