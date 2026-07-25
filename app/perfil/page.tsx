@@ -5,10 +5,29 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import styles from '../auth.module.css'
 
+const PROVINCES = [
+  'Madrid',
+  'Barcelona',
+  'Valencia',
+  'Sevilla',
+  'Málaga',
+  'Murcia',
+  'Alicante',
+  'Bilbao',
+  'Zaragoza',
+  'Segovia',
+  'Asturias',
+  'Cádiz',
+  'Mallorca',
+  'Tenerife',
+  'Castellón',
+]
+
 export default function PerfilPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [name, setName] = useState('')
+  const [province, setProvince] = useState('all')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [message, setMessage] = useState('')
@@ -27,6 +46,9 @@ export default function PerfilPage() {
       .then((r) => r.json())
       .then((j) => {
         if (j.success && j.user?.name) setName(j.user.name)
+        if (j.success && j.user?.province !== undefined) {
+          setProvince(j.user.province ?? 'all')
+        }
       })
       .catch(() => {})
   }, [status])
@@ -39,6 +61,7 @@ export default function PerfilPage() {
     try {
       const body: Record<string, string> = {}
       if (name.trim()) body.name = name.trim()
+      body.province = province
       if (newPassword) {
         body.newPassword = newPassword
         body.currentPassword = currentPassword
@@ -107,6 +130,24 @@ export default function PerfilPage() {
               onChange={(e) => setName(e.target.value)}
               autoComplete="name"
             />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="perfil-province">
+              Provincia por defecto
+            </label>
+            <select
+              id="perfil-province"
+              className={styles.input}
+              value={province}
+              onChange={(e) => setProvince(e.target.value)}
+            >
+              <option value="all">Todas</option>
+              {PROVINCES.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
           </div>
           <p className={styles.lead}>Cambiar contraseña (opcional)</p>
           <div className={styles.field}>

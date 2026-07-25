@@ -41,6 +41,7 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             name: user.name ?? undefined,
             role: user.role,
+            province: user.province ?? null,
           }
         } catch (err) {
           console.error('[next-auth][credentials]', err)
@@ -59,6 +60,20 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id
         token.role = (user as { role: UserRole }).role
+        token.province = (user as { province: string | null }).province ?? null
+      } else if (token.id) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: parseInt(token.id as string, 10) },
+            select: { role: true, province: true },
+          })
+          if (dbUser) {
+            token.role = dbUser.role
+            token.province = dbUser.province ?? null
+          }
+        } catch {
+          // no romper la sesión si la BD falla temporalmente
+        }
       }
       return token
     },
@@ -66,6 +81,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user && token.id) {
         session.user.id = token.id as string
         session.user.role = (token.role as UserRole) ?? 'user'
+        session.user.province = (token.province as string | null) ?? null
       }
       return session
     },

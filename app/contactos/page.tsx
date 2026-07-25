@@ -1042,6 +1042,10 @@ export default function ContactosPage() {
   const [visitadoTogglingId, setVisitadoTogglingId] = useState<number | null>(null)
   const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('200000') // Por defecto ocultar pisos > 200.000 €
   const [alquilerPool, setAlquilerPool] = useState<Listing[]>([])
+  const [filteredCount, setFilteredCount] = useState(0)
+  const [serverBarrios, setServerBarrios] = useState<string[]>([])
+  const [contactosPage, setContactosPage] = useState(1)
+  const CONTACTOS_PER_PAGE = 20
   const [similarHover, setSimilarHover] = useState<{
     row: Listing
     top: number
@@ -1069,33 +1073,34 @@ export default function ContactosPage() {
     })
   }, [])
 
-  /** Catálogo compras (API). El precio máximo se aplica en cliente para que el filtro sea fiable y reactivo. */
-  const loadListings = useCallback(() => {
+  /** Catálogo compras (API). Precio máximo y paginación ahora van al server. */
+  const loadListings = useCallback((page: number = 1) => {
     setLoading(true)
-    const params = new URLSearchParams({ type: 'compra' })
+    const params = new URLSearchParams({ type: 'compra', page: String(page), limit: '20' })
+    if (selectedMaxPrice !== 'all') {
+      params.set('maxPrice', selectedMaxPrice)
+    }
     fetch(`/api/contactos/listings?${params.toString()}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((json) => {
         if (json.success && Array.isArray(json.data)) {
           setListings(json.data)
+          setFilteredCount(typeof json.filteredCount === 'number' ? json.filteredCount : 0)
+          if (Array.isArray(json.barrios)) setServerBarrios(json.barrios)
         }
       })
       .finally(() => setLoading(false))
-  }, [])
+  }, [selectedMaxPrice])
 
   useEffect(() => {
-    loadListings()
-  }, [loadListings])
+    loadListings(contactosPage)
+  }, [loadListings, contactosPage])
 
-  const listingsInPriceRange = useMemo(() => {
-    if (selectedMaxPrice === 'all') return listings
-    const max = parseFloat(selectedMaxPrice)
-    if (Number.isNaN(max)) return listings
-    return listings.filter((l) => {
-      const p = listingPriceEUR(l)
-      return !Number.isNaN(p) && p <= max
-    })
-  }, [listings, selectedMaxPrice])
+  useEffect(() => {
+    setContactosPage(1)
+  }, [selectedMaxPrice])
+
+  const listingsInPriceRange = listings
 
   useEffect(() => {
     let cancelled = false
@@ -1398,13 +1403,8 @@ export default function ContactosPage() {
       (!l.citaAt || new Date(l.citaAt).getTime() <= nowForFilter)
   )
 
-  const barrios = Array.from(
-    new Set(
-      filteredForTodos
-        .map((l) => l.neighborhood?.trim())
-        .filter((b): b is string => Boolean(b))
-    )
-  ).sort((a, b) => a.localeCompare(b, 'es'))
+  // Barrios vienen del server (todas las listings visibles, no solo la página actual).
+  const barrios = serverBarrios
 
   const filteredByBarrio =
     selectedBarrio === null
@@ -2088,6 +2088,39 @@ export default function ContactosPage() {
                 <div className={styles.cardsOnly} role="list" aria-label="Pisos en venta (vista móvil)">
                   {sortedListings.map((row) => renderListingCard(row))}
                 </div>
+                {filteredCount > CONTACTOS_PER_PAGE && (
+                  <div className={styles.listingsPagination}>
+                    <p className={styles.listingsPaginationInfo}>
+                      Mostrando{' '}
+                      <strong>
+                        {Math.min((contactosPage - 1) * CONTACTOS_PER_PAGE + 1, filteredCount)}–{Math.min(contactosPage * CONTACTOS_PER_PAGE, filteredCount)}
+                      </strong>{' '}
+                      de <strong>{filteredCount}</strong> pisos
+                      {filteredCount > CONTACTOS_PER_PAGE ? ` · Página ${contactosPage} de ${Math.ceil(filteredCount / CONTACTOS_PER_PAGE)}` : null}
+                    </p>
+                    <div className={styles.listingsPaginationBar}>
+                      <button
+                        type="button"
+                        className={styles.listingsPageBtn}
+                        onClick={() => setContactosPage((p) => Math.max(1, p - 1))}
+                        disabled={contactosPage <= 1}
+                      >
+                        ← Anterior
+                      </button>
+                      <span className={styles.listingsPageNumbers}>
+                        {contactosPage} / {Math.ceil(filteredCount / CONTACTOS_PER_PAGE)}
+                      </span>
+                      <button
+                        type="button"
+                        className={styles.listingsPageBtn}
+                        onClick={() => setContactosPage((p) => Math.min(Math.ceil(filteredCount / CONTACTOS_PER_PAGE), p + 1))}
+                        disabled={contactosPage >= Math.ceil(filteredCount / CONTACTOS_PER_PAGE)}
+                      >
+                        Siguiente →
+                      </button>
+                    </div>
+                  </div>
+                )}
               </section>
             )}
           </>

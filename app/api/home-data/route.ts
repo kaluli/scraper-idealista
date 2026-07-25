@@ -62,49 +62,63 @@ export async function GET(request: NextRequest) {
     }
     where.surface = { gte: minSurfaceM2 }
 
-    // 1. Provincias (desde neighborhoods o listings)
-    let provinces: string[] = []
-    const neighborhoodsForProvinces = await prisma.neighborhood.findMany({
-      select: { province: true },
-      distinct: ['province'],
-      orderBy: { province: 'asc' },
-    })
-    provinces = neighborhoodsForProvinces
-      .map((n) => n.province)
-      .filter((p): p is string => p !== null && p !== '')
-      .sort()
-
-    if (provinces.length === 0) {
-      const fromListings = await prisma.listing.findMany({
+    // 1. Provincias (desde neighborhoods + listings)
+    const [nbProvinces, listingProvinces] = await Promise.all([
+      prisma.neighborhood.findMany({
+        select: { province: true },
+        distinct: ['province'],
+      }),
+      prisma.listing.findMany({
         where: { province: { not: null } },
         select: { province: true },
         distinct: ['province'],
-      })
-      provinces = fromListings
-        .map((l) => l.province)
-        .filter((p): p is string => p !== null && p !== '')
-        .sort()
+      }),
+    ])
+    const allProvinces = new Set<string>()
+    for (const row of nbProvinces) {
+      if (row.province) allProvinces.add(row.province)
     }
+    for (const row of listingProvinces) {
+      if (row.province) allProvinces.add(row.province)
+    }
+    const provinces = [...allProvinces].sort()
 
-    // 2. Total sin filtros + listings filtrados
-    const [totalInDb, listings] = await Promise.all([
+    // 2. Total sin filtros + listings filtrados (paginados)
+    const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10) || 20))
+    const offset = (page - 1) * limit
+
+    // Stats y barrios se calculan sobre TODOS los filtrados; listings se devuelven paginados
+    const statsSelect = {
+      price: true,
+      surface: true,
+      rooms: true,
+      neighborhood: true,
+      type: true,
+    } as const
+
+    const [totalInDb, filteredCount, allFilteredListings, paginatedListings] = await Promise.all([
       prisma.listing.count(),
+      prisma.listing.count({ where }),
+      prisma.listing.findMany({ where, select: statsSelect }),
       prisma.listing.findMany({
         where,
         orderBy: [
           { profitabilityRate: 'desc' },
           { createdAt: 'desc' },
         ],
+        take: limit,
+        skip: offset,
       }),
     ])
 
-    // 3. Stats calculadas desde listings (en memoria)
-    const stats = computeStats(listings, type ?? undefined)
+    // 3. Stats calculadas desde TODOS los listings filtrados
+    const stats = computeStats(allFilteredListings, type ?? undefined)
 
-    // 4. Barrios únicos desde listings filtrados
+    // 4. Barrios únicos desde TODOS los listings filtrados
     const neighborhoods = Array.from(
       new Set(
-        listings
+        allFilteredListings
           .map((l) => l.neighborhood)
           .filter((n): n is string => n !== null && n !== '')
       )
@@ -113,11 +127,14 @@ export async function GET(request: NextRequest) {
     const res = NextResponse.json({
       success: true,
       data: {
-        listings,
+        listings: paginatedListings,
         stats,
         neighborhoods,
         provinces,
         totalInDb,
+        filteredCount,
+        page,
+        limit,
       },
     })
     res.headers.set(

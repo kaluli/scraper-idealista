@@ -8,9 +8,27 @@ type Row = {
   email: string
   name: string | null
   role: 'user' | 'admin'
+  province: string | null
   createdAt: string
   lastLoginAt: string | null
 }
+
+const PROVINCES = [
+  'Madrid',
+  'Barcelona',
+  'Valencia',
+  'Sevilla',
+  'Málaga',
+  'Murcia',
+  'Alicante',
+  'Bilbao',
+  'Zaragoza',
+  'Segovia',
+  'Asturias',
+  'Cádiz',
+  'Mallorca',
+  'Tenerife',
+]
 
 function formatDateTime(iso: string | null) {
   if (!iso) return '—'
@@ -28,6 +46,7 @@ export default function AdminUsuariosPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [savingId, setSavingId] = useState<number | null>(null)
+  const [resettingId, setResettingId] = useState<number | null>(null)
 
   const [showForm, setShowForm] = useState(false)
   const [formEmail, setFormEmail] = useState('')
@@ -81,6 +100,51 @@ export default function AdminUsuariosPage() {
       setError('Error de red')
     } finally {
       setSavingId(null)
+    }
+  }
+
+  const changeProvince = async (id: number, province: string) => {
+    setSavingId(id)
+    setError('')
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ province }),
+      })
+      const json = await res.json()
+      if (!json.success) {
+        setError(json.error || 'No se pudo guardar')
+        return
+      }
+      setRows((prev) => prev.map((r) => (r.id === id ? { ...r, province: json.data.province } : r)))
+    } catch {
+      setError('Error de red')
+    } finally {
+      setSavingId(null)
+    }
+  }
+
+  const resetPassword = async (id: number) => {
+    if (!confirm('¿Resetear la contraseña a Test1234?')) return
+    setResettingId(id)
+    setError('')
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resetPassword: true }),
+      })
+      const json = await res.json()
+      if (!json.success) {
+        setError(json.error || 'No se pudo resetear')
+        return
+      }
+      alert('Contraseña reseteada a Test1234')
+    } catch {
+      setError('Error de red')
+    } finally {
+      setResettingId(null)
     }
   }
 
@@ -219,6 +283,8 @@ export default function AdminUsuariosPage() {
                 <th className={styles.th}>Email</th>
                 <th className={styles.th}>Nombre</th>
                 <th className={styles.th}>Rol</th>
+                <th className={styles.th}>Provincia</th>
+                <th className={styles.th}>Contraseña</th>
                 <th className={styles.th}>Último acceso</th>
                 <th className={styles.th}>Alta</th>
               </tr>
@@ -241,6 +307,30 @@ export default function AdminUsuariosPage() {
                       <option value="user">Usuario</option>
                       <option value="admin">Administrador</option>
                     </select>
+                  </td>
+                  <td className={styles.td}>
+                    <select
+                      className={styles.select}
+                      value={row.province || ''}
+                      disabled={savingId === row.id}
+                      onChange={(e) => changeProvince(row.id, e.target.value)}
+                      aria-label={`Provincia de ${row.email}`}
+                    >
+                      <option value="">Sin provincia</option>
+                      {PROVINCES.map((p) => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className={styles.td}>
+                    <button
+                      className={styles.select}
+                      disabled={resettingId === row.id}
+                      onClick={() => resetPassword(row.id)}
+                      style={{ cursor: 'pointer', color: '#2563eb', textDecoration: 'underline', background: 'none', border: 'none', fontSize: '13px' }}
+                    >
+                      {resettingId === row.id ? 'Resetando…' : 'Reset'}
+                    </button>
                   </td>
                   <td className={styles.td}>{formatDateTime(row.lastLoginAt)}</td>
                   <td className={styles.td}>

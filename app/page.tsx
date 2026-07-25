@@ -33,8 +33,10 @@ const LISTINGS_PER_PAGE = 16
 type MinSurfaceOption = '40' | '80'
 
 export default function Home() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const isAdmin = session?.user?.role === 'admin'
+  const isAuthed = status === 'authenticated'
+  const userProvince = isAuthed ? (session?.user?.province || 'all') : 'all'
 
   const [listings, setListings] = useState<Listing[]>([])
   const [barrioOptions, setBarrioOptions] = useState<string[]>([])
@@ -42,11 +44,13 @@ export default function Home() {
   const [stats, setStats] = useState<any>(null)
   /** Total de filas en `listings` (sin aplicar filtros de la query). */
   const [totalInDb, setTotalInDb] = useState<number | null>(null)
+  /** Total de filas que cumplen los filtros activos (para paginación server-side). */
+  const [filteredCount, setFilteredCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedType, setSelectedType] = useState<'alquiler' | 'compra' | 'all'>('all')
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>('all')
-  const [selectedProvince, setSelectedProvince] = useState<string>(DEFAULT_PROVINCE)
+  const [selectedProvince, setSelectedProvince] = useState<string>(userProvince)
   /** Sin tope por defecto: compras > 200k no desaparecen tras importar. */
   const [selectedMaxPrice, setSelectedMaxPrice] = useState<string>('all')
   const [selectedMinSurface, setSelectedMinSurface] =
@@ -61,6 +65,13 @@ export default function Home() {
     if (!isAdmin && showModal) setShowModal(false)
   }, [isAdmin, showModal])
 
+  useEffect(() => {
+    if (session?.user?.province !== undefined) {
+      setSelectedProvince(session.user.province || 'all')
+      setFormData((prev) => ({ ...prev, province: session.user!.province || 'all' }))
+    }
+  }, [session?.user?.province])
+
   const [formData, setFormData] = useState({
     title: '',
     price: '',
@@ -70,7 +81,7 @@ export default function Home() {
     type: 'alquiler' as 'alquiler' | 'compra',
     neighborhood: '',
     city: '',
-    province: DEFAULT_PROVINCE,
+    province: userProvince,
     publishedAddress: '',
     rooms: '',
   })
@@ -89,7 +100,7 @@ export default function Home() {
   }, [])
 
   // Cargar todos los datos en una sola petición (4 conexiones → 1)
-  const loadHomeData = async () => {
+  const loadHomeData = async (page: number = listingsPage) => {
     setLoading(true)
     setError(null)
     try {
@@ -107,6 +118,8 @@ export default function Home() {
         params.append('maxPrice', selectedMaxPrice)
       }
       params.append('minSurface', selectedMinSurface)
+      params.append('page', String(page))
+      params.append('limit', '20')
 
       const response = await fetch(`/api/home-data?${params.toString()}`)
       if (!response.ok) {
@@ -114,16 +127,17 @@ export default function Home() {
       }
       const result = await response.json()
       if (result.success && result.data) {
-        const { listings: list, stats: s, provinces: p, totalInDb: total } = result.data
+        const { listings: list, stats: s, provinces: p, totalInDb: total, filteredCount: fc } = result.data
         setListings(list || [])
         setStats(s ?? null)
         setTotalInDb(typeof total === 'number' ? total : 0)
+        setFilteredCount(typeof fc === 'number' ? fc : 0)
         if (p && p.length > 0) {
           setProvinces(p)
           if (selectedProvince !== 'all' && !p.includes(selectedProvince)) {
             setSelectedProvince(p[0])
-          } else if (p.includes(DEFAULT_PROVINCE) && selectedProvince === 'all') {
-            setSelectedProvince(DEFAULT_PROVINCE)
+          } else if (userProvince !== 'all' && p.includes(userProvince) && selectedProvince === 'all') {
+            setSelectedProvince(userProvince)
           }
         }
       } else {
@@ -147,17 +161,12 @@ export default function Home() {
   useEffect(() => {
     let cancelled = false
     async function loadBarrioOptions() {
-      if (selectedProvince === 'all') {
-        if (!cancelled) {
-          setBarrioOptions([])
-          setSelectedNeighborhood('all')
-        }
-        return
-      }
       try {
         const params = new URLSearchParams()
         params.set('all', 'true')
-        params.set('province', selectedProvince)
+        if (selectedProvince !== 'all') {
+          params.set('province', selectedProvince)
+        }
         if (selectedType !== 'all') {
           params.set('type', selectedType)
         }
@@ -195,11 +204,12 @@ export default function Home() {
   }, [selectedProvince, selectedType, selectedMaxPrice, selectedMinSurface])
 
   useEffect(() => {
-    loadHomeData()
+    if (status === 'loading') return
+    loadHomeData(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedType, selectedNeighborhood, selectedProvince, selectedMaxPrice, selectedMinSurface])
+  }, [status, selectedType, selectedNeighborhood, selectedProvince, selectedMaxPrice, selectedMinSurface])
 
-  /** Refinado en cliente (misma lista que devuelve la API con los filtros). */
+  /** Refinado en cliente (sobre la página actual de la API). */
   const displayedListings = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
     if (!q) return listings
@@ -219,14 +229,9 @@ export default function Home() {
   }, [listings, searchQuery])
 
   const totalListingsPages = useMemo(
-    () => Math.max(1, Math.ceil(displayedListings.length / LISTINGS_PER_PAGE)),
-    [displayedListings.length]
+    () => Math.max(1, Math.ceil(filteredCount / LISTINGS_PER_PAGE)),
+    [filteredCount]
   )
-
-  const paginatedListings = useMemo(() => {
-    const start = (listingsPage - 1) * LISTINGS_PER_PAGE
-    return displayedListings.slice(start, start + LISTINGS_PER_PAGE)
-  }, [displayedListings, listingsPage])
 
   useEffect(() => {
     setListingsPage(1)
@@ -235,6 +240,13 @@ export default function Home() {
   useEffect(() => {
     setListingsPage((p) => Math.min(p, totalListingsPages))
   }, [totalListingsPages])
+
+  // Reload when page changes
+  useEffect(() => {
+    if (status === 'loading') return
+    loadHomeData(listingsPage)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listingsPage])
 
   const goToListingsPage = useCallback(
     (next: number) => {
@@ -269,7 +281,7 @@ export default function Home() {
           type: 'alquiler',
           neighborhood: '',
           city: '',
-          province: DEFAULT_PROVINCE,
+          province: userProvince,
           publishedAddress: '',
           rooms: '',
         })
@@ -405,7 +417,6 @@ export default function Home() {
                 className={styles.select}
                 value={selectedNeighborhood}
                 onChange={(e) => setSelectedNeighborhood(e.target.value)}
-                disabled={selectedProvince === 'all'}
               >
                 <option value="all">Todos los barrios</option>
                 {barrioOptions.map((n) => (
@@ -595,7 +606,7 @@ export default function Home() {
             ) : null}
             <button className={styles.btnPrimary} onClick={() => {
               setError(null)
-              loadHomeData()
+              loadHomeData(1)
             }}>
               Reintentar
             </button>
@@ -637,6 +648,15 @@ export default function Home() {
                 Si la base está vacía, pedí a un <strong>administrador</strong> que importe o sincronice datos desde Ajustes.
               </p>
             )}
+          </div>
+        )}
+
+        {/* Provincia elegida */}
+        {selectedProvince !== 'all' && stats && stats.total > 0 && (
+          <div className={styles.provinceBadge}>
+            <span className={styles.provinceBadgeDot} aria-hidden />
+            Provincia elegida:{' '}
+            <strong className={styles.provinceBadgeAccent}>{selectedProvince}</strong>
           </div>
         )}
 
@@ -907,7 +927,7 @@ export default function Home() {
               aria-hidden
             />
             <div className={styles.listingsGrid}>
-            {paginatedListings.map((listing) => (
+            {displayedListings.map((listing) => (
               <div key={listing.id} className={styles.listingCard}>
                 <div className={styles.listingHeader}>
                   <h3 className={styles.listingTitle}>{listing.title || 'Sin título'}</h3>
@@ -971,11 +991,11 @@ export default function Home() {
                   <strong>
                     {Math.min(
                       (listingsPage - 1) * LISTINGS_PER_PAGE + 1,
-                      displayedListings.length
+                      filteredCount
                     )}
-                    –{Math.min(listingsPage * LISTINGS_PER_PAGE, displayedListings.length)}
+                    –{Math.min(listingsPage * LISTINGS_PER_PAGE, filteredCount)}
                   </strong>{' '}
-                  de <strong>{displayedListings.length}</strong> pisos
+                  de <strong>{filteredCount}</strong> pisos
                   {totalListingsPages > 1
                     ? ` · Página ${listingsPage} de ${totalListingsPages}`
                     : null}

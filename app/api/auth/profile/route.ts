@@ -20,7 +20,7 @@ export async function GET() {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true, name: true },
+      select: { email: true, name: true, province: true },
     })
     if (!user) {
       return NextResponse.json({ success: false, error: 'Usuario no encontrado' }, { status: 404 })
@@ -55,10 +55,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Usuario no encontrado' }, { status: 404 })
     }
 
-    const data: { name?: string | null; passwordHash?: string } = {}
+    const data: { name?: string | null; passwordHash?: string; province?: string | null } = {}
 
     if (name !== undefined) {
       data.name = name || null
+    }
+
+    if (body.province !== undefined) {
+      data.province = body.province === 'all' || body.province === '' ? null : body.province
     }
 
     if (newPassword !== undefined && newPassword !== '') {
@@ -91,6 +95,7 @@ export async function PATCH(request: NextRequest) {
       user: {
         email: user.email,
         name: data.name !== undefined ? data.name : user.name,
+        province: data.province !== undefined ? data.province : user.province,
       },
     })
   } catch (e) {

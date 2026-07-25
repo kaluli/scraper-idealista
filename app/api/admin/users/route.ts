@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/** Lista usuarios (sin contraseñas). Solo administradores. */
+/** Lista usuarios. Solo administradores. */
 export async function GET() {
   const auth = await requireAdminSession()
   if (!auth.ok) return auth.response
@@ -71,6 +71,7 @@ export async function GET() {
         email: true,
         name: true,
         role: true,
+        province: true,
         createdAt: true,
         lastLoginAt: true,
       },
