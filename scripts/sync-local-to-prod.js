@@ -1,16 +1,9 @@
 #!/usr/bin/env node
-/**
- * Sync LOCAL → PRODUCCIÓN (copia la base local a producción).
- * - LEE solo de la base local (Neon dev / Postgres local).
- * - ESCRIBE en producción (Neon prod).
- *
- * Requiere:
- *   .env.development.local  → DATABASE_URL local (postgresql://…)
- *   .env.production         → DATABASE_URL de producción (postgresql://…)
- */
-
 const path = require('path')
 const fs = require('fs')
+const { PrismaClient } = require('@prisma/client')
+
+const root = path.resolve(__dirname, '..')
 
 function readEnvFile(envPath) {
   if (!fs.existsSync(envPath)) return {}
@@ -29,103 +22,103 @@ function readEnvFile(envPath) {
   return env
 }
 
-const root = path.resolve(__dirname, '..')
-const prodEnv = readEnvFile(path.join(root, '.env.production'))
-const devEnv = readEnvFile(path.join(root, '.env.development.local'))
-
-const localUrl = (devEnv.DATABASE_URL || '').trim()
-const prodUrl = (prodEnv.DATABASE_URL || '').trim()
-
-const isPg = (u) =>
-  u.startsWith('postgresql://') || u.startsWith('postgres://')
-
-if (!localUrl || !isPg(localUrl)) {
-  console.error('❌ Falta DATABASE_URL local en .env.development.local (postgresql://…)')
-  process.exit(1)
+function resolveProdUrl() {
+  const fromEnv = (process.env.SYNC_PROD_DATABASE_URL || '').trim()
+  if (fromEnv) return fromEnv
+  const chain = [
+    '.env.sync.vercel.prod',
+    '.env.production.local',
+    '.env.production',
+    '.env.vercel.pulled',
+  ]
+  for (const name of chain) {
+    const env = readEnvFile(path.join(root, name))
+    const u = (env.DATABASE_URL || '').trim()
+    if (u) return u
+  }
+  return ''
 }
 
-const localDev =
-  localUrl.includes('localhost') ||
-  localUrl.includes('127.0.0.1') ||
-  localUrl.includes('neon.tech')
-if (!localDev) {
-  console.error(
-    '❌ Local debe ser Postgres en localhost/127.0.0.1 o una rama Neon (*.neon.tech).'
-  )
-  process.exit(1)
+function resolveLocalUrl() {
+  const fromEnv = (process.env.SYNC_LOCAL_DATABASE_URL || '').trim()
+  if (fromEnv) return fromEnv
+  const dev = readEnvFile(path.join(root, '.env.development.local'))
+  const loc = readEnvFile(path.join(root, '.env.local'))
+  return (dev.DATABASE_URL || loc.DATABASE_URL || '').trim()
 }
 
-if (!prodUrl || !isPg(prodUrl)) {
-  console.error('❌ Falta DATABASE_URL de producción en .env.production (postgresql://…)')
-  process.exit(1)
-}
+const localUrl = resolveLocalUrl()
+const prodUrl = resolveProdUrl()
 
-if (prodUrl === localUrl) {
-  console.error('❌ Producción y local tienen la misma DATABASE_URL.')
+if (!localUrl || !prodUrl) {
+  console.error('❌ Faltan DATABASE_URL de local o producción.')
   process.exit(1)
 }
 
 if (prodUrl.includes('localhost') || prodUrl.includes('127.0.0.1')) {
-  console.error('❌ La URL de producción no debe ser localhost.')
+  console.error('❌ La URL de producción no puede ser localhost.')
   process.exit(1)
 }
 
-const { PrismaClient } = require('@prisma/client')
-const prismaLocal = new PrismaClient({ datasources: { db: { url: localUrl } } })
-const prismaProd = new PrismaClient({ datasources: { db: { url: prodUrl } } })
+if (localUrl === prodUrl) {
+  console.error('❌ Local y producción tienen la misma URL.')
+  process.exit(1)
+}
 
 async function main() {
-  console.log('📤 Sync LOCAL → PRODUCCIÓN (Postgres)\n')
+  console.log('📤 Sync PRODUCCIÓN ← LOCAL\n')
 
-  let listings = []
-  let neighborhoods = []
+  // 1. Leer de local
+  console.log('📖 Leyendo desde local...')
+  const prismaLocal = new PrismaClient({ datasources: { db: { url: localUrl } } })
+  const [listings, neighborhoods, users] = await Promise.all([
+    prismaLocal.listing.findMany({ orderBy: { id: 'asc' } }),
+    prismaLocal.neighborhood.findMany({ orderBy: { id: 'asc' } }),
+    prismaLocal.user.findMany({ orderBy: { id: 'asc' } }),
+  ])
+  await prismaLocal.$disconnect()
+  console.log('   Listings:', listings.length)
+  console.log('   Neighborhoods:', neighborhoods.length)
+  console.log('   Users:', users.length)
 
-  try {
-    console.log('   Leyendo desde local...')
-    const [l, n] = await Promise.all([
-      prismaLocal.listing.findMany({ orderBy: { id: 'asc' } }),
-      prismaLocal.neighborhood.findMany({ orderBy: { id: 'asc' } }),
-    ])
-    listings = l
-    neighborhoods = n
-    await prismaLocal.$disconnect()
-    console.log('   Listings:', listings.length)
-    console.log('   Neighborhoods:', neighborhoods.length)
-  } catch (e) {
-    await prismaLocal.$disconnect().catch(() => {})
-    console.error('❌ Error leyendo local:', e.message)
-    process.exit(1)
-  }
+  // 2. Escribir en producción
+  console.log('\n✍️  Escribiendo en producción (Neon)...')
+  const prismaProd = new PrismaClient({ datasources: { db: { url: prodUrl } } })
 
   try {
-    console.log('\n   Escribiendo en producción...')
     await prismaProd.$transaction(async (tx) => {
+      await tx.userListingState.deleteMany({})
       await tx.listing.deleteMany({})
       await tx.neighborhood.deleteMany({})
-      if (neighborhoods.length) {
-        await tx.neighborhood.createMany({ data: neighborhoods })
-      }
-      if (listings.length) {
-        await tx.listing.createMany({ data: listings })
-      }
+      if (neighborhoods.length) await tx.neighborhood.createMany({ data: neighborhoods })
+      if (listings.length) await tx.listing.createMany({ data: listings })
     })
-    await prismaProd.$executeRawUnsafe(`
-      SELECT setval(pg_get_serial_sequence('listings', 'id'), COALESCE((SELECT MAX(id) FROM listings), 1))
-    `)
-    await prismaProd.$executeRawUnsafe(`
-      SELECT setval(pg_get_serial_sequence('neighborhoods', 'id'), COALESCE((SELECT MAX(id) FROM neighborhoods), 1))
-    `)
-    await prismaProd.$disconnect()
-    console.log('   ✅ Producción actualizada con los datos locales.')
+
+    await prismaProd.$executeRawUnsafe(
+      "SELECT setval(pg_get_serial_sequence('listings', 'id'), COALESCE((SELECT MAX(id) FROM listings), 1))"
+    )
+    await prismaProd.$executeRawUnsafe(
+      "SELECT setval(pg_get_serial_sequence('neighborhoods', 'id'), COALESCE((SELECT MAX(id) FROM neighborhoods), 1))"
+    )
+
+    // Sincronizar usuarios (upsert para no romper si ya existen)
+    for (const u of users) {
+      await prismaProd.user.upsert({
+        where: { id: u.id },
+        create: u,
+        update: u,
+      })
+    }
+
+    console.log('   ✅ Producción actualizada.')
   } catch (e) {
-    await prismaProd.$disconnect().catch(() => {})
     console.error('❌ Error escribiendo en producción:', e.message)
     process.exit(1)
+  } finally {
+    await prismaProd.$disconnect()
   }
 
-  console.log(
-    '\n✅ Sync listo. La base de producción tiene la misma información que local.\n'
-  )
+  console.log('\n✅ Sync completado: local → producción.')
 }
 
 main()

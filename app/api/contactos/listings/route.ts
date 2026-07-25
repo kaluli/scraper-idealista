@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
       const b = l.neighborhood?.trim()
       if (b) barriosSet.add(b)
     }
-    const barrios = [...barriosSet].sort((a, b) => a.localeCompare(b, 'es'))
+    const barrios = Array.from(barriosSet).sort((a, b) => a.localeCompare(b, 'es'))
 
     const filteredCount = visibleItems.length
     const offset = (page - 1) * limit

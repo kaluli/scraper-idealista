@@ -32,6 +32,69 @@ const LISTINGS_PER_PAGE = 16
 
 type MinSurfaceOption = '40' | '80'
 
+function ProvinceSelectorInline({
+  selectedProvince,
+  provinces,
+  onChange,
+}: {
+  selectedProvince: string
+  provinces: string[]
+  onChange: (v: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDown, true)
+    return () => document.removeEventListener('mousedown', onDown, true)
+  }, [open])
+
+  return (
+    <div ref={ref} className={styles.provinceBadgeWrapper}>
+      <button
+        type="button"
+        className={styles.provinceBadge}
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+      >
+        <span className={styles.provinceBadgeDot} aria-hidden />
+        Provincia elegida:{' '}
+        <strong className={styles.provinceBadgeAccent}>{selectedProvince}</strong>
+      </button>
+      {open && (
+        <div className={styles.provinceBadgeDropdown} role="listbox" aria-label="Cambiar provincia">
+          <button
+            type="button"
+            role="option"
+            aria-selected={selectedProvince === 'all'}
+            className={`${styles.provinceBadgeOption} ${selectedProvince === 'all' ? styles.provinceBadgeOptionActive : ''}`}
+            onClick={() => { onChange('all'); setOpen(false) }}
+          >
+            Todas las provincias
+          </button>
+          {provinces.map((p) => (
+            <button
+              key={p}
+              type="button"
+              role="option"
+              aria-selected={selectedProvince === p}
+              className={`${styles.provinceBadgeOption} ${selectedProvince === p ? styles.provinceBadgeOptionActive : ''}`}
+              onClick={() => { onChange(p); setOpen(false) }}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Home() {
   const { data: session, status } = useSession()
   const isAdmin = session?.user?.role === 'admin'
@@ -653,11 +716,14 @@ export default function Home() {
 
         {/* Provincia elegida */}
         {selectedProvince !== 'all' && stats && stats.total > 0 && (
-          <div className={styles.provinceBadge}>
-            <span className={styles.provinceBadgeDot} aria-hidden />
-            Provincia elegida:{' '}
-            <strong className={styles.provinceBadgeAccent}>{selectedProvince}</strong>
-          </div>
+          <ProvinceSelectorInline
+            selectedProvince={selectedProvince}
+            provinces={provinces}
+            onChange={(v) => {
+              setSelectedProvince(v)
+              setSelectedNeighborhood('all')
+            }}
+          />
         )}
 
         {/* Estadísticas (sin título visible: las tarjetas son autoexplicativas) */}

@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     for (const row of listingProvinces) {
       if (row.province) allProvinces.add(row.province)
     }
-    const provinces = [...allProvinces].sort()
+    const provinces = Array.from(allProvinces).sort()
 
     // 2. Total sin filtros + listings filtrados (paginados)
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1)
