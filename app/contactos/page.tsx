@@ -1046,6 +1046,7 @@ export default function ContactosPage() {
   const [alquilerPool, setAlquilerPool] = useState<Listing[]>([])
   const [filteredCount, setFilteredCount] = useState(0)
   const [serverBarrios, setServerBarrios] = useState<{ name: string; count: number }[]>([])
+  const [catalogCount, setCatalogCount] = useState(0)
   const [contactosPage, setContactosPage] = useState(1)
   const CONTACTOS_PER_PAGE = 20
   const [similarHover, setSimilarHover] = useState<{
@@ -1075,7 +1076,7 @@ export default function ContactosPage() {
     })
   }, [])
 
-  /** Catálogo compras (API). Precio máximo y paginación ahora van al server. */
+  /** Catálogo compras (API). Precio máximo, barrio y paginación van al server. */
   const loadListings = useCallback((page: number = 1) => {
     setLoading(true)
     const params = new URLSearchParams({ type: 'compra', page: String(page), limit: '20' })
@@ -1085,18 +1086,24 @@ export default function ContactosPage() {
     if (selectedProvince !== 'all') {
       params.set('province', selectedProvince)
     }
+    if (selectedBarrio) {
+      params.set('neighborhood', selectedBarrio)
+    }
     fetch(`/api/contactos/listings?${params.toString()}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((json) => {
         if (json.success && Array.isArray(json.data)) {
           setListings(json.data)
           setFilteredCount(typeof json.filteredCount === 'number' ? json.filteredCount : 0)
+          setCatalogCount(
+            typeof json.catalogCount === 'number' ? json.catalogCount : (typeof json.filteredCount === 'number' ? json.filteredCount : 0)
+          )
           if (Array.isArray(json.barrios)) setServerBarrios(json.barrios)
           if (Array.isArray(json.provinces)) setServerProvinces(json.provinces)
         }
       })
       .finally(() => setLoading(false))
-  }, [selectedMaxPrice, selectedProvince])
+  }, [selectedMaxPrice, selectedProvince, selectedBarrio])
 
   useEffect(() => {
     loadListings(contactosPage)
@@ -1104,7 +1111,7 @@ export default function ContactosPage() {
 
   useEffect(() => {
     setContactosPage(1)
-  }, [selectedMaxPrice, selectedProvince])
+  }, [selectedMaxPrice, selectedProvince, selectedBarrio])
 
   const listingsInPriceRange = listings
 
@@ -1409,13 +1416,11 @@ export default function ContactosPage() {
       (!l.citaAt || new Date(l.citaAt).getTime() <= nowForFilter)
   )
 
-  // Barrios vienen del server (todas las listings visibles, no solo la página actual).
+  // Barrios y contadores vienen del server (catálogo completo, no solo la página).
   const barrios = serverBarrios
 
-  const filteredByBarrio =
-    selectedBarrio === null
-      ? filteredForTodos
-      : filteredForTodos.filter((l) => l.neighborhood === selectedBarrio)
+  // El barrio ya se filtra en el server; acá solo quitamos visitados / citas futuras de la tabla principal.
+  const filteredByBarrio = filteredForTodos
 
   const searchLower = searchQuery.trim().toLowerCase()
   const searchNum = searchLower ? parseFloat(searchQuery.replace(/[^\d,.]/g, '').replace(',', '.')) : NaN
@@ -1877,7 +1882,7 @@ export default function ContactosPage() {
                     className={`${styles.barrioChip} ${selectedBarrio === null ? styles.barrioChipActive : ''}`}
                     onClick={() => setSelectedBarrio(null)}
                   >
-                    Todos ({filteredCount})
+                    Todos ({catalogCount || filteredCount})
                   </button>
                   {barrios.map((b) => (
                     <button

@@ -56,19 +56,33 @@ export async function GET(request: NextRequest) {
   try {
     await prisma.$connect()
     const searchParams = request.nextUrl.searchParams
-    const where = buildListingWhereFromSearchParams(searchParams)
+    // Catálogo base (tipo, provincia, precio) SIN barrio: sirve para chips/contadores.
+    const catalogParams = new URLSearchParams(searchParams)
+    catalogParams.delete('neighborhood')
+    const catalogWhere = buildListingWhereFromSearchParams(catalogParams)
+
+    const neighborhoodParam = searchParams.get('neighborhood')
 
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1)
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10) || 20))
 
     const allListings = await prisma.listing.findMany({
-      where,
+      where: catalogWhere,
       orderBy: [{ profitabilityRate: 'desc' }, { createdAt: 'desc' }],
-      select: { id: true, neighborhood: true, province: true },
+      select: { id: true, neighborhood: true, city: true, province: true },
     })
 
     if (allListings.length === 0) {
-      const res = NextResponse.json({ success: true, data: [], filteredCount: 0, barrios: [], page, limit })
+      const res = NextResponse.json({
+        success: true,
+        data: [],
+        filteredCount: 0,
+        catalogCount: 0,
+        barrios: [],
+        provinces: [],
+        page,
+        limit,
+      })
       res.headers.set('Cache-Control', 'no-store')
       return res
     }
@@ -96,13 +110,38 @@ export async function GET(request: NextRequest) {
       if (pr) provincesSet.add(pr)
     }
     const provinces = Array.from(provincesSet).sort((a, b) => a.localeCompare(b, 'es'))
+    const catalogCount = visibleItems.length
 
-    const filteredCount = visibleItems.length
+    // Filtrar por barrio en servidor (p. ej. Alcalá) antes de paginar.
+    let filteredItems = visibleItems
+    if (neighborhoodParam && neighborhoodParam !== 'all') {
+      if (neighborhoodParam === 'Alcalá de Henares') {
+        filteredItems = visibleItems.filter(
+          (l) =>
+            l.neighborhood === 'Alcalá de Henares' ||
+            l.city === 'Alcalá de Henares' ||
+            l.city === 'Alcala de Henares'
+        )
+      } else {
+        filteredItems = visibleItems.filter((l) => l.neighborhood === neighborhoodParam)
+      }
+    }
+
+    const filteredCount = filteredItems.length
     const offset = (page - 1) * limit
-    const pageIds = visibleItems.slice(offset, offset + limit).map((l) => l.id)
+    const pageIds = filteredItems.slice(offset, offset + limit).map((l) => l.id)
 
     if (pageIds.length === 0) {
-      const res = NextResponse.json({ success: true, data: [], filteredCount, barrios, provinces, page, limit })
+      const res = NextResponse.json({
+        success: true,
+        data: [],
+        filteredCount,
+        catalogCount,
+        barrios,
+        provinces,
+        page,
+        limit,
+      })
       res.headers.set('Cache-Control', 'no-store')
       return res
     }
@@ -119,7 +158,16 @@ export async function GET(request: NextRequest) {
       return mergeRow(plain, stateByListing.get(id))
     }).filter(Boolean)
 
-    const res = NextResponse.json({ success: true, data: merged, filteredCount, barrios, provinces, page, limit })
+    const res = NextResponse.json({
+      success: true,
+      data: merged,
+      filteredCount,
+      catalogCount,
+      barrios,
+      provinces,
+      page,
+      limit,
+    })
     res.headers.set('Cache-Control', 'no-store')
     return res
   } catch (error) {
